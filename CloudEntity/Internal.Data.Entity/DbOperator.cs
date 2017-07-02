@@ -30,7 +30,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// </summary>
         protected ObjectAccessor EntityAccessor
         {
-            get { return ObjectAccessor.GetAccessor(typeof(TEntity).GetTypeInfo()); }
+            get { return ObjectAccessor.GetAccessor(typeof(TEntity)); }
         }
         /// <summary>
         /// Table元数据解析器

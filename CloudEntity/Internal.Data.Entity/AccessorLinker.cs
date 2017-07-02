@@ -35,11 +35,11 @@ namespace CloudEntity.Internal.Data.Entity
         public AccessorLinker(PropertyInfo property, IMapperContainer mapperContainer, params AccessorLinker[] accessorLinkers)
         {
             //非空检查
-            Check.ArgumentNull(property, "property");
-            Check.ArgumentNull(mapperContainer, "mapperContainer");
+            Check.ArgumentNull(property, nameof(property));
+            Check.ArgumentNull(mapperContainer, nameof(mapperContainer));
             //赋值
             this.PropertyName = property.Name;
-            this.EntityAccessor = ObjectAccessor.GetAccessor(property.PropertyType.GetTypeInfo());
+            this.EntityAccessor = ObjectAccessor.GetAccessor(property.PropertyType);
             this.TableMapper = mapperContainer.GetTableMapper(property.PropertyType);
             this.AccessorLinkers = accessorLinkers;
         }

@@ -76,7 +76,7 @@ namespace CloudEntity.Internal.Data.Entity
         public DbSelectedQuery(IMapperContainer mapperContainer, CommandTreeGetter queryTreeGetter, DbHelper dbHelper)
             : base(mapperContainer, queryTreeGetter, dbHelper)
         {
-            this.entityAccessor = ObjectAccessor.GetAccessor(typeof(TEntity).GetTypeInfo());
+            this.entityAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
         }
         /// <summary>
         /// 获取枚举器

@@ -58,7 +58,7 @@ namespace CloudEntity.Internal.Data.Entity
         public DbQuery(IMapperContainer mapperContainer, CommandTreeGetter queryTreeGetter, DbHelper dbHelper)
             : base(mapperContainer, queryTreeGetter, dbHelper)
         {
-            this.objectAccessor = ObjectAccessor.GetAccessor(typeof(TEntity).GetTypeInfo());
+            this.objectAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
         }
         /// <summary>
         /// 获取枚举器

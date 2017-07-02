@@ -58,7 +58,7 @@ namespace CloudEntity.Data
         private static IEnumerable<IDbDataParameter> GetParameters(this IParameterFactory factory, object parameterModel, string commandText, char marker)
         {
             //获取对象存取器
-            ObjectAccessor modelAccessor = ObjectAccessor.GetAccessor(parameterModel.GetType().GetTypeInfo());
+            ObjectAccessor modelAccessor = ObjectAccessor.GetAccessor(parameterModel.GetType());
             //遍历属性名称,依次创建返回sql参数
             foreach (string propertyName in modelAccessor.GetPropertyNames())
             {
@@ -111,7 +111,7 @@ namespace CloudEntity.Data
             where TModel : class, new()
         {
             //获取TModel类型的对象存取器
-            ObjectAccessor accessor = ObjectAccessor.GetAccessor(typeof(TModel).GetTypeInfo());
+            ObjectAccessor accessor = ObjectAccessor.GetAccessor(typeof(TModel));
             //执行查询获取结果
             return dbHelper.GetResults(accessor.CreateModel<TModel>, commandText, parameters: parameters);
         }
@@ -129,7 +129,7 @@ namespace CloudEntity.Data
             //获取sql参数数组
             IDbDataParameter[] parameters = dbHelper.GetParameters(parameterModel).ToArray();
             //获取TModel类型的对象存取器
-            ObjectAccessor accessor = ObjectAccessor.GetAccessor(typeof(TModel).GetTypeInfo());
+            ObjectAccessor accessor = ObjectAccessor.GetAccessor(typeof(TModel));
             //执行查询获取结果
             return dbHelper.GetResults(accessor.CreateModel<TModel>, commandText, parameters: parameters);
         }

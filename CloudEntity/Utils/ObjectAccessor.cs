@@ -11,9 +11,10 @@ namespace CloudEntity
     /// </summary>
     public sealed class ObjectAccessor
     {
-        private IDictionary<string, PropertyAccessor> propertyAccessors;    //属性访问器字典
-        private IDictionary<ConstructorInfo, Delegate> creators;            //创建对象的匿名函数字典
+        private Delegate creator;                                           //创建对象的委托
         private object creatorLocker;                                       //creators线程锁
+        private IDictionary<ConstructorInfo, Delegate> creators;            //创建对象的匿名函数字典
+        private IDictionary<string, PropertyAccessor> propertyAccessors;    //属性访问器字典
         private static object accessorsLocker;                              //访问器字典线程锁
         private static IDictionary<string, ObjectAccessor> accessors;       //对象访问器字典
 
@@ -42,10 +43,13 @@ namespace CloudEntity
         /// 创建对象访问器
         /// </summary>
         /// <param name="objectType">对象类型</param>
-        private ObjectAccessor(TypeInfo objectType)
+        private ObjectAccessor(Type objectType)
         {
             //赋值
-            this.ObjectType = objectType;
+            this.ObjectType = objectType.GetTypeInfo();
+            //初始化不带参数的创建对象的匿名函数
+            NewExpression newExpression = Expression.New(objectType);
+            this.creator = Expression.Lambda(newExpression).Compile();
             //初始化创建对象的匿名函数字典
             this.creators = new Dictionary<ConstructorInfo, Delegate>();
             this.creatorLocker = new object();
@@ -174,9 +178,17 @@ namespace CloudEntity
         /// <summary>
         /// 创建对象
         /// </summary>
+        /// <returns>实体对象</returns>
+        public object CreateInstance()
+        {
+            return this.creator.DynamicInvoke();
+        }
+        /// <summary>
+        /// 创建对象
+        /// </summary>
         /// <param name="arguments">构造函数的参数集合</param>
         /// <returns>实体对象</returns>
-        public object CreateInstance(params object[] arguments)
+        public object CreateInstance(object[] arguments)
         {
             //获取类型数组
             Type[] argumentTypes = new Type[arguments.Length];
@@ -205,7 +217,7 @@ namespace CloudEntity
         /// </summary>
         /// <param name="objectType">对象类型</param>
         /// <returns>对象访问器</returns>
-        public static ObjectAccessor GetAccessor(TypeInfo objectType)
+        public static ObjectAccessor GetAccessor(Type objectType)
         {
             //检查
             Check.ArgumentNull(objectType, nameof(objectType));

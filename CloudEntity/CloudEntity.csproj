@@ -6,6 +6,7 @@
     <Authors>李凯</Authors>
     <Company />
     <Description>object relation mapping</Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Data.Common" Version="4.3.0" />

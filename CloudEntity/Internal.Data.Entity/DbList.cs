@@ -12,7 +12,7 @@ using System.Linq;
 namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
-    /// 可读可写的操作DB的对象数据源
+    /// 数据列表
     /// 李凯 Apple_Li
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>

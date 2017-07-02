@@ -12,14 +12,12 @@ public class Program
     private static void Main(string[] args)
     {
         IDbContainer container = DbContainer.GetContainer<MySqlInitializer>();
-        StringBuilder sqlBuilder = new StringBuilder();
-        sqlBuilder.AppendLine("SELECT category.CatId CategoryId,");
-        sqlBuilder.AppendLine("       category.CatName CategoryName");
-        sqlBuilder.AppendLine("  FROM memberSys.Categories category");
-        sqlBuilder.AppendLine(" WHERE category.CatName LIKE @Name");
-        foreach (Category category in container.DbHelper.Query<Category>(sqlBuilder.ToString(), new { Name = "%会员" }))
+        IDbQuery<Member> members = container.List<Member>();
+        IDbQuery<Category> categories = container.List<Category>();
+        members = members.Join(categories, m => m.MemberCategory, (m, c) => m.CategoryId == c.CategoryId);
+        foreach (Member member in members)
         {
-            Console.WriteLine(category.CategoryName);
+            Console.WriteLine("{0} {1}", member.MemberCategory.CategoryName, member.MemberName);
         }
     }
 }
