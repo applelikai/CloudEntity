@@ -35,5 +35,13 @@ namespace CloudEntity.Mapping
         /// 长度
         /// </summary>
         int? Length { get; }
+        /// <summary>
+        /// 小数点位数
+        /// </summary>
+        int? Decimals { get; }
+        /// <summary>
+        /// 是否允许为空
+        /// </summary>
+        bool AllowNull { get; }
     }
 }

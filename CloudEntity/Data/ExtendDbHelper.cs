@@ -57,14 +57,12 @@ namespace CloudEntity.Data
         /// <returns>sql参数流</returns>
         private static IEnumerable<IDbDataParameter> GetParameters(this IParameterFactory factory, object parameterModel, string commandText, char marker)
         {
-            //获取对象存取器
-            ObjectAccessor modelAccessor = ObjectAccessor.GetAccessor(parameterModel.GetType());
-            //遍历属性名称,依次创建返回sql参数
-            foreach (string propertyName in modelAccessor.GetPropertyNames())
+            //遍历所有的属性并创建返回sql参数
+            foreach (PropertyInfo property in parameterModel.GetType().GetRuntimeProperties())
             {
                 //若sql命令中包含此sql参数名，则创建参数并返回
-                if (commandText.Contains(string.Concat(marker, propertyName)))
-                    yield return factory.Parameter(propertyName, modelAccessor.GetValue(propertyName, parameterModel));
+                if (commandText.Contains(string.Concat(marker, property.Name)))
+                    yield return factory.Parameter(property.Name, property.GetValue(parameterModel));
             }
         }
 

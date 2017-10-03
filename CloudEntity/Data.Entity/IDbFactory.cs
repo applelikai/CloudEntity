@@ -77,6 +77,19 @@ namespace CloudEntity.Data.Entity
             where TEntity : class
             where TOther : class;
         /// <summary>
+        /// 创建左连接查询对象
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TOther">关联的实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="otherSource">关联对象的数据源</param>
+        /// <param name="selector">指定关联实体类型的属性表达式</param>
+        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
+        /// <returns>左连接查询对象</returns>
+        IDbQuery<TEntity> CreateLeftJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
+            where TEntity : class
+            where TOther : class;
+        /// <summary>
         /// 创建分页查询数据源
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>

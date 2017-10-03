@@ -24,11 +24,11 @@ namespace CloudEntity.Test.Mappers
         protected override void SetColumnMappers(IColumnMapSetter<Member> setter)
         {
             setter.Map(m => m.MemberId, ColumnAction.PrimaryAndIdentity);
-            setter.Map(m => m.MemberName, length: 25);
+            setter.Map(m => m.MemberName).DataType(length: 25);
             setter.Map(m => m.Sex, ColumnAction.Insert);
             setter.Map(m => m.AddTime, ColumnAction.Default);
             setter.Map(m => m.Points, ColumnAction.EditAndDefault);
-            setter.Map(m => m.CategoryId, ColumnAction.Insert, "CatId");
+            setter.Map(m => m.CategoryId, ColumnAction.Insert, "CatId").As();
         }
     }
 }

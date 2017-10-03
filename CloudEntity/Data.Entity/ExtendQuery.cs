@@ -235,7 +235,29 @@ namespace CloudEntity.Data.Entity
             //创建关联查询
             return source.Factory.CreateJoinedQuery(source, otherSource, selector, predicate);
         }
-        
+        /// <summary>
+        /// Extendable method: 获取左关联查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TOther">关联的实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="otherSource">关联数据源</param>
+        /// <param name="selector">指定关联实体类型的属性表达式</param>
+        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
+        /// <returns>左关联查询数据源</returns>
+        public static IDbQuery<TEntity> LeftJoin<TEntity, TOther>(this IDbQuery<TEntity> source, IDbQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
+            where TEntity : class
+            where TOther : class
+        {
+            //非空检查
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(otherSource, nameof(otherSource));
+            Check.ArgumentNull(selector, nameof(selector));
+            Check.ArgumentNull(predicate, nameof(predicate));
+            //创建关联查询
+            return source.Factory.CreateLeftJoinedQuery(source, otherSource, selector, predicate);
+        }
+
         /// <summary>
         /// Extendable method: 获取按某属性升序排序的分页查询数据源
         /// </summary>

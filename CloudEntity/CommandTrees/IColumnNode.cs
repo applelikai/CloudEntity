@@ -24,6 +24,10 @@ namespace CloudEntity.CommandTrees
         /// </summary>
         int? Length { get; }
         /// <summary>
+        /// 小数点位数
+        /// </summary>
+        int? Decimals { get; }
+        /// <summary>
         /// 是否设置默认值
         /// </summary>
         bool IsDefault { get; }

@@ -24,7 +24,7 @@ namespace CloudEntity.Test.Mappers
         protected override void SetColumnMappers(IColumnMapSetter<Category> setter)
         {
             setter.Map(c => c.CategoryId, ColumnAction.PrimaryAndIdentity, "CatId");
-            setter.Map(c => c.CategoryName, ColumnAction.Insert, "CatName", length: 25);
+            setter.Map(c => c.CategoryName, ColumnAction.Insert, "CatName").DataType(length: 25);
         }
     }
 }

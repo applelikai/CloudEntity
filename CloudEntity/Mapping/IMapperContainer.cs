@@ -14,10 +14,5 @@ namespace CloudEntity.Mapping
         /// <param name="entityType">实体类型</param>
         /// <returns>当前实体的存储与表的映射关系的对象</returns>
         ITableMapper GetTableMapper(Type entityType);
-        /// <summary>
-        /// 注册Table映射对象
-        /// </summary>
-        /// <param name="tableMapper">Table映射对象</param>
-        void RegisterMapper(ITableMapper tableMapper);
     }
 }

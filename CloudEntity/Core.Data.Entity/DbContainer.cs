@@ -30,6 +30,10 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         private object _dbListsLocker;
         /// <summary>
+        /// 连接字符串
+        /// </summary>
+        private string _connectionString;
+        /// <summary>
         /// 初始化器
         /// </summary>
         private DbInitializer _initializer;
@@ -72,11 +76,11 @@ namespace CloudEntity.Core.Data.Entity
         /// <summary>
         /// 控制字典缓存的线程锁
         /// </summary>
-        private static object _containtersLocker;
+        private static object _containersLocker;
         /// <summary>
-        /// 数据容器字典缓存
+        /// 容器集字典
         /// </summary>
-        private static IDictionary<Type, IDbContainer> _containers;
+        private static IDictionary<Type, ContainerSet> _containerSets;
 
         /// <summary>
         /// CommandTree获取器
@@ -211,47 +215,10 @@ namespace CloudEntity.Core.Data.Entity
                 {
                     //若dbHelper为空,则创建
                     if (this._dbHelper == null)
-                        this._dbHelper = this._initializer.CreateDbHelper();
+                        this._dbHelper = this._initializer.CreateDbHelper(this._connectionString);
                     //回到Start
                     goto Start;
                 }
-            }
-        }
-        
-        /// <summary>
-        /// 静态初始化
-        /// </summary>
-        static DbContainer()
-        {
-            DbContainer._containtersLocker = new object();
-            DbContainer._containers = new Dictionary<Type, IDbContainer>();
-        }
-        /// <summary>
-        /// 获取数据容器
-        /// </summary>
-        /// <typeparam name="TInitializer">初始化器</typeparam>
-        /// <returns>数据容器</returns>
-        public static IDbContainer GetContainer<TInitializer>()
-            where TInitializer : DbInitializer, new()
-        {
-            //获取初始化器类型
-            Type initializerType = typeof(TInitializer);
-
-            Start:
-            //若字典中包含当前初始化器类型的容器，则直接返回
-            if (DbContainer._containers.ContainsKey(initializerType))
-                return DbContainer._containers[initializerType];
-            //进入临界区
-            lock (DbContainer._containtersLocker)
-            {
-                //若字典中不包含当前类型的容器,则注册
-                if (!DbContainer._containers.ContainsKey(initializerType))
-                {
-                    IDbContainer container = new DbContainer(new TInitializer());
-                    DbContainer._containers.Add(initializerType, container);
-                }
-                //回到Start
-                goto Start;
             }
         }
 
@@ -423,7 +390,7 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         /// <param name="expression">条件表达式主体</param>
         /// <returns>sql表达式节点迭代器</returns>
-        private IEnumerable<INodeBuilder> GetJoinedQueryNodeBuilders(Expression expression)
+        private IEnumerable<INodeBuilder> GetJoinedOnNodeBuilders(Expression expression)
         {
             switch (expression.NodeType)
             {
@@ -445,10 +412,10 @@ namespace CloudEntity.Core.Data.Entity
                     //获取AND二叉树表达式主体
                     BinaryExpression andExpression = expression as BinaryExpression;
                     //解析表达式主体的左节点，后去sql表达式生成器集合
-                    foreach (INodeBuilder nodeBuilder in this.GetJoinedQueryNodeBuilders(andExpression.Left))
+                    foreach (INodeBuilder nodeBuilder in this.GetJoinedOnNodeBuilders(andExpression.Left))
                         yield return nodeBuilder;
                     //解析表达式主体的右节点，后去sql表达式生成器集合
-                    foreach (INodeBuilder nodeBuilder in this.GetJoinedQueryNodeBuilders(andExpression.Right))
+                    foreach (INodeBuilder nodeBuilder in this.GetJoinedOnNodeBuilders(andExpression.Right))
                         yield return nodeBuilder;
                     break;
                 //不可解析的表达式直接扔出异常
@@ -460,16 +427,19 @@ namespace CloudEntity.Core.Data.Entity
         /// 解析关联表达式获取sql表达式节点迭代器
         /// </summary>
         /// <param name="expression">条件表达式主体</param>
-        /// <param name="nodeBuilders">源sql表达式节点</param>
-        /// <returns>sql表达式节点迭代器</returns>
-        private IEnumerable<INodeBuilder> GetJoinedQueryNodeBuilders(Expression expression, IEnumerable<INodeBuilder> nodeBuilders)
+        /// <param name="nodeBuilders">主表sql表达式节点集合</param>
+        /// <param name="otherSourceNodeBuilders">从表sql表达式节点集合</param>
+        /// <param name="getJoinBuilder">传入tableBuilder获取joinBuilder的函数</param>
+        /// <returns>关联查询的sql表达式节点集合</returns>
+        private IEnumerable<INodeBuilder> GetJoinedQueryNodeBuilders(Expression expression, IEnumerable<INodeBuilder> nodeBuilders, IEnumerable<INodeBuilder> otherSourceNodeBuilders, Func<TableBuilder, JoinBuilder> getJoinBuilder)
         {
-            //返回连接查询条件
-            foreach (INodeBuilder nodeBuilder in this.GetJoinedQueryNodeBuilders(expression))
-                yield return nodeBuilder;
-            //返回原先的表达式
-            IList<string> columnNames = new List<string>();
+            //返回主表sql表达式节点集合
             foreach (INodeBuilder nodeBuilder in nodeBuilders)
+                yield return nodeBuilder;
+            //记录列名
+            IList<string> columnNames = new List<string>();
+            //返回从表sql表达式节点集合
+            foreach (INodeBuilder nodeBuilder in otherSourceNodeBuilders)
             {
                 //去除相同列名的列
                 if (nodeBuilder.BuilderType == BuilderType.Column)
@@ -479,7 +449,20 @@ namespace CloudEntity.Core.Data.Entity
                         continue;
                     columnNames.Add(columnBuilder.ColumnName);
                 }
-                //返回sql表达式节点
+                //获取从表Table表达式节点并生成JOIN表达式节点
+                if (nodeBuilder.BuilderType == BuilderType.Table)
+                {
+                    //获取joinBuilder节点
+                    TableBuilder tableBuilder = nodeBuilder as TableBuilder;
+                    JoinBuilder joinBuilder = getJoinBuilder(tableBuilder);
+                    //拼接join on表达式节点
+                    foreach (ISqlBuilder sqlBuilder in this.GetJoinedOnNodeBuilders(expression))
+                        joinBuilder.OnBuilders.Append(sqlBuilder);
+                    //返回joinBuilder节点并跳过
+                    yield return joinBuilder;
+                    continue;
+                }
+                //返回其他类型的表达式节点
                 yield return nodeBuilder;
             }
         }
@@ -562,6 +545,84 @@ namespace CloudEntity.Core.Data.Entity
                     yield return whereVisitor.Visit(parameterExpression, expression);
                     break;
             }
+        }
+        
+        /// <summary>
+        /// 静态初始化
+        /// </summary>
+        static DbContainer()
+        {
+            DbContainer._containersLocker = new object();
+            DbContainer._containerSets = new Dictionary<Type, ContainerSet>();
+        }
+        /// <summary>
+        /// 获取数据容器
+        /// </summary>
+        /// <typeparam name="TInitializer">初始化器类型</typeparam>
+        /// <param name="connectionString">连接字符串</param>
+        /// <returns>数据容器</returns>
+        public static IDbContainer GetContainer<TInitializer>(string connectionString)
+            where TInitializer : DbInitializer, new()
+        {
+            Start:
+            //若当前初始化器类型的容器集存在,直接获取数据容器
+            if (DbContainer._containerSets.ContainsKey(typeof(TInitializer)))
+                return DbContainer._containerSets[typeof(TInitializer)].GetContainer(connectionString);
+            //进入临界区
+            lock (DbContainer._containersLocker)
+            {
+                //若当前初始化器类型的容器集不存在，则创建并添加
+                if (!DbContainer._containerSets.ContainsKey(typeof(TInitializer)))
+                    DbContainer._containerSets.Add(typeof(TInitializer), new ContainerSet(new TInitializer()));
+                //回到Start
+                goto Start;
+            }
+        }
+        /// <summary>
+        /// 获取数据容器
+        /// </summary>
+        /// <param name="initializerType">初始化器类型</param>
+        /// <param name="connectionString">连接字符串</param>
+        /// <returns>数据容器</returns>
+        public static IDbContainer GetContainer(Type initializerType, string connectionString)
+        {
+            Start:
+            //若当前初始化器类型的容器集存在,直接获取数据容器
+            if (DbContainer._containerSets.ContainsKey(initializerType))
+                return DbContainer._containerSets[initializerType].GetContainer(connectionString);
+            //进入临界区
+            lock (DbContainer._containersLocker)
+            {
+                //若当前初始化器类型的容器集不存在，则创建并添加
+                if (!DbContainer._containerSets.ContainsKey(initializerType))
+                {
+                    DbInitializer initializer = Activator.CreateInstance(initializerType) as DbInitializer;
+                    DbContainer._containerSets.Add(initializerType, new ContainerSet(initializer));
+                }
+                //回到Start
+                goto Start;
+            }
+        }
+
+        /// <summary>
+        /// 创建数据容器
+        /// </summary>
+        /// <param name="connectionString">连接字符串</param>
+        /// <param name="initializer">初始化器</param>
+        internal DbContainer(string connectionString, DbInitializer initializer)
+        {
+            //非空检查
+            Check.ArgumentNull(connectionString, "connectionString");
+            Check.ArgumentNull(initializer, "initializer");
+            //初始化线程锁
+            this._locker = new object();
+            this._dbListsLocker = new object();
+            //赋值
+            this._connectionString = connectionString;
+            this._initializer = initializer;
+            this._tableInitializer = initializer.CreateTableInitializer();  //获取Table初始化器
+            this._columnInitializer = initializer.CreateColumnInitializer();//获取列初始化器
+            this._dbLists = new Dictionary<Type, object>();                 //初始化DbList字典
         }
 
         /// <summary>
@@ -739,7 +800,33 @@ namespace CloudEntity.Core.Data.Entity
             return new DbQuery<TEntity>(this.MapperContainer, this.QueryTreeGetter, this.DbHelper)
             {
                 Factory = this,
-                NodeBuilders = this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders.Concat(otherSource.NodeBuilders)),
+                NodeBuilders = this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetInnerJoinBuilder),
+                Parameters = source.Parameters.Concat(otherSource.Parameters),
+                PropertyLinkers = propertyLinkers.ToArray()
+            };
+        }
+        /// <summary>
+        /// 创建左连接查询对象
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TOther">关联的实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="otherSource">关联对象的数据源</param>
+        /// <param name="selector">指定关联实体类型的属性表达式</param>
+        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
+        /// <returns>左连接查询对象</returns>
+        public IDbQuery<TEntity> CreateLeftJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
+            where TEntity : class
+            where TOther : class
+        {
+            //获取PropertyLinkers
+            IList<PropertyLinker> propertyLinkers = source.PropertyLinkers.ToList();
+            propertyLinkers.Add(new PropertyLinker(selector.Body.GetProperty(), otherSource.PropertyLinkers));
+            //返回新的查询对象
+            return new DbQuery<TEntity>(this.MapperContainer, this.QueryTreeGetter, this.DbHelper)
+            {
+                Factory = this,
+                NodeBuilders = this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetLeftJoinBuilder),
                 Parameters = source.Parameters.Concat(otherSource.Parameters),
                 PropertyLinkers = propertyLinkers.ToArray()
             };

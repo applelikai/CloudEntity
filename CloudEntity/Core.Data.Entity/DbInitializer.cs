@@ -29,8 +29,9 @@ namespace CloudEntity.Core.Data.Entity
         /// <summary>
         /// 创建DbHelper对象
         /// </summary>
+        /// <param name="connectionString">连接字符串</param>
         /// <returns>DbHelper对象</returns>
-        public abstract DbHelper CreateDbHelper();
+        public abstract DbHelper CreateDbHelper(string connectionString);
         /// <summary>
         /// 获取创建sql命令生成树的工厂
         /// </summary>

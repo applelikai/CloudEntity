@@ -18,6 +18,10 @@ namespace CloudEntity.Internal.Mapping
         /// </summary>
         public PropertyInfo Property { get; private set; }
         /// <summary>
+        /// 可对改属性所Mapping的列的操作(默认为InsertAndEdit)
+        /// </summary>
+        public ColumnAction ColumnAction { get; set; }
+        /// <summary>
         /// 列名(为空时取属性名)
         /// </summary>
         public string ColumnName
@@ -42,9 +46,13 @@ namespace CloudEntity.Internal.Mapping
         /// </summary>
         public int? Length { get; set; }
         /// <summary>
-        /// 可对改属性所Mapping的列的操作(默认为InsertAndEdit)
+        /// 小数点位数
         /// </summary>
-        public ColumnAction ColumnAction { get; set; }
+        public int? Decimals { get; set; }
+        /// <summary>
+        /// 是否允许为空
+        /// </summary>
+        public bool AllowNull { get; set; }
 
         /// <summary>
         /// 创建ColumnMapper

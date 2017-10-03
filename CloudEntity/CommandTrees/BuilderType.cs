@@ -19,8 +19,12 @@
         /// </summary>
         Table = 2,
         /// <summary>
+        /// 当前节点为JoinBuilder
+        /// </summary>
+        Join = 3,
+        /// <summary>
         /// 当前节点为BinaryBuilder
         /// </summary>
-        Binary = 3
+        Binary = 4
     }
 }

@@ -44,9 +44,9 @@ namespace CloudEntity.CommandTrees.Commom
                 //创建fromBuilder
                 this.fromBuilder = new BuilderCollection()
                 {
-                    TitleLeftSpace = "\n    FROM ",
-                    BodyLeftSpace = "         ",
-                    BodyRightSpace = ",\n",
+                    TitleLeftSpace = "\n      FROM ",
+                    BodyLeftSpace = string.Empty,
+                    BodyRightSpace = "\n",
                     LastRightSpace = string.Empty
                 };
                 //回到Start
@@ -67,8 +67,8 @@ namespace CloudEntity.CommandTrees.Commom
                 //创建whereBuilder
                 this.whereBuilder = new BuilderCollection()
                 {
-                    TitleLeftSpace = "\n   WHERE ",
-                    BodyLeftSpace = "     AND ",
+                    TitleLeftSpace = "\n     WHERE ",
+                    BodyLeftSpace = "       AND ",
                     BodyRightSpace = "\n",
                     LastRightSpace = string.Empty
                 };
@@ -90,8 +90,8 @@ namespace CloudEntity.CommandTrees.Commom
                 //创建groupByBuilder
                 this.groupByBuilder = new BuilderCollection()
                 {
-                    TitleLeftSpace = "\nGROUP BY ",
-                    BodyLeftSpace = "         ",
+                    TitleLeftSpace = "\n  GROUP BY",
+                    BodyLeftSpace = "           ",
                     BodyRightSpace = ",\n",
                     LastRightSpace = string.Empty
                 };
@@ -113,8 +113,8 @@ namespace CloudEntity.CommandTrees.Commom
                 //创建orderByBuilder
                 this.orderByBuilder = new BuilderCollection()
                 {
-                    TitleLeftSpace = "\nORDER BY ",
-                    BodyLeftSpace = "        ",
+                    TitleLeftSpace = "\n  ORDER BY ",
+                    BodyLeftSpace = "           ",
                     BodyRightSpace = ",\n",
                     LastRightSpace = string.Empty
                 };
@@ -131,8 +131,8 @@ namespace CloudEntity.CommandTrees.Commom
         {
             return new BuilderCollection()
             {
-                TitleLeftSpace = "  SELECT ",
-                BodyLeftSpace = "         ",
+                TitleLeftSpace = "    SELECT ",
+                BodyLeftSpace = "           ",
                 BodyRightSpace = ",\n",
                 LastRightSpace = string.Empty
             };

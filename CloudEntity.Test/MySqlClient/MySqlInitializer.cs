@@ -4,6 +4,7 @@ using CloudEntity.Core.Data.Entity;
 using CloudEntity.Data;
 using CloudEntity.Mapping;
 using CloudEntity.Mapping.Common;
+using CloudEntity.Test.Entities;
 using CloudEntity.Test.Mappers;
 using System;
 using System.Collections.Generic;
@@ -27,10 +28,10 @@ namespace CloudEntity.Test.MySqlClient
         /// <summary>
         /// 创建DbHelper对象
         /// </summary>
+        /// <param name="connectionString">连接字符串</param>
         /// <returns>DbHelper对象</returns>
-        public override DbHelper CreateDbHelper()
+        public override DbHelper CreateDbHelper(string connectionString)
         {
-            string connectionString = "Data Source=localhost;Initial Catalog=MemberSys;User Id=root;";
             return new MySqlHelper(connectionString);
         }
         /// <summary>
@@ -47,10 +48,7 @@ namespace CloudEntity.Test.MySqlClient
         /// <returns>Mapper容器</returns>
         public override IMapperContainer CreateMapperContainer()
         {
-            IMapperContainer mapperContainer = new MapperContainer();
-            mapperContainer.RegisterMapper(new CategoryMapper());
-            mapperContainer.RegisterMapper(new MemberMapper());
-            return mapperContainer;
+            return new InnerMapperContainer();
         }
     }
 }

@@ -11,10 +11,10 @@ public class Program
 {
     private static void Main(string[] args)
     {
-        IDbContainer container = DbContainer.GetContainer<MySqlInitializer>();
-        IDbQuery<Member> members = container.List<Member>();
-        IDbQuery<Category> categories = container.List<Category>();
-        members = members.Join(categories, m => m.MemberCategory, (m, c) => m.CategoryId == c.CategoryId);
+        string connectionString = "Data Source=localhost;Initial Catalog=MemberSys;User Id=root;SslMode=None;";
+        IDbContainer container = DbContainer.GetContainer<MySqlInitializer>(connectionString);
+        IDbQuery<Member> members = container.List<Member>()
+            .LeftJoin(container.List<Category>(), m => m.MemberCategory, (m, c) => m.CategoryId == c.CategoryId);
         foreach (Member member in members)
         {
             Console.WriteLine("{0} {1}", member.MemberCategory.CategoryName, member.MemberName);

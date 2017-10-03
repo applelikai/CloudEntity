@@ -1,12 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard1.6</TargetFramework>
-    <DocumentationFile>bin\Debug\netstandard1.6\CloudEntity.xml</DocumentationFile>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <DocumentationFile>bin\Debug\netstandard2.0\CloudEntity.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Authors>李凯</Authors>
     <Company />
     <Description>object relation mapping</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.0.1</AssemblyVersion>
+    <FileVersion>1.0.0.1</FileVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Data.Common" Version="4.3.0" />

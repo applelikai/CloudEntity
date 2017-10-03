@@ -73,17 +73,22 @@ namespace CloudEntity.Internal.Data.Entity
             //遍历所有的ColumnMapper对象
             foreach (IColumnMapper columnMapper in this.TableMapper.GetColumnMappers())
             {
+                //获取当前Column对应的Property的值
+                object value = this.EntityAccessor.GetValue(columnMapper.Property.Name, entity);
+                //构建sql条件表达式以及参数
                 switch (columnMapper.ColumnAction)
                 {
                     //解析主键列，获取对应sql表达式节点添加至Where节点
                     case ColumnAction.PrimaryAndInsert:
                     case ColumnAction.PrimaryAndIdentity:
+                        //返回Where表达式的子节点
                         yield return new NodeBuilder(SqlType.Where, "{0} = ${1}", columnMapper.ColumnFullName, columnMapper.Property.Name);
+                        //添加sql参数
+                        parameters.Add(this.DbHelper.Parameter(columnMapper.Property.Name, value));
                         break;
                     //解析所有可编辑的列元数据，获取对应sql表达式节点添加至Set节点
                     default:
-                        //获取当前Column对应的Property的值
-                        object value = this.EntityAccessor.GetValue(columnMapper.Property.Name, entity);
+                        //若值为空,跳过
                         if (value == null)
                             continue;
                         //返回Set表达式节点

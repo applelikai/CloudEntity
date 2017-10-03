@@ -7,55 +7,47 @@ namespace CloudEntity.Mapping.Common
     /// Mapper容器
     /// 李凯 Apple_Li
     /// </summary>
-    public class MapperContainer : IMapperContainer
+    public class MapperContainer : MapperContainerBase
     {
         /// <summary>
-        /// 线程锁
+        /// 创建TableMapper的委托字典
         /// </summary>
-        private object locker;
+        private IDictionary<Type, Func<ITableMapper>> tableMapperCreators;
+
         /// <summary>
-        /// table映射对象字典
+        /// 创建TableMapper对象
         /// </summary>
-        private IDictionary<Type, ITableMapper> tableMappers;
+        /// <param name="entityType">实体类型</param>
+        /// <returns>当前实体的存储与表的映射关系的对象</returns>
+        protected override ITableMapper CreateTableMapper(Type entityType)
+        {
+            //若当前实体类型对应的创建TableMapper的委托存在，直接获取
+            if (this.tableMapperCreators.ContainsKey(entityType))
+                return this.tableMapperCreators[entityType]();
+            //若不存在则扔出异常
+            throw new Exception(string.Format("Can not find entity type {0}", entityType.FullName));
+        }
 
         /// <summary>
         /// 创建Mapper容器
         /// </summary>
         public MapperContainer()
         {
-            this.locker = new object();
-            this.tableMappers = new Dictionary<Type, ITableMapper>();
+            this.tableMapperCreators = new Dictionary<Type, Func<ITableMapper>>();
         }
         /// <summary>
-        /// 获取当前实体的存储与表的映射关系的对象
+        /// 设置实体类型对应的TableMapper类型
         /// </summary>
-        /// <param name="entityType">实体类型</param>
-        /// <returns>当前实体的存储与表的映射关系的对象</returns>
-        public virtual ITableMapper GetTableMapper(Type entityType)
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TMapper">TableMapper类型</typeparam>
+        public void Map<TEntity, TMapper>()
+            where TEntity : class
+            where TMapper : TableMapper<TEntity>, new()
         {
-            if (this.tableMappers.ContainsKey(entityType))
-                return this.tableMappers[entityType];
-            throw new Exception(string.Format("Please register {0}'s tableMapper", entityType.Name));
-        }
-        /// <summary>
-        /// 注册Table映射对象
-        /// </summary>
-        /// <param name="tableMapper">Table映射对象</param>
-        public void RegisterMapper(ITableMapper tableMapper)
-        {
-            Start:
-            //若当前类型的TableMapper存在，退出
-            if (this.tableMappers.ContainsKey(tableMapper.EntityType))
-                return;
-            //进入临界区
-            lock (this.locker)
-            {
-                //若当前类型的TableMapper不存在，注册
-                if (!this.tableMappers.ContainsKey(tableMapper.EntityType))
-                    this.tableMappers.Add(tableMapper.EntityType, tableMapper);
-                //回到Start
-                goto Start;
-            }
+            //若当前实体类型未映射ITableMapper类型
+            if (!this.tableMapperCreators.ContainsKey(typeof(TEntity)))
+                //则注册
+                this.tableMapperCreators.Add(typeof(TEntity), () => new TMapper());
         }
     }
 }

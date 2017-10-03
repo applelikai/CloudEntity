@@ -22,8 +22,9 @@ namespace CloudEntity.Core.Data.Entity
                 SourceType = columnMapper.Property.PropertyType,
                 SqlDataType = columnMapper.DataType,
                 Length = columnMapper.Length,
+                Decimals = columnMapper.Decimals,
                 IsDefault = columnMapper.ColumnAction.ToString().Contains("Default"),
-                IsNull = !columnMapper.ColumnAction.ToString().Contains("Insert"),
+                IsNull = columnMapper.AllowNull,
                 IsPrimary = columnMapper.ColumnAction.ToString().StartsWith("Primary"),
                 IsIdentity = columnMapper.ColumnAction == ColumnAction.PrimaryAndIdentity
             };

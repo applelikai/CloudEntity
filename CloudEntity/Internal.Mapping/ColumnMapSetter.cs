@@ -40,39 +40,28 @@ namespace CloudEntity.Internal.Mapping
         /// <param name="selector">执行当前实体某属性</param>
         /// <param name="action">指定对该列的操作</param>
         /// <param name="columnName">列名</param>
-        /// <param name="dataType">数据类型(如 VARCHAR INT等),可以不设置</param>
-        /// <param name="length">类型长度</param>
-        /// <param name="columnAlias">是否使用别名查询(默认为false)</param>
-        /// <param name="useAlias">列的别名(使用别名查询时，此值为空，则取属性名为别名)</param>
-        public void Map
-        (
-            Expression<Func<TEntity, object>> selector,
-            ColumnAction action = ColumnAction.InsertAndEdit,
-            string columnName = null, 
-            string dataType = null, 
-            int? length = null, 
-            bool useAlias = false, 
-            string columnAlias = null
-        )
+        /// <param name="allowNull">是否允许为空</param>
+        /// <returns>列信息设置器</returns>
+        public IColumnSetter Map(Expression<Func<TEntity, object>> selector, ColumnAction action = ColumnAction.InsertAndEdit, string columnName = null, bool allowNull = false)
         {
             //获取并检查属性
             PropertyInfo property = selector.Body.GetProperty();
             if (!Check.IsCanMapping(property))
-                return;
+                throw new Exception(string.Format("Can not map property {0}", property.Name));
             if (this.columnMappers.ContainsKey(property.Name))
-                return;
+                return null;
             //创建ColumnMapper
-            IColumnMapper columnMapper = new ColumnMapper(property)
+            ColumnMapper columnMapper = new ColumnMapper(property)
             {
                 ColumnAction = action,
                 ColumnName = columnName ?? property.Name,
                 ColumnFullName = string.Format("{0}.{1}", this.tableAlias, columnName ?? property.Name),
-                DataType = dataType,
-                Length = length,
-                ColumnAlias = useAlias ? columnAlias ?? property.Name : string.Empty
+                AllowNull = allowNull
             };
             //添加columnMapper
             this.columnMappers.Add(property.Name, columnMapper);
+            //饭hi列属性设置器
+            return new ColumnSetter(columnMapper);
         }
     }
 }
