@@ -2,13 +2,11 @@
 using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
-using CloudEntity.Internal.CommandTreeGetters;
 using CloudEntity.Mapping;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Reflection;
 
 namespace CloudEntity.Internal.Data.Entity
 {
@@ -23,15 +21,19 @@ namespace CloudEntity.Internal.Data.Entity
         /// 对象访问器
         /// </summary>
         private ObjectAccessor entityAccessor;
-
-        /// <summary>
-        /// 创建CommandTree的工厂
-        /// </summary>
-        internal ICommandTreeFactory CommandTreeFactory { private get; set; }
+        
         /// <summary>
         /// 当前对象的关联对象属性链接数组
         /// </summary>
         internal PropertyLinker[] PropertyLinkers { private get; set; }
+        /// <summary>
+        /// 排序的列
+        /// </summary>
+        internal string OrderByColumn { private get; set; }
+        /// <summary>
+        /// 升序 还是 降序
+        /// </summary>
+        internal bool IsAsc { private get; set; }
 
         /// <summary>
         /// 元素总数量
@@ -103,10 +105,10 @@ namespace CloudEntity.Internal.Data.Entity
         /// 创建分页查询数据源
         /// </summary>
         /// <param name="mapperContainer">Mapper容器</param>
-        /// <param name="queryTreeGetter">查询命令生成树获取器</param>
+        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbPagedQuery(IMapperContainer mapperContainer, CommandTreeGetter queryTreeGetter, DbHelper dbHelper)
-            : base(mapperContainer, queryTreeGetter, dbHelper)
+        public DbPagedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
+            : base(mapperContainer, commandTreeFactory, dbHelper)
         {
             this.entityAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
         }
@@ -117,7 +119,7 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TEntity> GetEnumerator()
         {
             //获取查询命令生成树(当前可默认获取到分页查询命令生成树)
-            ICommandTree queryTree = base.QueryTreeGetter.Get(base.NodeBuilders);
+            ICommandTree queryTree = base.CommandTreeFactory.CreatePagingQueryTree(base.NodeBuilders, this.OrderByColumn, this.IsAsc);
             //获取sql参数集合
             IList<IDbDataParameter> parameters = base.Parameters.ToList();
             parameters.Add(base.DbHelper.Parameter("SkipCount", this.PageSize * (this.PageIndex - 1)));

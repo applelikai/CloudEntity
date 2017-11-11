@@ -13,8 +13,8 @@
         {
             return new BuilderCollection()
             {
-                TitleLeftSpace = "  SELECT DISTINCT\n         ",
-                BodyLeftSpace = "         ",
+                TitleLeftSpace = "    SELECT DISTINCT\n           ",
+                BodyLeftSpace = "           ",
                 BodyRightSpace = ",\n",
                 LastRightSpace = string.Empty
             };

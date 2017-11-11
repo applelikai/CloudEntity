@@ -69,5 +69,12 @@ namespace CloudEntity.CommandTrees
         /// <param name="isAsc">True:升序(False为降序)</param>
         /// <returns>分页查询命令生成树</returns>
         ICommandTree CreatePagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, string orderByColumn, bool isAsc = true);
+        /// <summary>
+        /// 创建With As 查询命令生成树
+        /// </summary>
+        /// <param name="innerQuerySql">查询sql</param>
+        /// <param name="queryChildBuilders">查询条件表达式节点集合</param>
+        /// <returns>With As 查询命令生成树</returns>
+        ICommandTree CreateWithAsQueryTree(string innerQuerySql, IEnumerable<INodeBuilder> queryChildBuilders);
     }
 }

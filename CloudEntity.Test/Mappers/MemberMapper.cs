@@ -28,7 +28,7 @@ namespace CloudEntity.Test.Mappers
             setter.Map(m => m.Sex, ColumnAction.Insert);
             setter.Map(m => m.AddTime, ColumnAction.Default);
             setter.Map(m => m.Points, ColumnAction.EditAndDefault);
-            setter.Map(m => m.CategoryId, ColumnAction.Insert, "CatId").As();
+            setter.Map(m => m.CategoryId, ColumnAction.Insert, "CatId");
         }
     }
 }

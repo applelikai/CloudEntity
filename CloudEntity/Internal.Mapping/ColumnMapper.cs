@@ -62,6 +62,7 @@ namespace CloudEntity.Internal.Mapping
         {
             Check.ArgumentNull(property, nameof(property));
             this.Property = property;
+            this.AllowNull = true;
         }
     }
 }

@@ -108,9 +108,18 @@ namespace CloudEntity.Data.Entity
         /// <typeparam name="TElement">结果类型</typeparam>
         /// <param name="source">数据源</param>
         /// <param name="selector">转换实体对象到结果对象的表达式</param>
-        /// <param name="sourceMethod">源扩展方法</param>
         /// <returns>选定项查询数据源</returns>
-        IDbSelectedQuery<TElement> CreateSelectedQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector, string sourceMethod)
+        IDbSelectedQuery<TElement> CreateSelectedQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
+            where TEntity : class;
+        /// <summary>
+        /// 创建去除重复项查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TElement">结果类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">转换实体对象到结果对象的表达式</param>
+        /// <returns>去除重复项查询数据源</returns>
+        IDbSelectedQuery<TElement> CreateDistinctQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
             where TEntity : class;
     }
 }

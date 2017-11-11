@@ -308,7 +308,7 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(source, nameof(source));
             Check.ArgumentNull(selector, nameof(selector));
             //执行获取结果
-            return source.Factory.CreateSelectedQuery(source, selector, "Select");
+            return source.Factory.CreateSelectedQuery(source, selector);
         }
         /// <summary>
         /// Extendable method: 转换数据源中所有的元素获取TResult类型迭代器并去除重复
@@ -325,7 +325,7 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(source, nameof(source));
             Check.ArgumentNull(selector, nameof(selector));
             //执行获取去除重复的数据源并装换成TResult类型
-            return source.Factory.CreateSelectedQuery(source, selector, "Distinct");
+            return source.Factory.CreateDistinctQuery(source, selector);
         }
 
         /// <summary>

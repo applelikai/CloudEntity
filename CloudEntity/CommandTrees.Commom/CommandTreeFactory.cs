@@ -217,5 +217,31 @@ namespace CloudEntity.CommandTrees.Commom
         /// <param name="isAsc">True:升序(False为降序)</param>
         /// <returns>分页查询命令生成树</returns>
         public abstract ICommandTree CreatePagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, string orderByColumn, bool isAsc = true);
+        /// <summary>
+        /// 创建With As 查询命令生成树
+        /// </summary>
+        /// <param name="innerQuerySql">查询sql</param>
+        /// <param name="queryChildBuilders">查询条件表达式节点集合</param>
+        /// <returns>With As 查询命令生成树</returns>
+        public ICommandTree CreateWithAsQueryTree(string innerQuerySql, IEnumerable<INodeBuilder> queryChildBuilders)
+        {
+            //创建with as查询命令生成树
+            WithAsQueryTree withAsQueryTree = new WithAsQueryTree(this.ParameterMarker, innerQuerySql);
+            //加载查询条件节点
+            foreach (INodeBuilder nodeBuilder in queryChildBuilders)
+            {
+                switch (nodeBuilder.ParentNodeType)
+                {
+                    case SqlType.Where:
+                        withAsQueryTree.Where.Append(nodeBuilder);
+                        break;
+                    case SqlType.OrderBy:
+                        withAsQueryTree.OrderBy.Append(nodeBuilder);
+                        break;
+                }
+            }
+            //返回with as查询命令生成树
+            return withAsQueryTree;
+        }
     }
 }

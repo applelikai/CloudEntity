@@ -2,7 +2,6 @@
 using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
-using CloudEntity.Internal.CommandTreeGetters;
 using CloudEntity.Internal.Data.Entity;
 using CloudEntity.Internal.WhereVisitors;
 using CloudEntity.Mapping;
@@ -50,14 +49,6 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         private ColumnInitializer _columnInitializer;
         /// <summary>
-        /// QueryTree获取器
-        /// </summary>
-        private QueryTreeGetter _queryTreeGetter;
-        /// <summary>
-        /// 去除重复的QueryTree获取器
-        /// </summary>
-        private DistinctQueryTreeGetter _distinctQueryTreeGetter;
-        /// <summary>
         /// 创建Sql命令生成树的工厂
         /// </summary>
         private ICommandTreeFactory _commandTreeFactory;
@@ -81,54 +72,7 @@ namespace CloudEntity.Core.Data.Entity
         /// 容器集字典
         /// </summary>
         private static IDictionary<Type, ContainerSet> _containerSets;
-
-        /// <summary>
-        /// CommandTree获取器
-        /// </summary>
-        private QueryTreeGetter QueryTreeGetter
-        {
-            get
-            {
-                Start:
-                //若queryTreeGetter不为空，直接返回
-                if (this._queryTreeGetter != null)
-                    return this._queryTreeGetter;
-                //获取commandTreeFactory
-                ICommandTreeFactory commandTreeFactory = this.CommandTreeFactory;
-                //进入临界区
-                lock (this._locker)
-                {
-                    //若queryTreeGetter为空，则创建
-                    if (this._queryTreeGetter == null)
-                        this._queryTreeGetter = new QueryTreeGetter(commandTreeFactory);
-                    goto Start;
-                }
-            }
-        }
-        /// <summary>
-        /// 去除重复的QueryTree获取器
-        /// </summary>
-        private DistinctQueryTreeGetter DistinctQueryTreeGetter
-        {
-            get
-            {
-                Start:
-                //若distinctQueryTreeGetter不为空,直接返回
-                if (this._distinctQueryTreeGetter != null)
-                    return this._distinctQueryTreeGetter;
-                //获取commandTreeFactory
-                ICommandTreeFactory commandTreeFactory = this.CommandTreeFactory;
-                //进入临界区
-                lock (this._locker)
-                {
-                    //若distinctQueryTreeGetter为空,则创建
-                    if (this._distinctQueryTreeGetter == null)
-                        this._distinctQueryTreeGetter = new DistinctQueryTreeGetter(commandTreeFactory);
-                    //回到Start
-                    goto Start;
-                }
-            }
-        }
+        
         /// <summary>
         /// 创建Sql命令生成树的工厂
         /// </summary>
@@ -433,11 +377,22 @@ namespace CloudEntity.Core.Data.Entity
         /// <returns>关联查询的sql表达式节点集合</returns>
         private IEnumerable<INodeBuilder> GetJoinedQueryNodeBuilders(Expression expression, IEnumerable<INodeBuilder> nodeBuilders, IEnumerable<INodeBuilder> otherSourceNodeBuilders, Func<TableBuilder, JoinBuilder> getJoinBuilder)
         {
-            //返回主表sql表达式节点集合
-            foreach (INodeBuilder nodeBuilder in nodeBuilders)
-                yield return nodeBuilder;
             //记录列名
             IList<string> columnNames = new List<string>();
+            //返回主表sql表达式节点集合
+            foreach (INodeBuilder nodeBuilder in nodeBuilders)
+            {
+                //去除相同列名的列
+                if (nodeBuilder.BuilderType == BuilderType.Column)
+                {
+                    ColumnBuilder columnBuilder = nodeBuilder as ColumnBuilder;
+                    if (columnNames.Contains(columnBuilder.ColumnName))
+                        continue;
+                    columnNames.Add(columnBuilder.ColumnName);
+                }
+                //返回主表表达式节点
+                yield return nodeBuilder;
+            }
             //返回从表sql表达式节点集合
             foreach (INodeBuilder nodeBuilder in otherSourceNodeBuilders)
             {
@@ -649,13 +604,35 @@ namespace CloudEntity.Core.Data.Entity
             }
         }
         /// <summary>
-        /// 初始化某实体类所Mapping的Table
+        /// 重命名当前实体所Mapping的表
         /// </summary>
-        /// <typeparam name="TEntity">实体类的类型</typeparam>
-        public void InitTable<TEntity>()
-            where TEntity : class
+        /// <param name="entityType">实体类型</param>
+        /// <param name="oldTableName">旧的表名</param>
+        public void RenameTable(Type entityType, string oldTableName)
         {
-            this.InitTable(typeof(TEntity));
+            //检查Table初始化器是否为空,直接退出
+            if (this._tableInitializer == null)
+                return;
+            //获取TableMapper
+            ITableMapper tableMapper = this.MapperContainer.GetTableMapper(entityType);
+            //若Table未生成,则从旧表修改
+            if (!this._tableInitializer.IsExist(this.DbHelper, tableMapper.Header))
+                this._tableInitializer.RenameTable(this.DbHelper, tableMapper.Header, oldTableName);
+        }
+        /// <summary>
+        /// 删除实体类Mapping的表
+        /// </summary>
+        /// <param name="entityType">实体类型</param>
+        public void DropTable(Type entityType)
+        {
+            //检查Table初始化器是否为空,直接退出
+            if (this._tableInitializer == null)
+                return;
+            //获取TableMapper
+            ITableMapper tableMapper = this.MapperContainer.GetTableMapper(entityType);
+            //若Table存在,则删除Table
+            if (this._tableInitializer.IsExist(this.DbHelper, tableMapper.Header))
+                this._tableInitializer.DropTable(this.DbHelper, tableMapper.Header);
         }
         /// <summary>
         /// 创建事故执行器
@@ -674,7 +651,7 @@ namespace CloudEntity.Core.Data.Entity
         public IDbScalar CreateScalar(IDbBase dbBase, string functionName)
         {
             //返回新的DbScaler对象
-            return new DbScalar(this.MapperContainer, this.QueryTreeGetter, this.DbHelper)
+            return new DbScalar(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
             {
                 NodeBuilders = this.GetFunctionNodeBuilders(dbBase.NodeBuilders, functionName),
                 Parameters = dbBase.Parameters
@@ -690,7 +667,7 @@ namespace CloudEntity.Core.Data.Entity
         public IDbScalar CreateScalar(IDbBase dbBase, string functionName, LambdaExpression lambdaExpression)
         {
             //返回新的DbScaler对象
-            return new DbScalar(this.MapperContainer, this.QueryTreeGetter, this.DbHelper)
+            return new DbScalar(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
             {
                 NodeBuilders = this.GetFunctionNodeBuilders(dbBase.NodeBuilders, functionName, lambdaExpression),
                 Parameters = dbBase.Parameters
@@ -729,7 +706,7 @@ namespace CloudEntity.Core.Data.Entity
                 }
             }
             //返回新的查询对象
-            return new DbQuery<TEntity>(this.MapperContainer, this.QueryTreeGetter, this.DbHelper)
+            return new DbQuery<TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
             {
                 Factory = this,
                 NodeBuilders = source.NodeBuilders.Concat(nodeBuilders),
@@ -750,7 +727,7 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             //返回新的查询对象
-            return new DbQuery<TEntity>(this.MapperContainer, this.QueryTreeGetter, this.DbHelper)
+            return new DbQuery<TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
             {
                 Factory = this,
                 NodeBuilders = this.GetQueryNodeBuilders(source.NodeBuilders, property, whereTemplate),
@@ -771,7 +748,7 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             //返回新的查询对象
-            return new DbQuery<TEntity>(this.MapperContainer, this.QueryTreeGetter, this.DbHelper)
+            return new DbQuery<TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
             {
                 Factory = this,
                 NodeBuilders = this.GetSortedQueryNodeBuilders(source.NodeBuilders, keySelector, isAsc),
@@ -797,7 +774,7 @@ namespace CloudEntity.Core.Data.Entity
             IList<PropertyLinker> propertyLinkers = source.PropertyLinkers.ToList();
             propertyLinkers.Add(new PropertyLinker(selector.Body.GetProperty(), otherSource.PropertyLinkers));
             //返回新的查询对象
-            return new DbQuery<TEntity>(this.MapperContainer, this.QueryTreeGetter, this.DbHelper)
+            return new DbQuery<TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
             {
                 Factory = this,
                 NodeBuilders = this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetInnerJoinBuilder),
@@ -823,7 +800,7 @@ namespace CloudEntity.Core.Data.Entity
             IList<PropertyLinker> propertyLinkers = source.PropertyLinkers.ToList();
             propertyLinkers.Add(new PropertyLinker(selector.Body.GetProperty(), otherSource.PropertyLinkers));
             //返回新的查询对象
-            return new DbQuery<TEntity>(this.MapperContainer, this.QueryTreeGetter, this.DbHelper)
+            return new DbQuery<TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
             {
                 Factory = this,
                 NodeBuilders = this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetLeftJoinBuilder),
@@ -844,16 +821,16 @@ namespace CloudEntity.Core.Data.Entity
         public IDbPagedQuery<TEntity> CreatePagedQuery<TEntity>(IDbQuery<TEntity> source, Expression<Func<TEntity, object>> orderBySelector, int pageSize, int pageIndex = 1, bool isAsc = true)
             where TEntity : class
         {
-            //获取查询命令生成树获取器
+            //获取排序属性
             IColumnMapper columnMapper = this.MapperContainer.GetColumnMapper(orderBySelector.Body.GetProperty());
-            CommandTreeGetter pagingQueryTreeGetter = new PagingOrderByQueryTreeGetter(this.CommandTreeFactory, columnMapper.ColumnFullName, isAsc);
             //创建分页查询数据源
-            return new DbPagedQuery<TEntity>(this.MapperContainer, pagingQueryTreeGetter, this.DbHelper)
+            return new DbPagedQuery<TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
             {
-                CommandTreeFactory = this.CommandTreeFactory,
+                PropertyLinkers = source.PropertyLinkers,
+                OrderByColumn = columnMapper.ColumnFullName,
+                IsAsc = isAsc,
                 NodeBuilders = source.NodeBuilders,
                 Parameters = source.Parameters,
-                PropertyLinkers = source.PropertyLinkers,
                 PageIndex = pageIndex,
                 PageSize = pageSize
             };
@@ -865,26 +842,36 @@ namespace CloudEntity.Core.Data.Entity
         /// <typeparam name="TElement">结果类型</typeparam>
         /// <param name="source">数据源</param>
         /// <param name="selector">转换实体对象到结果对象的表达式</param>
-        /// <param name="sourceMethod">源扩展方法</param>
         /// <returns>选定项查询数据源</returns>
-        public IDbSelectedQuery<TElement> CreateSelectedQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector, string sourceMethod)
+        public IDbSelectedQuery<TElement> CreateSelectedQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
             where TEntity : class
         {
             //获取Table元数据解析器
             ITableMapper tableMapper = this.MapperContainer.GetTableMapper(typeof(TEntity));
-            //获取CommandTree获取器
-            CommandTreeGetter queryTreeGetter = null;
-            switch (sourceMethod)
-            {
-                case "Select":
-                    queryTreeGetter = this.QueryTreeGetter;
-                    break;
-                case "Distinct":
-                    queryTreeGetter = this.DistinctQueryTreeGetter;
-                    break;
-            }
             //返回新的查询对象
-            return new DbSelectedQuery<TElement, TEntity>(this.MapperContainer, queryTreeGetter, this.DbHelper)
+            return new DbSelectedQuery<TElement, TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
+            {
+                NodeBuilders = this.GetSelectedQueryNodeBuilders(source.NodeBuilders, selector, tableMapper),
+                Parameters = source.Parameters,
+                PropertyLinkers = source.PropertyLinkers,
+                Convert = selector.Compile()
+            };
+        }
+        /// <summary>
+        /// 创建去除重复项查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TElement">结果类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">转换实体对象到结果对象的表达式</param>
+        /// <returns>去除重复项查询数据源</returns>
+        public IDbSelectedQuery<TElement> CreateDistinctQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
+            where TEntity : class
+        {
+            //获取Table元数据解析器
+            ITableMapper tableMapper = this.MapperContainer.GetTableMapper(typeof(TEntity));
+            //返回新的查询对象
+            return new DbDistinctQuery<TElement, TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
             {
                 NodeBuilders = this.GetSelectedQueryNodeBuilders(source.NodeBuilders, selector, tableMapper),
                 Parameters = source.Parameters,

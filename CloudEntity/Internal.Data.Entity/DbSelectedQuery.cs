@@ -1,14 +1,12 @@
 ﻿using CloudEntity.CommandTrees;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
-using CloudEntity.Internal.CommandTreeGetters;
 using CloudEntity.Mapping;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Reflection;
 
 namespace CloudEntity.Internal.Data.Entity
 {
@@ -68,13 +66,22 @@ namespace CloudEntity.Internal.Data.Entity
         }
 
         /// <summary>
+        /// 创建查询命令生成树
+        /// </summary>
+        /// <returns>查询命令生成树</returns>
+        protected virtual ICommandTree CreateQueryTree()
+        {
+            return base.CommandTreeFactory.CreateQueryTree(base.NodeBuilders);
+        }
+
+        /// <summary>
         /// 创建选定项查询数据源对象
         /// </summary>
         /// <param name="mapperContainer">Mapper容器</param>
-        /// <param name="queryTreeGetter">查询命令生成树获取器</param>
+        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbSelectedQuery(IMapperContainer mapperContainer, CommandTreeGetter queryTreeGetter, DbHelper dbHelper)
-            : base(mapperContainer, queryTreeGetter, dbHelper)
+        public DbSelectedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
+            : base(mapperContainer, commandTreeFactory, dbHelper)
         {
             this.entityAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
         }
@@ -85,7 +92,7 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TElement> GetEnumerator()
         {
             //获取查询命令生成树
-            ICommandTree queryTree = base.QueryTreeGetter.Get(base.NodeBuilders);
+            ICommandTree queryTree = this.CreateQueryTree();
             //执行查询获取TElement类型的枚举器
             foreach (TElement element in base.DbHelper.GetResults(this.CreateElement, queryTree.Compile(), parameters: base.Parameters.ToArray()))
                 yield return element;
@@ -104,7 +111,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>条件查询Sql</returns>
         public string ToWhereSqlString()
         {
-            ICommandTree queryTree = base.QueryTreeGetter.Get(this.GetWhereNodeBuilders());
+            ICommandTree queryTree = this.CreateQueryTree();
             return queryTree.Compile();
         }
     }

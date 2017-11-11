@@ -19,11 +19,16 @@ namespace CloudEntity.Data.Entity
         /// <param name="entityType">某实体类的类型</param>
         void InitTable(Type entityType);
         /// <summary>
-        /// 初始化某实体类所Mapping的Table
+        /// 重命名旧表以获取当前实体所Mapping的表
         /// </summary>
-        /// <typeparam name="TEntity">实体类的类型</typeparam>
-        void InitTable<TEntity>()
-            where TEntity : class;
+        /// <param name="entityType">实体类型</param>
+        /// <param name="oldTableName">旧的表名</param>
+        void RenameTable(Type entityType, string oldTableName);
+        /// <summary>
+        /// 删除实体类Mapping的表
+        /// </summary>
+        /// <param name="entityType">实体类型</param>
+        void DropTable(Type entityType);
         /// <summary>
         /// 创建事故执行器
         /// </summary>
@@ -34,15 +39,13 @@ namespace CloudEntity.Data.Entity
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
         /// <returns>数据列表</returns>
-        IDbList<TEntity> List<TEntity>()
-            where TEntity : class;
+        IDbList<TEntity> List<TEntity>() where TEntity : class;
         /// <summary>
         /// 创建实体操作器
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
         /// <param name="transaction">事物出来对象</param>
         /// <returns>实体操作器</returns>
-        IDbOperator<TEntity> CreateOperator<TEntity>(IDbTransaction transaction)
-            where TEntity : class;
+        IDbOperator<TEntity> CreateOperator<TEntity>(IDbTransaction transaction) where TEntity : class;
     }
 }

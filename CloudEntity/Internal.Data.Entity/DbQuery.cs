@@ -1,13 +1,11 @@
 ﻿using CloudEntity.CommandTrees;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
-using CloudEntity.Internal.CommandTreeGetters;
 using CloudEntity.Mapping;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Reflection;
 
 namespace CloudEntity.Internal.Data.Entity
 {
@@ -48,15 +46,15 @@ namespace CloudEntity.Internal.Data.Entity
             AccessorLinker[] accessorLinkers = this.PropertyLinkers.Select(l => l.ToAccessorLinker(base.MapperContainer)).ToArray();
             return this.objectAccessor.CreateEntity(tableMapper, reader, columnNames, accessorLinkers);
         }
-
+        
         /// <summary>
         /// 创建DbQuery对象
         /// </summary>
         /// <param name="mapperContainer">Mapper容器</param>
-        /// <param name="queryTreeGetter">查询命令生成树获取器</param>
+        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbQuery(IMapperContainer mapperContainer, CommandTreeGetter queryTreeGetter, DbHelper dbHelper)
-            : base(mapperContainer, queryTreeGetter, dbHelper)
+        public DbQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
+            : base(mapperContainer, commandTreeFactory, dbHelper)
         {
             this.objectAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
         }
@@ -67,7 +65,7 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TEntity> GetEnumerator()
         {
             //创建CommandTree
-            ICommandTree queryTree = base.QueryTreeGetter.Get(base.NodeBuilders);
+            ICommandTree queryTree = base.CommandTreeFactory.CreateQueryTree(base.NodeBuilders);
             //执行查询
             foreach (TEntity entity in base.DbHelper.GetResults(this.CreateEntity, queryTree.Compile(), parameters: base.Parameters.ToArray()))
                 yield return entity;

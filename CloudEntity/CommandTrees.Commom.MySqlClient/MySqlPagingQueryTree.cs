@@ -25,7 +25,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
             base.Build(commandText);
             //拼接MySql分页条件
             commandText.AppendLine();
-            commandText.Append("   LIMIT @SkipCount, @NextCount");
+            commandText.Append("     LIMIT @SkipCount, @NextCount");
         }
     }
 }
