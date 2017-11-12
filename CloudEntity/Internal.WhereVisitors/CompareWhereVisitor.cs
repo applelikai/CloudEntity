@@ -81,9 +81,9 @@ namespace CloudEntity.Internal.WhereVisitors
         /// 创建比较类型表达式解析对象
         /// </summary>
         /// <param name="parameterFactory">sql参数创建对象</param>
-        /// <param name="mapperContainer">mapper容器</param>
-        public CompareWhereVisitor(IParameterFactory parameterFactory, IMapperContainer mapperContainer)
-            : base(parameterFactory, mapperContainer)
+        /// <param name="columnGetter">列获取器</param>
+        public CompareWhereVisitor(IParameterFactory parameterFactory, IColumnGetter columnGetter)
+            : base(parameterFactory, columnGetter)
         {
         }
         /// <summary>

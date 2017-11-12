@@ -14,6 +14,7 @@ namespace CloudEntity.Internal.WhereVisitors
     {
         private IParameterFactory parameterFactory;                     //参数创建工厂
         private IMapperContainer mapperContainer;                       //Mapper容器
+        private IColumnGetter columnGetter;                             //列获取器
         private object locaker;                                         //线程锁
         private IDictionary<ExpressionType, WhereVisitor> whereVisitors;//表达式解析器字典
 
@@ -33,19 +34,19 @@ namespace CloudEntity.Internal.WhereVisitors
                 case ExpressionType.LessThanOrEqual:        //小于等于
                 case ExpressionType.Equal:                  //等于
                 case ExpressionType.NotEqual:               //不等于
-                    return new CompareWhereVisitor(this.parameterFactory, this.mapperContainer);
+                    return new CompareWhereVisitor(this.parameterFactory, this.columnGetter);
                 //创建方法调用表达式解析器
                 case ExpressionType.Call:
-                    return new MethodCallWhereVisitor(this.parameterFactory, this.mapperContainer);
+                    return new MethodCallWhereVisitor(this.parameterFactory, this.columnGetter);
                 //创建NOT一元表达式解析器
                 case ExpressionType.Not:
-                    return new UnaryNotWhereVisitor(this.parameterFactory, this.mapperContainer, this);
+                    return new UnaryNotWhereVisitor(this.parameterFactory, this.columnGetter, this);
                 //创建二叉树表达式解析器
                 case ExpressionType.And:
                 case ExpressionType.AndAlso:
                 case ExpressionType.Or:
                 case ExpressionType.OrElse:
-                    return new BinaryWhereVisitor(this.parameterFactory, this.mapperContainer, this);
+                    return new BinaryWhereVisitor(this.parameterFactory, this.columnGetter, this);
                 //其他类型的表达式不支持解析
                 default:
                     throw new Exception(string.Format("unsupported expression's type:{0}", expressionType));
@@ -56,15 +57,15 @@ namespace CloudEntity.Internal.WhereVisitors
         /// 创建获取表达式解析器的工厂
         /// </summary>
         /// <param name="parameterFactory">参数创建器</param>
-        /// <param name="mapperContainer">Mapper容器</param>
-        public WhereVisitorFactory(IParameterFactory parameterFactory, IMapperContainer mapperContainer)
+        /// <param name="columnGetter">列获取器</param>
+        public WhereVisitorFactory(IParameterFactory parameterFactory, IColumnGetter columnGetter)
         {
             //非空检查
             Check.ArgumentNull(parameterFactory, nameof(parameterFactory));
-            Check.ArgumentNull(mapperContainer, nameof(mapperContainer));
+            Check.ArgumentNull(columnGetter, nameof(columnGetter));
             //赋值
             this.parameterFactory = parameterFactory;
-            this.mapperContainer = mapperContainer;
+            this.columnGetter = columnGetter;
             this.locaker = new object();
             this.whereVisitors = new Dictionary<ExpressionType, WhereVisitor>();
         }

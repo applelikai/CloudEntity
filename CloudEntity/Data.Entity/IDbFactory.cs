@@ -121,5 +121,36 @@ namespace CloudEntity.Data.Entity
         /// <returns>去除重复项查询数据源</returns>
         IDbSelectedQuery<TElement> CreateDistinctQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
             where TEntity : class;
+        /// <summary>
+        /// 创建视图查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">视图对象</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="predicates">查询条件表达式数组</param>
+        /// <returns>新的视图查询数据源</returns>
+        IDbView<TModel> CreateView<TModel>(IDbView<TModel> source, params Expression<Func<TModel, bool>>[] predicates)
+            where TModel : class, new();
+        /// <summary>
+        /// 创建视图查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">视图模型对象</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="property">属性</param>
+        /// <param name="whereTemplate">sql条件表达式模板</param>
+        /// <param name="parameters">sql参数数组</param>
+        /// <returns>新的视图查询数据源</returns>
+        IDbView<TModel> CreateView<TModel>(IDbView<TModel> source, PropertyInfo property, string whereTemplate, params IDbDataParameter[] parameters)
+            where TModel : class, new();
+        /// <summary>
+        /// 创建根据某属性排好序的视图查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">视图模型对象</typeparam>
+        /// <typeparam name="TKey">对象某属性类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="keySelector">指定视图模型对象某属性的表达式</param>
+        /// <param name="isAsc">true:升序 false:降序</param>
+        /// <returns>排好序的视图查询数据源</returns>
+        IDbView<TModel> CreateSortedView<TModel, TKey>(IDbView<TModel> source, Expression<Func<TModel, TKey>> keySelector, bool isAsc = true)
+            where TModel : class, new();
     }
 }

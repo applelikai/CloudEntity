@@ -259,6 +259,210 @@ namespace CloudEntity.Data.Entity
         }
 
         /// <summary>
+        /// Extendable method: 过滤数据源中属性包含(或不包含)某些值的实体(生成Sql IN表达式)
+        /// </summary>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
+        /// <typeparam name="TProperty">对象属性类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="selector">指定对象某属性的表达式</param>
+        /// <param name="values">对象属性所包含的值</param>
+        /// <param name="isIn">IN 或 NOT IN</param>
+        /// <returns>新的视图查询数据源</returns>
+        public static IDbView<TModel> In<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, TProperty[] values, bool isIn = true)
+            where TModel : class, new()
+        {
+            //非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            Check.ArgumentNull(values, nameof(values));
+            //获取sql表达式模板
+            PropertyInfo property = selector.Body.GetProperty();
+            StringBuilder sqlTemplate = new StringBuilder();
+            sqlTemplate.AppendLine(isIn ? "IN " : "NOT IN ");
+            for (int i = 0; i < values.Length; i++)
+            {
+                sqlTemplate.AppendFormat("\t {0}", i == 0 ? '(' : ' ');
+                sqlTemplate.AppendFormat("${0}", property.Name);
+                sqlTemplate.AppendFormat("{0}{1}", i, (i + 1 == values.Length) ? ")" : ",\n");
+            }
+            //获取原始参数集合
+            IDbDataParameter[] parameters = new IDbDataParameter[values.Length];
+            for (int i = 0; i < values.Length; i++)
+                parameters[i] = source.ParameterFactory.Parameter(string.Concat(property.Name, i), values[i]);
+            //过滤获取新数据源
+            return source.Factory.CreateView(source, property, sqlTemplate.ToString(), parameters.ToArray());
+        }
+        /// <summary>
+        /// Extendable method: 过滤数据源中属性包含(或不包含)某些值的实体(生成Sql IN表达式)
+        /// </summary>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
+        /// <typeparam name="TProperty">对象属性类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="selector">指定对象某属性的表达式</param>
+        /// <param name="selectorSource">子查询数据源</param>
+        /// <param name="isIn">IN 或 NOT IN</param>
+        /// <returns>新的视图查询数据源</returns>
+        public static IDbView<TModel> In<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, IDbSelectedQuery<TProperty> selectorSource, bool isIn = true)
+            where TModel : class, new()
+        {
+            //非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            Check.ArgumentNull(selectorSource, nameof(selectorSource));
+            //获取sql表达式模板
+            PropertyInfo property = selector.Body.GetProperty();
+            StringBuilder sqlTemplate = new StringBuilder();
+            sqlTemplate.AppendLine(isIn ? "IN " : "NOT IN ");
+            sqlTemplate.Append("\t(");
+            sqlTemplate.Append(selectorSource.ToWhereSqlString().Trim());
+            sqlTemplate.Append(")");
+            sqlTemplate.Replace("\n ", "\n      ");
+            //过滤获取新数据源
+            return source.Factory.CreateView(source, property, sqlTemplate.ToString(), selectorSource.Parameters.ToArray());
+        }
+        /// <summary>
+        /// Extendable method: 执行区间查询获取视图查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
+        /// <typeparam name="TProperty">属性类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="selector">指定对象某属性的表达式</param>
+        /// <param name="left">最小值</param>
+        /// <param name="right">最大值</param>
+        /// <returns>视图查询数据源</returns>
+        public static IDbView<TModel> Between<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, TProperty left, TProperty right)
+            where TModel : class, new()
+            where TProperty : struct
+        {
+            //非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            Check.ArgumentNull(left, nameof(left));
+            Check.ArgumentNull(right, nameof(right));
+            //获取sql表达式模板
+            PropertyInfo property = selector.Body.GetProperty();
+            string sqlTemplate = string.Format("BETWEEN ${0}Left AND ${0}Right", property.Name);
+            //获取sql参数
+            IDbDataParameter[] parameters = new IDbDataParameter[]
+            {
+                source.ParameterFactory.Parameter(string.Concat(property.Name, "Left"), left),
+                source.ParameterFactory.Parameter(string.Concat(property.Name, "Right"), right)
+            };
+            //创建新的视图查询数据源
+            return source.Factory.CreateView(source, property, sqlTemplate, parameters);
+        }
+        /// <summary>
+        /// Extendable method: 执行模糊查询获取视图查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="selector">指定对象某属性的表达式</param>
+        /// <param name="value">参数值</param>
+        /// <param name="isLike">LIKE 或 NOT LIKE</param>
+        /// <returns>模糊筛选后的视图查询数据源</returns>
+        public static IDbView<TModel> Like<TModel>(this IDbView<TModel> source, Expression<Func<TModel, string>> selector, string value, bool isLike = true)
+            where TModel : class, new()
+        {
+            //非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            Check.ArgumentNull(value, nameof(value));
+            //获取sql条件表达式
+            PropertyInfo property = selector.Body.GetProperty();
+            string sqlTemplate = string.Format("{0} ${1}", isLike ? "LIKE" : "NOT LIKE", property.Name);
+            //获取参数
+            IDbDataParameter parameter = source.ParameterFactory.Parameter(property.Name, value);
+            //创建新的视图查询数据源
+            return source.Factory.CreateView(source, property, sqlTemplate, parameter);
+        }
+        /// <summary>
+        /// Extendable method: 执行非空或可空查询获取视图查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
+        /// <typeparam name="TProperty">属性类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="selector">指定对象某属性的表达式</param>
+        /// <param name="isNull">IS NULL 或 IS NOT NULL</param>
+        /// <returns>视图查询数据源</returns>
+        public static IDbView<TModel> Null<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, bool isNull = true)
+            where TModel : class, new()
+        {
+            //非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            //拼接sql
+            string sqlTemplate = isNull ? "IS NULL" : "IS NOT NULL";
+            //创建新的视图查询数据源
+            return source.Factory.CreateView(source, selector.Body.GetProperty(), sqlTemplate);
+        }
+        /// <summary>
+        /// Extendable method: 筛选并获取筛选后的视图查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="predicate">筛选表达式</param>
+        /// <returns>被筛选后的数据源</returns>
+        public static IDbView<TModel> Where<TModel>(this IDbView<TModel> source, Expression<Func<TModel, bool>> predicate)
+            where TModel : class, new()
+        {
+            //非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(predicate, nameof(predicate));
+            //创建新的视图查询数据源
+            return source.Factory.CreateView(source, predicate);
+        }
+        /// <summary>
+        /// Extendable method: 筛选并获取筛选后的视图查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="predicates">筛选表达式数组</param>
+        /// <returns>被筛选后的数据源</returns>
+        public static IDbView<TModel> Filter<TModel>(this IDbView<TModel> source, Expression<Func<TModel, bool>>[] predicates)
+            where TModel : class, new()
+        {
+            //非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(predicates, nameof(predicates));
+            //创建新的视图查询数据源
+            return source.Factory.CreateView(source, predicates);
+        }
+        /// <summary>
+        /// Extendable method: 对视图查询数据源按某属性升序排序
+        /// </summary>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
+        /// <typeparam name="TKey">对象属性类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="keySelector">指定对象某属性的表达式(根据此属性排序)</param>
+        /// <returns>排好序的视图查询数据源</returns>
+        public static IDbView<TModel> OrderBy<TModel, TKey>(this IDbView<TModel> source, Expression<Func<TModel, TKey>> keySelector)
+            where TModel : class, new()
+        {
+            //非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(keySelector, nameof(keySelector));
+            //创建新的视图查询数据源并返回
+            return source.Factory.CreateSortedView(source, keySelector);
+        }
+        /// <summary>
+        /// Extendable method: 对视图查询数据源按某属性降序排序
+        /// </summary>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
+        /// <typeparam name="TKey">对象属性类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="keySelector">指定对象某属性的表达式(根据此属性排序)</param>
+        /// <returns>排好序的视图查询数据源</returns>
+        public static IDbView<TModel> OrderByDescending<TModel, TKey>(this IDbView<TModel> source, Expression<Func<TModel, TKey>> keySelector)
+            where TModel : class, new()
+        {
+            //非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(keySelector, nameof(keySelector));
+            //创建新的视图查询数据源并返回
+            return source.Factory.CreateSortedView(source, keySelector, false);
+        }
+
+        /// <summary>
         /// Extendable method: 获取按某属性升序排序的分页查询数据源
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>

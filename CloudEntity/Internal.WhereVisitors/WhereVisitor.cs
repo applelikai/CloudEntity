@@ -15,8 +15,14 @@ namespace CloudEntity.Internal.WhereVisitors
     /// </summary>
     public abstract class WhereVisitor
     {
-        private IParameterFactory parameterFactory;   //sql参数创建对象
-        private IMapperContainer mapperContainer;       //mapper容器
+        /// <summary>
+        /// sql参数创建对象
+        /// </summary>
+        private IParameterFactory parameterFactory;
+        /// <summary>
+        /// 列获取器
+        /// </summary>
+        private IColumnGetter columnGetter;
 
         /// <summary>
         /// 获取当前属性Mapping的完整列名
@@ -25,8 +31,7 @@ namespace CloudEntity.Internal.WhereVisitors
         /// <returns>当前属性Mapping的完整列名</returns>
         protected string GetColumnFullName(PropertyInfo property)
         {
-            ITableMapper tableMapper = this.mapperContainer.GetTableMapper(property.DeclaringType);
-            return tableMapper.GetColumnMapper(property.Name).ColumnFullName;
+            return this.columnGetter.GetColumnFullName(property);
         }
         /// <summary>
         /// 创建sql参数
@@ -53,12 +58,10 @@ namespace CloudEntity.Internal.WhereVisitors
             {
                 //获取属性元数据解析器
                 PropertyInfo property = expression.GetProperty();
-                ITableMapper tableMapper = this.mapperContainer.GetTableMapper(property.DeclaringType);
-                IColumnMapper columnMapper = tableMapper.GetColumnMapper(property.Name);
                 //获取参数名
-                parameterName = string.Format("{0}_{1}", property.DeclaringType.Name, property.Name);
+                parameterName = string.Format("{0}_{1}", property.ReflectedType.Name, property.Name);
                 //获取sql表达式节点(指定列名)
-                return new SqlBuilder(columnMapper.ColumnFullName);
+                return new SqlBuilder(this.GetColumnFullName(property));
             }
             //若当前表达式节点不包含参数表达式
             //1.获取参数名
@@ -74,15 +77,15 @@ namespace CloudEntity.Internal.WhereVisitors
         /// 创建Lambda表达式解析对象
         /// </summary>
         /// <param name="parameterFactory">sql参数创建对象</param>
-        /// <param name="mapperContainer">mapper容器</param>
-        public WhereVisitor(IParameterFactory parameterFactory, IMapperContainer mapperContainer)
+        /// <param name="columnGetter">列名获取器</param>
+        public WhereVisitor(IParameterFactory parameterFactory, IColumnGetter columnGetter)
         {
             //非空检查
             Check.ArgumentNull(parameterFactory, nameof(parameterFactory));
-            Check.ArgumentNull(mapperContainer, nameof(mapperContainer));
+            Check.ArgumentNull(columnGetter, nameof(columnGetter));
             //赋值
             this.parameterFactory = parameterFactory;
-            this.mapperContainer = mapperContainer;
+            this.columnGetter = columnGetter;
         }
         /// <summary>
         /// 解析查询条件表达式,生成sql条件表达式节点及其附属的sql参数

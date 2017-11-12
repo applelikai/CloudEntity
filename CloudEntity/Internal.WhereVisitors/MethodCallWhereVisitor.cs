@@ -126,9 +126,9 @@ namespace CloudEntity.Internal.WhereVisitors
         /// 创建Lambda表达式解析对象
         /// </summary>
         /// <param name="parameterFactory">sql参数创建对象</param>
-        /// <param name="mapperContainer">mapper容器</param>
-        public MethodCallWhereVisitor(IParameterFactory parameterFactory, IMapperContainer mapperContainer)
-            : base(parameterFactory, mapperContainer)
+        /// <param name="columnGetter">列名获取器</param>
+        public MethodCallWhereVisitor(IParameterFactory parameterFactory, IColumnGetter columnGetter)
+            : base(parameterFactory, columnGetter)
         {
         }
         /// <summary>

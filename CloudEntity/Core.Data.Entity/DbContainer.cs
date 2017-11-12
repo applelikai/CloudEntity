@@ -33,10 +33,6 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         private string _connectionString;
         /// <summary>
-        /// 初始化器
-        /// </summary>
-        private DbInitializer _initializer;
-        /// <summary>
         /// 操作数据库的DbHelper
         /// </summary>
         private DbHelper _dbHelper;
@@ -57,9 +53,21 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         private IMapperContainer _mapperContainer;
         /// <summary>
+        /// 列获取器
+        /// </summary>
+        private IColumnGetter _columnGetter;
+        /// <summary>
+        /// mpping列获取器
+        /// </summary>
+        private IColumnGetter _mapperColumnGetter;
+        /// <summary>
         /// 创建表达式解析器的工厂
         /// </summary>
         private IWhereVisitorFactory _whereVisitorFactory;
+        /// <summary>
+        /// 创建查询条件解析器的工厂
+        /// </summary>
+        private IWhereVisitorFactory _mapperWhereVisitorFactory;
         /// <summary>
         /// 数据列表字典
         /// </summary>
@@ -72,113 +80,15 @@ namespace CloudEntity.Core.Data.Entity
         /// 容器集字典
         /// </summary>
         private static IDictionary<Type, ContainerSet> _containerSets;
-        
-        /// <summary>
-        /// 创建Sql命令生成树的工厂
-        /// </summary>
-        private ICommandTreeFactory CommandTreeFactory
-        {
-            get
-            {
-                Start:
-                //若_commandTreeFactory不为空,直接返回
-                if (this._commandTreeFactory != null)
-                    return this._commandTreeFactory;
-                //进入临界区
-                lock (this._locker)
-                {
-                    //若_commandTreeFactory为空,则创建
-                    if (this._commandTreeFactory == null)
-                        this._commandTreeFactory = this._initializer.CreateCommandTreeFactory();
-                    //回到Start
-                    goto Start;
-                }
-            }
-        }
-        /// <summary>
-        /// Mapper容器
-        /// </summary>
-        private IMapperContainer MapperContainer
-        {
-            get
-            {
-                Start:
-                //若_mapperContainer不为空,直接返回
-                if (this._mapperContainer != null)
-                    return this._mapperContainer;
-                //进入临界区
-                lock (this._locker)
-                {
-                    //若_mapperContainer为空,则创建
-                    if (this._mapperContainer == null)
-                        this._mapperContainer = this._initializer.CreateMapperContainer();
-                    //回到Start
-                    goto Start;
-                }
-            }
-        }
-        /// <summary>
-        /// 创建表达式解析器的工厂
-        /// </summary>
-        private IWhereVisitorFactory WhereVisitorFactory
-        {
-            get
-            {
-                Start:
-                //若whereVisitorFactory不为空,则直接返回
-                if (this._whereVisitorFactory != null)
-                    return this._whereVisitorFactory;
-                //获取所需参数
-                IParameterFactory parameterFactory = this.DbHelper;
-                IMapperContainer mapperContainer = this.MapperContainer;
-                //进入临界区
-                lock (this._locker)
-                {
-                    //若whereVisitorFactory为空,则创建
-                    if (this._whereVisitorFactory == null)
-                        this._whereVisitorFactory = new WhereVisitorFactory(parameterFactory, mapperContainer);
-                    //回到Start
-                    goto Start;
-                }
-            }
-        }
 
         /// <summary>
         /// 操作数据库的DbHelper
         /// </summary>
         public DbHelper DbHelper
         {
-            get
-            {
-                Start:
-                //若dbHelper不为空,直接返回
-                if (this._dbHelper != null)
-                    return this._dbHelper;
-                //进入临界区
-                lock (this._locker)
-                {
-                    //若dbHelper为空,则创建
-                    if (this._dbHelper == null)
-                        this._dbHelper = this._initializer.CreateDbHelper(this._connectionString);
-                    //回到Start
-                    goto Start;
-                }
-            }
+            get { return this._dbHelper; }
         }
-
-        /// <summary>
-        /// 创建数据容器
-        /// </summary>
-        /// <param name="initializer">初始化器</param>
-        private DbContainer(DbInitializer initializer)
-        {
-            this._locker = new object();
-            this._dbListsLocker = new object();
-            this._dbLists = new Dictionary<Type, object>();
-            this._initializer = initializer;
-            this._tableInitializer = initializer.CreateTableInitializer();     //获取Table初始化器
-            this._columnInitializer = initializer.CreateColumnInitializer();   //获取列初始化器
-        }
+        
         /// <summary>
         /// 获取sql成员表达式节点
         /// </summary>
@@ -186,7 +96,7 @@ namespace CloudEntity.Core.Data.Entity
         /// <returns>sql成员表达式节点</returns>
         private ISqlBuilder GetSqlBuilder(Expression expression)
         {
-            IColumnMapper columnMapper = this.MapperContainer.GetColumnMapper(expression.GetProperty());
+            IColumnMapper columnMapper = this._mapperContainer.GetColumnMapper(expression.GetProperty());
             return new SqlBuilder(columnMapper.ColumnFullName);
         }
         /// <summary>
@@ -283,7 +193,7 @@ namespace CloudEntity.Core.Data.Entity
         private IEnumerable<INodeBuilder> GetFunctionNodeBuilders(IEnumerable<INodeBuilder> nodeBuilders, string functionName, LambdaExpression lambdaExpression)
         {
             //获取Sql函数表达式节点
-            IColumnMapper columnMapper = this.MapperContainer.GetColumnMapper(lambdaExpression.Body.GetProperty());
+            IColumnMapper columnMapper = this._mapperContainer.GetColumnMapper(lambdaExpression.Body.GetProperty());
             yield return new NodeBuilder(SqlType.Select, "{0}({1})", functionName, columnMapper.ColumnFullName);
             //获取其他的sql表达式节点
             foreach (INodeBuilder nodeBuilder in nodeBuilders)
@@ -301,33 +211,34 @@ namespace CloudEntity.Core.Data.Entity
         /// 获取条件查询Sql表达式节点集合
         /// </summary>
         /// <param name="nodeBuilders">源Sql表达式节点集合</param>
+        /// <param name="columnGetter">列获取器</param>
         /// <param name="property">属性</param>
         /// <param name="whereTemplate">sql条件表达式</param>
         /// <returns>条件查询Sql表达式节点集合</returns>
-        private IEnumerable<INodeBuilder> GetQueryNodeBuilders(IEnumerable<INodeBuilder> nodeBuilders, PropertyInfo property, string whereTemplate)
+        private IEnumerable<INodeBuilder> GetQueryNodeBuilders(IEnumerable<INodeBuilder> nodeBuilders, IColumnGetter columnGetter, PropertyInfo property, string whereTemplate)
         {
             //返回原先的Sql表达式节点
             foreach (INodeBuilder nodeBuilder in nodeBuilders)
                 yield return nodeBuilder;
             //返回新增的查询条件表达式节点
-            IColumnMapper columnMapper = this.MapperContainer.GetColumnMapper(property);
-            yield return new NodeBuilder(SqlType.Where, "{0} {1}", columnMapper.ColumnFullName, whereTemplate);
+            yield return new NodeBuilder(SqlType.Where, "{0} {1}", columnGetter.GetColumnFullName(property), whereTemplate);
         }
         /// <summary>
         /// 获取排序查询Sql表达式节点集合
         /// </summary>
         /// <param name="nodeBuilders">源Sql表达式节点集合</param>
+        /// <param name="columnGetter">列获取器</param>
         /// <param name="selector">指定对象某属性的表达式</param>
         /// <param name="isAsc">true:升序 false:降序</param>
         /// <returns>排序查询Sql表达式节点集合</returns>
-        private IEnumerable<INodeBuilder> GetSortedQueryNodeBuilders(IEnumerable<INodeBuilder> nodeBuilders, LambdaExpression selector, bool isAsc)
+        private IEnumerable<INodeBuilder> GetSortedQueryNodeBuilders(IEnumerable<INodeBuilder> nodeBuilders, IColumnGetter columnGetter, LambdaExpression selector, bool isAsc)
         {
             //返回原先的Sql表达式节点
             foreach (INodeBuilder nodeBuilder in nodeBuilders)
                 yield return nodeBuilder;
             //生成并返回OrderBy节点的子节点
-            IColumnMapper columnMapper = this.MapperContainer.GetColumnMapper(selector.Body.GetProperty());
-            yield return new NodeBuilder(SqlType.OrderBy, "{0} {1}", columnMapper.ColumnFullName, isAsc ? "ASC" : "DESC");
+            string columnFullName = columnGetter.GetColumnFullName(selector.Body.GetProperty());
+            yield return new NodeBuilder(SqlType.OrderBy, "{0} {1}", columnFullName, isAsc ? "ASC" : "DESC");
         }
         /// <summary>
         /// 解析关联表达式获取sql表达式节点迭代器
@@ -435,7 +346,7 @@ namespace CloudEntity.Core.Data.Entity
             {
                 //解析成员表达式(e => e.Property1)
                 case ExpressionType.MemberAccess:
-                    IColumnMapper columnMapper = this.MapperContainer.GetColumnMapper(selector.Body.GetProperty());
+                    IColumnMapper columnMapper = this._mapperContainer.GetColumnMapper(selector.Body.GetProperty());
                     if (string.IsNullOrEmpty(columnMapper.ColumnAlias))
                         yield return new ColumnBuilder(columnMapper.ColumnAlias, string.Format("{0} {1}", columnMapper.ColumnFullName, columnMapper.ColumnAlias));
                     else
@@ -476,10 +387,11 @@ namespace CloudEntity.Core.Data.Entity
         /// <summary>
         /// 解析表达式，获取sql表达式集合以及其附属参数集合
         /// </summary>
+        /// <param name="whereVisitorFactory">查询条件解析器工厂</param>
         /// <param name="parameterExpression">lambda表达式参数节点</param>
         /// <param name="expression">表达式</param>
         /// <returns></returns>
-        private IEnumerable<KeyValuePair<INodeBuilder, IDbDataParameter[]>> GetNodeBuilderPairs(ParameterExpression parameterExpression, Expression expression)
+        private IEnumerable<KeyValuePair<INodeBuilder, IDbDataParameter[]>> GetNodeBuilderPairs(IWhereVisitorFactory whereVisitorFactory, ParameterExpression parameterExpression, Expression expression)
         {
             switch (expression.NodeType)
             {
@@ -488,15 +400,15 @@ namespace CloudEntity.Core.Data.Entity
                 case ExpressionType.AndAlso:
                     BinaryExpression binaryExpression = expression as BinaryExpression;
                     //解析返回左表达式节点集合
-                    foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(parameterExpression, binaryExpression.Left))
+                    foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(whereVisitorFactory, parameterExpression, binaryExpression.Left))
                         yield return nodeBuilderPair;
                     //解析返回有表达式节点集合
-                    foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(parameterExpression, binaryExpression.Right))
+                    foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(whereVisitorFactory, parameterExpression, binaryExpression.Right))
                         yield return nodeBuilderPair;
                     break;
                 //解析其他类型的表达式
                 default:
-                    WhereVisitor whereVisitor = this.WhereVisitorFactory.GetVisitor(expression.NodeType);
+                    WhereVisitor whereVisitor = this._whereVisitorFactory.GetVisitor(expression.NodeType);
                     yield return whereVisitor.Visit(parameterExpression, expression);
                     break;
             }
@@ -567,17 +479,22 @@ namespace CloudEntity.Core.Data.Entity
         internal DbContainer(string connectionString, DbInitializer initializer)
         {
             //非空检查
-            Check.ArgumentNull(connectionString, "connectionString");
-            Check.ArgumentNull(initializer, "initializer");
+            Check.ArgumentNull(connectionString, nameof(connectionString));
+            Check.ArgumentNull(initializer, nameof(initializer));
             //初始化线程锁
             this._locker = new object();
             this._dbListsLocker = new object();
             //赋值
-            this._connectionString = connectionString;
-            this._initializer = initializer;
+            this._dbHelper = initializer.CreateDbHelper(connectionString);
+            this._commandTreeFactory = initializer.CreateCommandTreeFactory();
+            this._mapperContainer = initializer.CreateMapperContainer();
             this._tableInitializer = initializer.CreateTableInitializer();  //获取Table初始化器
             this._columnInitializer = initializer.CreateColumnInitializer();//获取列初始化器
             this._dbLists = new Dictionary<Type, object>();                 //初始化DbList字典
+            this._columnGetter = new ColumnGetter();
+            this._mapperColumnGetter = new MapperColumnGetter(this._mapperContainer);
+            this._whereVisitorFactory = new WhereVisitorFactory(this._dbHelper, this._columnGetter);
+            this._mapperWhereVisitorFactory = new WhereVisitorFactory(this._dbHelper, this._mapperColumnGetter);
         }
 
         /// <summary>
@@ -590,17 +507,17 @@ namespace CloudEntity.Core.Data.Entity
             if (this._tableInitializer == null)
                 return;
             //获取TableMapper
-            ITableMapper tableMapper = this.MapperContainer.GetTableMapper(entityType);
+            ITableMapper tableMapper = this._mapperContainer.GetTableMapper(entityType);
             //若Table不存在,则创建Table
             if (!this._tableInitializer.IsExist(this.DbHelper, tableMapper.Header))
-                this._tableInitializer.CreateTable(this.DbHelper, this.CommandTreeFactory, tableMapper);
+                this._tableInitializer.CreateTable(this.DbHelper, this._commandTreeFactory, tableMapper);
             //若Table存在，则检查并添加EntityMapper中某些属性未注册到目标Table的列
             else
             {
                 //若列初始化器不为空
                 if (this._columnInitializer != null)
                     //检查并添加EntityMapper中某些属性未注册到目标Table的列
-                    this._columnInitializer.AlterTableAddColumns(this.DbHelper, this.CommandTreeFactory, tableMapper);
+                    this._columnInitializer.AlterTableAddColumns(this.DbHelper, this._commandTreeFactory, tableMapper);
             }
         }
         /// <summary>
@@ -614,7 +531,7 @@ namespace CloudEntity.Core.Data.Entity
             if (this._tableInitializer == null)
                 return;
             //获取TableMapper
-            ITableMapper tableMapper = this.MapperContainer.GetTableMapper(entityType);
+            ITableMapper tableMapper = this._mapperContainer.GetTableMapper(entityType);
             //若Table未生成,则从旧表修改
             if (!this._tableInitializer.IsExist(this.DbHelper, tableMapper.Header))
                 this._tableInitializer.RenameTable(this.DbHelper, tableMapper.Header, oldTableName);
@@ -629,7 +546,7 @@ namespace CloudEntity.Core.Data.Entity
             if (this._tableInitializer == null)
                 return;
             //获取TableMapper
-            ITableMapper tableMapper = this.MapperContainer.GetTableMapper(entityType);
+            ITableMapper tableMapper = this._mapperContainer.GetTableMapper(entityType);
             //若Table存在,则删除Table
             if (this._tableInitializer.IsExist(this.DbHelper, tableMapper.Header))
                 this._tableInitializer.DropTable(this.DbHelper, tableMapper.Header);
@@ -651,7 +568,7 @@ namespace CloudEntity.Core.Data.Entity
         public IDbScalar CreateScalar(IDbBase dbBase, string functionName)
         {
             //返回新的DbScaler对象
-            return new DbScalar(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
+            return new DbScalar(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
             {
                 NodeBuilders = this.GetFunctionNodeBuilders(dbBase.NodeBuilders, functionName),
                 Parameters = dbBase.Parameters
@@ -667,7 +584,7 @@ namespace CloudEntity.Core.Data.Entity
         public IDbScalar CreateScalar(IDbBase dbBase, string functionName, LambdaExpression lambdaExpression)
         {
             //返回新的DbScaler对象
-            return new DbScalar(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
+            return new DbScalar(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
             {
                 NodeBuilders = this.GetFunctionNodeBuilders(dbBase.NodeBuilders, functionName, lambdaExpression),
                 Parameters = dbBase.Parameters
@@ -699,14 +616,14 @@ namespace CloudEntity.Core.Data.Entity
             //加载Sql表达式节点集合 和 Sql参数节点集合
             foreach (Expression<Func<TEntity, bool>> predicate in predicates)
             {
-                foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(predicate.Parameters[0], predicate.Body))
+                foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(this._mapperWhereVisitorFactory, predicate.Parameters[0], predicate.Body))
                 {
                     nodeBuilders.Add(nodeBuilderPair.Key);
                     parameters.AddRange(nodeBuilderPair.Value);
                 }
             }
             //返回新的查询对象
-            return new DbQuery<TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
+            return new DbQuery<TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
             {
                 Factory = this,
                 NodeBuilders = source.NodeBuilders.Concat(nodeBuilders),
@@ -727,10 +644,10 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             //返回新的查询对象
-            return new DbQuery<TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
+            return new DbQuery<TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
             {
                 Factory = this,
-                NodeBuilders = this.GetQueryNodeBuilders(source.NodeBuilders, property, whereTemplate),
+                NodeBuilders = this.GetQueryNodeBuilders(source.NodeBuilders, this._mapperColumnGetter, property, whereTemplate),
                 Parameters = source.Parameters.Concat(parameters),
                 PropertyLinkers = source.PropertyLinkers
             };
@@ -748,10 +665,10 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             //返回新的查询对象
-            return new DbQuery<TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
+            return new DbQuery<TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
             {
                 Factory = this,
-                NodeBuilders = this.GetSortedQueryNodeBuilders(source.NodeBuilders, keySelector, isAsc),
+                NodeBuilders = this.GetSortedQueryNodeBuilders(source.NodeBuilders, this._mapperColumnGetter, keySelector, isAsc),
                 Parameters = source.Parameters,
                 PropertyLinkers = source.PropertyLinkers
             };
@@ -774,7 +691,7 @@ namespace CloudEntity.Core.Data.Entity
             IList<PropertyLinker> propertyLinkers = source.PropertyLinkers.ToList();
             propertyLinkers.Add(new PropertyLinker(selector.Body.GetProperty(), otherSource.PropertyLinkers));
             //返回新的查询对象
-            return new DbQuery<TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
+            return new DbQuery<TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
             {
                 Factory = this,
                 NodeBuilders = this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetInnerJoinBuilder),
@@ -800,7 +717,7 @@ namespace CloudEntity.Core.Data.Entity
             IList<PropertyLinker> propertyLinkers = source.PropertyLinkers.ToList();
             propertyLinkers.Add(new PropertyLinker(selector.Body.GetProperty(), otherSource.PropertyLinkers));
             //返回新的查询对象
-            return new DbQuery<TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
+            return new DbQuery<TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
             {
                 Factory = this,
                 NodeBuilders = this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetLeftJoinBuilder),
@@ -822,9 +739,9 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             //获取排序属性
-            IColumnMapper columnMapper = this.MapperContainer.GetColumnMapper(orderBySelector.Body.GetProperty());
+            IColumnMapper columnMapper = this._mapperContainer.GetColumnMapper(orderBySelector.Body.GetProperty());
             //创建分页查询数据源
-            return new DbPagedQuery<TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
+            return new DbPagedQuery<TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
             {
                 PropertyLinkers = source.PropertyLinkers,
                 OrderByColumn = columnMapper.ColumnFullName,
@@ -847,9 +764,9 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             //获取Table元数据解析器
-            ITableMapper tableMapper = this.MapperContainer.GetTableMapper(typeof(TEntity));
+            ITableMapper tableMapper = this._mapperContainer.GetTableMapper(typeof(TEntity));
             //返回新的查询对象
-            return new DbSelectedQuery<TElement, TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
+            return new DbSelectedQuery<TElement, TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
             {
                 NodeBuilders = this.GetSelectedQueryNodeBuilders(source.NodeBuilders, selector, tableMapper),
                 Parameters = source.Parameters,
@@ -869,9 +786,9 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             //获取Table元数据解析器
-            ITableMapper tableMapper = this.MapperContainer.GetTableMapper(typeof(TEntity));
+            ITableMapper tableMapper = this._mapperContainer.GetTableMapper(typeof(TEntity));
             //返回新的查询对象
-            return new DbDistinctQuery<TElement, TEntity>(this.MapperContainer, this.CommandTreeFactory, this.DbHelper)
+            return new DbDistinctQuery<TElement, TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
             {
                 NodeBuilders = this.GetSelectedQueryNodeBuilders(source.NodeBuilders, selector, tableMapper),
                 Parameters = source.Parameters,
@@ -888,7 +805,7 @@ namespace CloudEntity.Core.Data.Entity
         public IDbOperator<TEntity> CreateOperator<TEntity>(IDbTransaction transaction)
             where TEntity : class
         {
-            return new DbTransactionOperator<TEntity>(this, this.DbHelper, this.CommandTreeFactory, this.MapperContainer, transaction);
+            return new DbTransactionOperator<TEntity>(this, this.DbHelper, this._commandTreeFactory, this._mapperContainer, transaction);
         }
         /// <summary>
         /// 创建自动连接Table的增删改集合
@@ -908,12 +825,95 @@ namespace CloudEntity.Core.Data.Entity
                 if (!this._dbLists.ContainsKey(typeof(TEntity)))
                 {
                     //注册DbList
-                    IDbList<TEntity> entities = new DbList<TEntity>(this, this.DbHelper, this.CommandTreeFactory, this.MapperContainer);
+                    IDbList<TEntity> entities = new DbList<TEntity>(this, this.DbHelper, this._commandTreeFactory, this._mapperContainer);
                     this._dbLists.Add(typeof(TEntity), entities);
                 }
                 //重新从字典中获取当前类型的集合
                 goto Start;
             }
+        }
+        /// <summary>
+        /// 创建视图查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">对象类型</typeparam>
+        /// <param name="querySql">查询sql</param>
+        /// <param name="parameters">sql参数数组</param>
+        /// <returns>视图查询数据源</returns>
+        public IDbView<TModel> View<TModel>(string querySql, params IDbDataParameter[] parameters)
+            where TModel : class, new()
+        {
+            return new DbView<TModel>(this, this.DbHelper, this._commandTreeFactory, querySql)
+            {
+                NodeBuilders = new INodeBuilder[0],
+                Parameters = parameters
+            };
+        }
+        /// <summary>
+        /// 创建视图查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">视图对象</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="predicates">查询条件表达式数组</param>
+        /// <returns>新的视图查询数据源</returns>
+        public IDbView<TModel> CreateView<TModel>(IDbView<TModel> source, params Expression<Func<TModel, bool>>[] predicates)
+            where TModel : class, new()
+        {
+            //初始化Sql表达式节点集合 和 Sql参数节点集合
+            List<INodeBuilder> nodeBuilders = new List<INodeBuilder>();
+            List<IDbDataParameter> parameters = new List<IDbDataParameter>();
+            //加载Sql表达式节点集合 和 Sql参数节点集合
+            foreach (Expression<Func<TModel, bool>> predicate in predicates)
+            {
+                foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(this._whereVisitorFactory, predicate.Parameters[0], predicate.Body))
+                {
+                    nodeBuilders.Add(nodeBuilderPair.Key);
+                    parameters.AddRange(nodeBuilderPair.Value);
+                }
+            }
+            //创建并返回视图查询数据源
+            return new DbView<TModel>(this, this._dbHelper, this._commandTreeFactory, source.InnerQuerySql)
+            {
+                NodeBuilders = source.NodeBuilders.Concat(nodeBuilders),
+                Parameters = source.Parameters.Concat(parameters),
+            };
+        }
+        /// <summary>
+        /// 创建视图查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">视图模型对象</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="property">属性</param>
+        /// <param name="whereTemplate">sql条件表达式模板</param>
+        /// <param name="parameters">sql参数数组</param>
+        /// <returns>新的视图查询数据源</returns>
+        public IDbView<TModel> CreateView<TModel>(IDbView<TModel> source, PropertyInfo property, string whereTemplate, params IDbDataParameter[] parameters)
+            where TModel : class, new()
+        {
+            //创建并返回视图查询数据源
+            return new DbView<TModel>(this, this._dbHelper, this._commandTreeFactory, source.InnerQuerySql)
+            {
+                NodeBuilders = this.GetQueryNodeBuilders(source.NodeBuilders, this._columnGetter, property, whereTemplate),
+                Parameters = source.Parameters.Concat(parameters),
+            };
+        }
+        /// <summary>
+        /// 创建根据某属性排好序的视图查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">视图模型对象</typeparam>
+        /// <typeparam name="TKey">对象某属性类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="keySelector">指定视图模型对象某属性的表达式</param>
+        /// <param name="isAsc">true:升序 false:降序</param>
+        /// <returns>排好序的视图查询数据源</returns>
+        public IDbView<TModel> CreateSortedView<TModel, TKey>(IDbView<TModel> source, Expression<Func<TModel, TKey>> keySelector, bool isAsc = true)
+            where TModel : class, new()
+        {
+            //创建并返回视图查询数据源
+            return new DbView<TModel>(this, this._dbHelper, this._commandTreeFactory, source.InnerQuerySql)
+            {
+                NodeBuilders = this.GetSortedQueryNodeBuilders(source.NodeBuilders, this._columnGetter, keySelector, isAsc),
+                Parameters = source.Parameters,
+            };
         }
     }
 }

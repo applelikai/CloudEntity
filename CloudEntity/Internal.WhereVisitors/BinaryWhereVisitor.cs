@@ -22,10 +22,10 @@ namespace CloudEntity.Internal.WhereVisitors
         /// 创建二叉树表达式解析对象
         /// </summary>
         /// <param name="parameterFactory">sql参数创建对象</param>
-        /// <param name="mapperContainer">mapper容器</param>
+        /// <param name="columnGetter">列名获取器</param>
         /// <param name="factory">创建表达式解析器的工厂</param>
-        public BinaryWhereVisitor(IParameterFactory parameterFactory, IMapperContainer mapperContainer, IWhereVisitorFactory factory)
-            : base(parameterFactory, mapperContainer)
+        public BinaryWhereVisitor(IParameterFactory parameterFactory, IColumnGetter columnGetter, IWhereVisitorFactory factory)
+            : base(parameterFactory, columnGetter)
         {
             this.factory = factory;
         }

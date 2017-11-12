@@ -35,17 +35,25 @@ namespace CloudEntity.Data.Entity
         /// <returns>事故执行器</returns>
         IDbExecutor CreateExecutor();
         /// <summary>
-        /// 获取数据列表
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <returns>数据列表</returns>
-        IDbList<TEntity> List<TEntity>() where TEntity : class;
-        /// <summary>
         /// 创建实体操作器
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
         /// <param name="transaction">事物出来对象</param>
         /// <returns>实体操作器</returns>
         IDbOperator<TEntity> CreateOperator<TEntity>(IDbTransaction transaction) where TEntity : class;
+        /// <summary>
+        /// 获取数据列表
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <returns>数据列表</returns>
+        IDbList<TEntity> List<TEntity>() where TEntity : class;
+        /// <summary>
+        /// 创建视图查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">对象类型</typeparam>
+        /// <param name="querySql">查询sql</param>
+        /// <param name="parameters">sql参数数组</param>
+        /// <returns>视图查询数据源</returns>
+        IDbView<TModel> View<TModel>(string querySql, params IDbDataParameter[] parameters) where TModel : class, new();
     }
 }
