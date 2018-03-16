@@ -408,7 +408,7 @@ namespace CloudEntity.Core.Data.Entity
                     break;
                 //解析其他类型的表达式
                 default:
-                    WhereVisitor whereVisitor = this._whereVisitorFactory.GetVisitor(expression.NodeType);
+                    WhereVisitor whereVisitor = whereVisitorFactory.GetVisitor(expression.NodeType);
                     yield return whereVisitor.Visit(parameterExpression, expression);
                     break;
             }

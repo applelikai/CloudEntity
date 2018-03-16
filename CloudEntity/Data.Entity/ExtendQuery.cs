@@ -159,7 +159,7 @@ namespace CloudEntity.Data.Entity
         {
             //非空验证
             Check.ArgumentNull(source, nameof(source));
-            Check.ArgumentNull(predicate, "predicate");
+            Check.ArgumentNull(predicate, nameof(predicate));
             //创建新的查询对象
             return source.Factory.CreateQuery(source, predicate);
         }
