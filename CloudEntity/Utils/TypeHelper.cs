@@ -20,6 +20,8 @@ namespace CloudEntity
             //若值为空,返回默认值
             if (value == null)
                 return default(TValue);
+            if (value is DBNull)
+                return default(TValue);
             //获取目标类型
             Type resultType = typeof(TValue);
             //若目标类型与value的类型一直，直接范围， 否则在转换

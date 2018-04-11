@@ -49,7 +49,7 @@ namespace CloudEntity.Core.Data.Entity
         /// <param name="tableHeader">Table头信息</param>
         /// <param name="oldTableName">旧的表名</param>
         /// <returns>受影响的行数</returns>
-        public int RenameTable(DbHelper dbHelper, ITableHeader tableHeader, string oldTableName)
+        public virtual int RenameTable(DbHelper dbHelper, ITableHeader tableHeader, string oldTableName)
         {
             return dbHelper.ExecuteUpdate(string.Format("ALTER TABLE {0} RENAME TO {1}", oldTableName, tableHeader.TableName));
         }

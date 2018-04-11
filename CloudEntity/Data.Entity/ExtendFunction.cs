@@ -491,23 +491,14 @@ namespace CloudEntity.Data.Entity
         /// <returns>数据源中所有元素某属性的最大值</returns>
         public static TProperty Max<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector)
             where TEntity : class
-            where TProperty : struct
         {
-            return source.Function("MAX", selector);
-        }
-        /// <summary>
-        /// Extendable method: 统计数据源中所有元素某属性的最大值
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TProperty">属性类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="selector">指定元素某属性的表达式</param>
-        /// <returns>数据源中所有元素某属性的最大值</returns>
-        public static TProperty Max<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty?>> selector)
-            where TEntity : class
-            where TProperty : struct
-        {
-            return source.Function("MAX", selector);
+            //非空检查
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            //创建DbScaler
+            IDbScalar dbScaler = source.Factory.CreateScalar(source, "MAX", selector);
+            //执行统计查询获取元素属性最大值
+            return TypeHelper.ConvertTo<TProperty>(dbScaler.Execute());
         }
         /// <summary>
         /// Extendable method: 统计数据源中符合条件的元素某属性的最大值
@@ -520,24 +511,8 @@ namespace CloudEntity.Data.Entity
         /// <returns>数据源中符合条件的元素某属性的最大值</returns>
         public static TProperty Max<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
-            where TProperty : struct
         {
-            return source.Function("MAX", selector, predicate);
-        }
-        /// <summary>
-        /// Extendable method: 统计数据源中符合条件的元素某属性的最大值
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TProperty">属性类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="selector">指定元素某属性的表达式</param>
-        /// <param name="predicate">筛选条件表达式</param>
-        /// <returns>数据源中符合条件的元素某属性的最大值</returns>
-        public static TProperty Max<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty?>> selector, Expression<Func<TEntity, bool>> predicate)
-            where TEntity : class
-            where TProperty : struct
-        {
-            return source.Function("MAX", selector, predicate);
+            return source.Where(predicate).Max(selector);
         }
 
         /// <summary>
@@ -550,23 +525,14 @@ namespace CloudEntity.Data.Entity
         /// <returns>数据源中所有元素某属性的最小值</returns>
         public static TProperty Min<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector)
             where TEntity : class
-            where TProperty : struct
         {
-            return source.Function("MIN", selector);
-        }
-        /// <summary>
-        /// Extendable method: 统计数据源中所有元素某属性的最小值
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TProperty">属性类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="selector">指定元素某属性的表达式</param>
-        /// <returns>数据源中所有元素某属性的最小值</returns>
-        public static TProperty Min<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty?>> selector)
-            where TEntity : class
-            where TProperty : struct
-        {
-            return source.Function("MIN", selector);
+            //非空检查
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            //创建DbScaler
+            IDbScalar dbScaler = source.Factory.CreateScalar(source, "MIN", selector);
+            //执行统计查询获取元素属性最大值
+            return TypeHelper.ConvertTo<TProperty>(dbScaler.Execute());
         }
         /// <summary>
         /// Extendable method: 统计数据源中符合条件的元素某属性的最小值
@@ -579,24 +545,8 @@ namespace CloudEntity.Data.Entity
         /// <returns>数据源中符合条件的元素某属性的最小值</returns>
         public static TProperty Min<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
-            where TProperty : struct
         {
-            return source.Function("MIN", selector, predicate);
-        }
-        /// <summary>
-        /// Extendable method: 统计数据源中符合条件的元素某属性的最小值
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TProperty">属性类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="selector">指定元素某属性的表达式</param>
-        /// <param name="predicate">筛选条件表达式</param>
-        /// <returns>数据源中符合条件的元素某属性的最小值</returns>
-        public static TProperty Min<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty?>> selector, Expression<Func<TEntity, bool>> predicate)
-            where TEntity : class
-            where TProperty : struct
-        {
-            return source.Function("MIN", selector, predicate);
+            return source.Where(predicate).Min(selector);
         }
     }
 }

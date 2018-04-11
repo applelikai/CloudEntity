@@ -32,6 +32,10 @@
         /// <summary>
         /// 该列为主键,也是自增列
         /// </summary>
-        PrimaryAndIdentity = 6
+        PrimaryAndIdentity = 6,
+        /// <summary>
+        /// 该列只用于Select
+        /// </summary>
+        Select = 7
     }
 }
