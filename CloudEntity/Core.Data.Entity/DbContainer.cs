@@ -753,6 +753,50 @@ namespace CloudEntity.Core.Data.Entity
             };
         }
         /// <summary>
+        /// 创建TOP选定项查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="topCount">查询的前几条的元素数量</param>
+        /// <returns>TOP选定项查询数据源</returns>
+        public IDbSelectedQuery<TEntity> CreateTopSelectedQuery<TEntity>(IDbQuery<TEntity> source, int topCount)
+            where TEntity : class
+        {
+            //获取Table元数据解析器
+            ITableMapper tableMapper = this._mapperContainer.GetTableMapper(typeof(TEntity));
+            //返回新的查询对象
+            return new DbTopSelectedQuery<TEntity,TEntity>(this._mapperContainer, this._commandTreeFactory, this._dbHelper, topCount)
+            {
+                NodeBuilders = source.NodeBuilders,
+                Parameters = source.Parameters,
+                PropertyLinkers = source.PropertyLinkers,
+                Convert = e => e
+            };
+        }
+        /// <summary>
+        /// 创建TOP选定项查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TElement">结果类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="topCount">查询的前几条的元素数量</param>
+        /// <param name="selector">转换实体对象到结果对象的表达式</param>
+        /// <returns>TOP选定项查询数据源</returns>
+        public IDbSelectedQuery<TElement> CreateTopSelectedQuery<TEntity, TElement>(IDbQuery<TEntity> source, int topCount, Expression<Func<TEntity, TElement>> selector)
+            where TEntity : class
+        {
+            //获取Table元数据解析器
+            ITableMapper tableMapper = this._mapperContainer.GetTableMapper(typeof(TEntity));
+            //返回新的查询对象
+            return new DbTopSelectedQuery<TElement, TEntity>(this._mapperContainer, this._commandTreeFactory, this._dbHelper, topCount)
+            {
+                NodeBuilders = this.GetSelectedQueryNodeBuilders(source.NodeBuilders, selector, tableMapper),
+                Parameters = source.Parameters,
+                PropertyLinkers = source.PropertyLinkers,
+                Convert = selector.Compile()
+            };
+        }
+        /// <summary>
         /// 创建选定项查询数据源
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>

@@ -102,6 +102,26 @@ namespace CloudEntity.Data.Entity
         IDbPagedQuery<TEntity> CreatePagedQuery<TEntity>(IDbQuery<TEntity> source, Expression<Func<TEntity, object>> orderBySelector, int pageSize, int pageIndex = 1, bool isAsc = true)
             where TEntity : class;
         /// <summary>
+        /// 创建TOP选定项查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="topCount">查询的前几条的元素数量</param>
+        /// <returns>TOP选定项查询数据源</returns>
+        IDbSelectedQuery<TEntity> CreateTopSelectedQuery<TEntity>(IDbQuery<TEntity> source, int topCount)
+            where TEntity : class;
+        /// <summary>
+        /// 创建TOP选定项查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TElement">结果类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="topCount">查询的前几条的元素数量</param>
+        /// <param name="selector">转换实体对象到结果对象的表达式</param>
+        /// <returns>TOP选定项查询数据源</returns>
+        IDbSelectedQuery<TElement> CreateTopSelectedQuery<TEntity, TElement>(IDbQuery<TEntity> source, int topCount, Expression<Func<TEntity, TElement>> selector)
+            where TEntity : class;
+        /// <summary>
         /// 创建选定项查询数据源
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>

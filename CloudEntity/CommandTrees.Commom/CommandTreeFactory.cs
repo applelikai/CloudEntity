@@ -196,6 +196,21 @@ namespace CloudEntity.CommandTrees.Commom
             return queryTree;
         }
         /// <summary>
+        /// 创建TOP查询sql的生成树
+        /// </summary>
+        /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
+        /// <param name="topCount">查询的前几条的元素数量</param>
+        /// <returns>TOP查询sql的生成树</returns>
+        public ICommandTree CreateTopQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, int topCount)
+        {
+            //创建top查询命令生成树
+            QueryTree queryTree = new TopQueryTree(this.ParameterMarker, topCount);
+            //填充查询命令生成树各个节点
+            this.LoadQueryTree(queryTree, queryChildBuilders);
+            //返回查询命令生成树
+            return queryTree;
+        }
+        /// <summary>
         /// 创建生成Distinct查询sql的生成树
         /// </summary>
         /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>

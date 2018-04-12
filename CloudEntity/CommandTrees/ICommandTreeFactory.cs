@@ -56,6 +56,13 @@ namespace CloudEntity.CommandTrees
         /// <returns>sql查询命令生成树</returns>
         ICommandTree CreateQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
         /// <summary>
+        /// 创建TOP查询sql的生成树
+        /// </summary>
+        /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
+        /// <param name="topCount">查询的前几条的元素数量</param>
+        /// <returns>TOP查询sql的生成树</returns>
+        ICommandTree CreateTopQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, int topCount);
+        /// <summary>
         /// 创建生成Distinct查询sql的生成树
         /// </summary>
         /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>

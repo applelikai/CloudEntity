@@ -498,6 +498,41 @@ namespace CloudEntity.Data.Entity
         }
 
         /// <summary>
+        /// Extendable method: 查询前几条的元素
+        /// </summary>
+        /// <typeparam name="TEntity">object's type</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="topCount">查询的前几条的元素数量</param>
+        /// <returns>TOP查询数据源</returns>
+        public static IDbSelectedQuery<TEntity> Top<TEntity>(this IDbQuery<TEntity> source, int topCount)
+            where TEntity : class
+        {
+            //非空检查
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(topCount, nameof(topCount));
+            //获取TOP查询数据源
+            return source.Factory.CreateTopSelectedQuery(source, topCount);
+        }
+        /// <summary>
+        /// Extendable method: 查询前几条选定项
+        /// </summary>
+        /// <typeparam name="TEntity">object's type</typeparam>
+        /// <typeparam name="TResult">result's type</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="topCount">查询的前几条的元素数量</param>
+        /// <param name="selector">指定选定项的表达式</param>
+        /// <returns>TOP选定项查询数据源</returns>
+        public static IDbSelectedQuery<TResult> Top<TEntity, TResult>(this IDbQuery<TEntity> source, int topCount, Expression<Func<TEntity, TResult>> selector)
+            where TEntity : class
+        {
+            //非空检查
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(topCount, nameof(topCount));
+            Check.ArgumentNull(selector, nameof(selector));
+            //获取TOP查询数据源
+            return source.Factory.CreateTopSelectedQuery(source, topCount, selector);
+        }
+        /// <summary>
         /// Extendable method: 转换数据源中所有的元素获取TResult类型迭代器
         /// </summary>
         /// <typeparam name="TEntity">object's type</typeparam>
