@@ -31,13 +31,13 @@ namespace CloudEntity.Internal.WhereVisitors
                 case "Equals":
                     return "=";
                 case "Contains":
-                    parameterValue = string.Format("%{0}%", parameterValue.ToString());
+                    parameterValue = string.Format("%{0}%", parameterValue);
                     return "LIKE";
                 case "StartsWith":
-                    parameterValue = string.Concat(parameterValue.ToString(), "%");
+                    parameterValue = string.Concat(parameterValue, "%");
                     return "LIKE";
                 case "EndsWith":
-                    parameterValue = string.Concat("%", parameterValue.ToString());
+                    parameterValue = string.Concat("%", parameterValue);
                     return "LIKE";
                 default:
                     return null;
