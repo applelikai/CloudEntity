@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 
 namespace CloudEntity.Data.Entity
 {
@@ -19,5 +20,23 @@ namespace CloudEntity.Data.Entity
         /// <returns>当前实体的数据操作对象</returns>
         IDbOperator<TEntity> Operator<TEntity>()
             where TEntity : class;
+        /// <summary>
+        /// Execute and get result
+        /// 执行并获取单个结果
+        /// </summary>
+        /// <param name="commandText">sql命令</param>
+        /// <param name="commandType">命令类型</param>
+        /// <param name="parameters">sql参数数组</param>
+        /// <returns>单个结果</returns>
+        object GetScalar(string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters);
+        /// <summary>
+        /// Execute and get changed rows numbers
+        /// 执行获取DB受影响行数
+        /// </summary>
+        /// <param name="commandText">sql命令</param>
+        /// <param name="commandType">命令类型</param>
+        /// <param name="parameters">sql参数数组</param>
+        /// <returns>DB受影响行数</returns>
+        int ExecuteUpdate(string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters);
     }
 }

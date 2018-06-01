@@ -29,10 +29,6 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         private object _dbListsLocker;
         /// <summary>
-        /// 连接字符串
-        /// </summary>
-        private string _connectionString;
-        /// <summary>
         /// 操作数据库的DbHelper
         /// </summary>
         private DbHelper _dbHelper;

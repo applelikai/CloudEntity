@@ -13,7 +13,6 @@ namespace CloudEntity.Internal.WhereVisitors
     public class WhereVisitorFactory : IWhereVisitorFactory
     {
         private IParameterFactory parameterFactory;                     //参数创建工厂
-        private IMapperContainer mapperContainer;                       //Mapper容器
         private IColumnGetter columnGetter;                             //列获取器
         private object locaker;                                         //线程锁
         private IDictionary<ExpressionType, WhereVisitor> whereVisitors;//表达式解析器字典

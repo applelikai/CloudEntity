@@ -175,16 +175,13 @@ namespace CloudEntity.Internal.Data.Entity
             Check.ArgumentNull(entities, nameof(entities));
             //初始化Db受影响函数
             int result = 0;
-            //生成Insert sql命令
-            ICommandTree insertTree = base.CommandTreeFactory.CreateInsertTree(base.TableMapper.Header.TableFullName, this.GetInsertChildNodes());
-            string commandText = insertTree.Compile();
             //遍历对象，每次添加一个对象计算一次DB受影响行数
             foreach (TEntity entity in entities)
             {
                 //获取sql参数数组
-                IDbDataParameter[] parameters = this.GetParameters(commandText, entity).ToArray();
+                IDbDataParameter[] parameters = this.GetParameters(base.InsertSql, entity).ToArray();
                 //执行Insert
-                result += base.DbHelper.ExecuteUpdate(commandText, parameters: parameters);
+                result += base.DbHelper.ExecuteUpdate(base.InsertSql, parameters: parameters);
             }
             //返回DB受影响函数
             return result;
@@ -200,19 +197,13 @@ namespace CloudEntity.Internal.Data.Entity
             Check.ArgumentNull(entities, nameof(entities));
             //初始化Db受影响函数
             int result = 0;
-            //生成Update命令
-            ICommandTree updateTree = base.CommandTreeFactory.CreateUpdateTree(
-                base.TableMapper.Header.TableFullName,
-                base.TableMapper.Header.TableAlias,
-                this.GetUpdateChildNodes());
-            string commandText = updateTree.Compile();
             //遍历对象，每次添加一个对象计算一次DB受影响行数
             foreach (TEntity entity in entities)
             {
                 //获取sql参数数组
-                IDbDataParameter[] parameters = this.GetParameters(commandText, entity).ToArray();
+                IDbDataParameter[] parameters = this.GetParameters(base.UpdateSql, entity).ToArray();
                 //执行并返回DB受影响行数
-                result += base.DbHelper.ExecuteUpdate(commandText, parameters: parameters);
+                result += base.DbHelper.ExecuteUpdate(base.UpdateSql, parameters: parameters);
             }
             //返回DB受影响函数
             return result;

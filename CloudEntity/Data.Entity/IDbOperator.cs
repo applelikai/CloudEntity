@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace CloudEntity.Data.Entity
 {
@@ -21,11 +23,23 @@ namespace CloudEntity.Data.Entity
         /// <returns>添加的实体对象的数量</returns>
         int Add(TEntity entity);
         /// <summary>
+        /// (异步)向数据库插入实体对象指定插入的列的值
+        /// </summary>
+        /// <param name="entity">待添加的实体对象</param>
+        /// <returns>添加的实体对象的数量</returns>
+        Task<int> AddAsync(TEntity entity);
+        /// <summary>
         /// 向数据库插入实体对象所有非自增标识的列的值
         /// </summary>
         /// <param name="entity">待添加的实体对象</param>
         /// <returns>添加的实体对象的数量</returns>
         int Insert(TEntity entity);
+        /// <summary>
+        /// (异步)向数据库插入实体对象所有非自增标识的列的值
+        /// </summary>
+        /// <param name="entity">待添加的实体对象</param>
+        /// <returns>添加的实体对象的数量</returns>
+        Task<int> InsertAsync(TEntity entity);
 
         /// <summary>
         /// 删除数据库中的某个实体对象
@@ -33,6 +47,12 @@ namespace CloudEntity.Data.Entity
         /// <param name="entity">待删除的实体对象</param>
         /// <returns>删除的实体对象的数量</returns>
         int Remove(TEntity entity);
+        /// <summary>
+        /// (异步)删除数据库中的某个实体对象
+        /// </summary>
+        /// <param name="entity">待删除的实体对象</param>
+        /// <returns>删除的实体对象的数量</returns>
+        Task<int> RemoveAsync(TEntity entity);
         /// <summary>
         /// 批量删除数据库中的实体对象
         /// </summary>
@@ -47,11 +67,23 @@ namespace CloudEntity.Data.Entity
         /// <returns>修改的实体对象的数量</returns>
         int Modify(TEntity entity);
         /// <summary>
+        /// (异步)将实体对象的所有的属性的值更新至数据库
+        /// </summary>
+        /// <param name="entity">实体对象</param>
+        /// <returns>修改的实体对象的数量</returns>
+        Task<int> ModifyAsync(TEntity entity);
+        /// <summary>
         /// 保存实体对象中所有指定修改的属性的值至数据库
         /// </summary>
         /// <param name="entity">实体对象</param>
         /// <returns>修改的实体对象的数量</returns>
         int Save(TEntity entity);
+        /// <summary>
+        /// (异步)保存实体对象中所有指定修改的属性的值至数据库
+        /// </summary>
+        /// <param name="entity">实体对象</param>
+        /// <returns>修改的实体对象的数量</returns>
+        Task<int> SaveAsync(TEntity entity);
         /// <summary>
         /// 批量修改符合条件的实体的信息
         /// </summary>

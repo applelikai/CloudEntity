@@ -76,5 +76,29 @@ namespace CloudEntity.Internal.Data.Entity
                 goto Start;
             }
         }
+        /// <summary>
+        /// Execute and get result
+        /// 执行并获取单个结果
+        /// </summary>
+        /// <param name="commandText">sql命令</param>
+        /// <param name="commandType">命令类型</param>
+        /// <param name="parameters">sql参数数组</param>
+        /// <returns>单个结果</returns>
+        public object GetScalar(string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
+        {
+            return this.container.DbHelper.GetScalar(commandText, this.transaction, commandType, parameters);
+        }
+        /// <summary>
+        /// Execute and get changed rows numbers
+        /// 执行获取DB受影响行数
+        /// </summary>
+        /// <param name="commandText">sql命令</param>
+        /// <param name="commandType">命令类型</param>
+        /// <param name="parameters">sql参数数组</param>
+        /// <returns>DB受影响行数</returns>
+        public int ExecuteUpdate(string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
+        {
+            return this.container.DbHelper.ExecuteUpdate(commandText, this.transaction, commandType, parameters);
+        }
     }
 }
