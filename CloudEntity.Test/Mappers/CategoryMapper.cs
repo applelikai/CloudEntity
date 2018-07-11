@@ -15,7 +15,7 @@ namespace CloudEntity.Test.Mappers
         /// <returns>获取Table信息</returns>
         protected override ITableHeader GetHeader()
         {
-            return base.GetHeader("Categories", "memberSys");
+            return base.GetHeader("Categories");
         }
         /// <summary>
         /// 设置属性映射

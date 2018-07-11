@@ -44,6 +44,18 @@ namespace CloudEntity.Internal.WhereVisitors
             return this.parameterFactory.Parameter(name, value);
         }
         /// <summary>
+        /// 获取sql参数列表
+        /// </summary>
+        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
+        /// <param name="name">参数名</param>
+        /// <param name="value">参数值</param>
+        /// <returns>sql参数列表</returns>
+        protected IEnumerable<IDbDataParameter> GetParameters(HashSet<string> parameterNames, string name, object value)
+        {
+            if (parameterNames.Add(name))
+                yield return this.parameterFactory.Parameter(name, value);
+        }
+        /// <summary>
         /// 解析表达式 获取基本类型的sql表达式节点 或 (参数名和参数值)
         /// </summary>
         /// <param name="parameterExpression">Lambda表达式的参数</param>
@@ -92,7 +104,8 @@ namespace CloudEntity.Internal.WhereVisitors
         /// </summary>
         /// <param name="parameterExpression">Lambda表达式的参数</param>
         /// <param name="bodyExpression">Lambda表达式的主体(或主体的一部分)</param>
+        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
         /// <returns>sql条件表达式节点及其附属的sql参数</returns>
-        public abstract KeyValuePair<INodeBuilder, IDbDataParameter[]> Visit(ParameterExpression parameterExpression, Expression bodyExpression);
+        public abstract KeyValuePair<INodeBuilder, IDbDataParameter[]> Visit(ParameterExpression parameterExpression, Expression bodyExpression, HashSet<string> parameterNames);
     }
 }

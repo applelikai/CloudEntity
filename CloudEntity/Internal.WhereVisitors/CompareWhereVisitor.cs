@@ -1,9 +1,9 @@
 ﻿using CloudEntity.CommandTrees;
 using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
-using CloudEntity.Mapping;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace CloudEntity.Internal.WhereVisitors
@@ -91,8 +91,9 @@ namespace CloudEntity.Internal.WhereVisitors
         /// </summary>
         /// <param name="parameterExpression">Lambda表达式的参数</param>
         /// <param name="bodyExpression">Lambda表达式的主体(或主体的一部分)</param>
+        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
         /// <returns>sql条件表达式节点及其附属的sql参数</returns>
-        public override KeyValuePair<INodeBuilder, IDbDataParameter[]> Visit(ParameterExpression parameterExpression, Expression bodyExpression)
+        public override KeyValuePair<INodeBuilder, IDbDataParameter[]> Visit(ParameterExpression parameterExpression, Expression bodyExpression, HashSet<string> parameterNames)
         {
             //获取二叉树表达式主体
             BinaryExpression binaryExpression = bodyExpression as BinaryExpression;
@@ -118,10 +119,7 @@ namespace CloudEntity.Internal.WhereVisitors
             if (binaryBuilder.RightBuilder == null)
                 binaryBuilder.RightBuilder = new SqlBuilder("${0}", parameterName);
             //获取其附属参数数组
-            IDbDataParameter[] sqlParameters = new IDbDataParameter[]
-            {
-                base.CreateParameter(parameterName, parameterValue)
-            };
+            IDbDataParameter[] sqlParameters = base.GetParameters(parameterNames, parameterName, parameterValue).ToArray();
             //返回最终的sql参数表达式及其附属参数
             return new KeyValuePair<INodeBuilder, IDbDataParameter[]>(binaryBuilder, sqlParameters);
         }

@@ -12,23 +12,19 @@ public class Program
 {
     private static void Main(string[] args)
     {
+        //获取数据容器
         string connectionString = "Data Source=localhost;Initial Catalog=MemberSys;User Id=root;SslMode=None;";
         IDbContainer container = DbContainer.GetContainer<MySqlInitializer>(connectionString);
-        //获取sql
-        StringBuilder sqlBuilder = new StringBuilder();
-        sqlBuilder.AppendLine("    SELECT member.MemberId UserId,");
-        sqlBuilder.AppendLine("           member.MemberName UserName,");
-        sqlBuilder.AppendLine("           category.CatName CategoryName");
-        sqlBuilder.AppendLine("      FROM MemberSys.Members member");
-        sqlBuilder.AppendLine("INNER JOIN MemberSys.categories category");
-        sqlBuilder.AppendLine("        ON member.CatId = category.CatId");
-        //获取视图查询数据源
-        IDbView<User> users = container.View<User>(sqlBuilder.ToString())
-            .In(u => u.CategoryName, new string[] { "金卡会员", "银卡会员" })
-            .OrderByDescending(u => u.UserName);
-        foreach (User user in users)
+        //执行其他操作
+        string searchName = "Apple";
+        IDbQuery<Category> categories = container.List<Category>()
+            .Where(c => !c.CategoryName.Equals(searchName));
+        IDbQuery<Member> members = container.List<Member>()
+            .Join(categories, m => m.MemberCategory, (m, c) => m.CategoryId == c.CategoryId)
+            .Where(m => m.MemberName.Equals(searchName));
+        foreach (Member member in members)
         {
-            Console.WriteLine("{0} {1}", user.CategoryName, user.UserName);
+            Console.WriteLine($"{member.MemberCategory.CategoryName} {member.MemberName}");
         }
     }
 }

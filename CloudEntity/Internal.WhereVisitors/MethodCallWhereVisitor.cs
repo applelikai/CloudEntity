@@ -1,11 +1,11 @@
 ﻿using CloudEntity.CommandTrees;
 using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
-using CloudEntity.Mapping;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -48,8 +48,9 @@ namespace CloudEntity.Internal.WhereVisitors
         /// </summary>
         /// <param name="parameterExpression">Lambda表达式的参数</param>
         /// <param name="methodCallExpression">方法调用表达式</param>
+        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
         /// <returns>sql表达式及其附属的参数</returns>
-        private KeyValuePair<INodeBuilder, IDbDataParameter[]> GetNodeBuilderPair(ParameterExpression parameterExpression, MethodCallExpression methodCallExpression)
+        private KeyValuePair<INodeBuilder, IDbDataParameter[]> GetNodeBuilderPair(ParameterExpression parameterExpression, MethodCallExpression methodCallExpression, HashSet<string> parameterNames)
         {
             //初始化参数名和参数值
             string parameterName = string.Empty;
@@ -69,11 +70,10 @@ namespace CloudEntity.Internal.WhereVisitors
             //检查解析表达式是否正确
             if (string.IsNullOrEmpty(binaryBuilder.SqlOperator))
                 throw new Exception(string.Format("Unknow Expression: {0}", methodCallExpression.ToString()));
+            //获取参数
+            IDbDataParameter[] sqlParameters = base.GetParameters(parameterNames, parameterName, parameterValue).ToArray();
             //返回sql表达式节点及其附属参数
-            return new KeyValuePair<INodeBuilder, IDbDataParameter[]>(binaryBuilder, new IDbDataParameter[]
-            {
-                base.CreateParameter(parameterName, parameterValue)
-            });
+            return new KeyValuePair<INodeBuilder, IDbDataParameter[]>(binaryBuilder, sqlParameters);
         }
         /// <summary>
         /// 解析Contains方法表达式,获取sql IN语句表达式及其附属参数
@@ -136,8 +136,9 @@ namespace CloudEntity.Internal.WhereVisitors
         /// </summary>
         /// <param name="parameterExpression">Lambda表达式的参数</param>
         /// <param name="bodyExpression">Lambda表达式的主体(或主体的一部分)</param>
+        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
         /// <returns>sql条件表达式节点及其附属的sql参数</returns>
-        public override KeyValuePair<INodeBuilder, IDbDataParameter[]> Visit(ParameterExpression parameterExpression, Expression bodyExpression)
+        public override KeyValuePair<INodeBuilder, IDbDataParameter[]> Visit(ParameterExpression parameterExpression, Expression bodyExpression, HashSet<string> parameterNames)
         {
             //获取方法调用表达式主体
             MethodCallExpression methodCallExpression = bodyExpression as MethodCallExpression;
@@ -148,7 +149,7 @@ namespace CloudEntity.Internal.WhereVisitors
                 if (methodCallExpression.Object.Type.GetTypeInfo().IsGenericType && methodCallExpression.Method.Name.Equals("Contains"))
                     return this.GetSqlInBuilderPair(parameterExpression, methodCallExpression);
                 //解析普通表达式获取sql表达式及其附属参数
-                return this.GetNodeBuilderPair(parameterExpression, methodCallExpression);
+                return this.GetNodeBuilderPair(parameterExpression, methodCallExpression, parameterNames);
             }
             //解析获取 sql IN表达式及其附属参数
             else if (methodCallExpression.Method.Name.Equals("Contains"))

@@ -29,7 +29,7 @@ namespace CloudEntity.Test.MySqlClient
             IDbDataParameter[] parameters = new IDbDataParameter[]
             {
                 dbHelper.Parameter("TableName", tableHeader.TableName),
-                dbHelper.Parameter("SchemaName", tableHeader.SchemaName)
+                dbHelper.Parameter("SchemaName", "MemberSys")
             };
             //执行获取结果
             int result = TypeHelper.ConvertTo<int>(dbHelper.GetScalar(commandText.ToString(), parameters: parameters));

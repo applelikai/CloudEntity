@@ -386,8 +386,9 @@ namespace CloudEntity.Core.Data.Entity
         /// <param name="whereVisitorFactory">查询条件解析器工厂</param>
         /// <param name="parameterExpression">lambda表达式参数节点</param>
         /// <param name="expression">表达式</param>
-        /// <returns></returns>
-        private IEnumerable<KeyValuePair<INodeBuilder, IDbDataParameter[]>> GetNodeBuilderPairs(IWhereVisitorFactory whereVisitorFactory, ParameterExpression parameterExpression, Expression expression)
+        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
+        /// <returns>sql表达式集合以及其附属参数集合</returns>
+        private IEnumerable<KeyValuePair<INodeBuilder, IDbDataParameter[]>> GetNodeBuilderPairs(IWhereVisitorFactory whereVisitorFactory, ParameterExpression parameterExpression, Expression expression, HashSet<string> parameterNames)
         {
             switch (expression.NodeType)
             {
@@ -396,16 +397,16 @@ namespace CloudEntity.Core.Data.Entity
                 case ExpressionType.AndAlso:
                     BinaryExpression binaryExpression = expression as BinaryExpression;
                     //解析返回左表达式节点集合
-                    foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(whereVisitorFactory, parameterExpression, binaryExpression.Left))
+                    foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(whereVisitorFactory, parameterExpression, binaryExpression.Left, parameterNames))
                         yield return nodeBuilderPair;
                     //解析返回有表达式节点集合
-                    foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(whereVisitorFactory, parameterExpression, binaryExpression.Right))
+                    foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(whereVisitorFactory, parameterExpression, binaryExpression.Right, parameterNames))
                         yield return nodeBuilderPair;
                     break;
                 //解析其他类型的表达式
                 default:
                     WhereVisitor whereVisitor = whereVisitorFactory.GetVisitor(expression.NodeType);
-                    yield return whereVisitor.Visit(parameterExpression, expression);
+                    yield return whereVisitor.Visit(parameterExpression, expression, parameterNames);
                     break;
             }
         }
@@ -612,7 +613,7 @@ namespace CloudEntity.Core.Data.Entity
             //加载Sql表达式节点集合 和 Sql参数节点集合
             foreach (Expression<Func<TEntity, bool>> predicate in predicates)
             {
-                foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(this._mapperWhereVisitorFactory, predicate.Parameters[0], predicate.Body))
+                foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(this._mapperWhereVisitorFactory, predicate.Parameters[0], predicate.Body, new HashSet<string>()))
                 {
                     nodeBuilders.Add(nodeBuilderPair.Key);
                     parameters.AddRange(nodeBuilderPair.Value);
@@ -623,7 +624,7 @@ namespace CloudEntity.Core.Data.Entity
             {
                 Factory = this,
                 NodeBuilders = source.NodeBuilders.Concat(nodeBuilders),
-                Parameters = source.Parameters.Concat(parameters),
+                Parameters = source.Parameters.Concat(parameters).DistinctBy(p => p.ParameterName),
                 PropertyLinkers = source.PropertyLinkers
             };
         }
@@ -644,7 +645,7 @@ namespace CloudEntity.Core.Data.Entity
             {
                 Factory = this,
                 NodeBuilders = this.GetQueryNodeBuilders(source.NodeBuilders, this._mapperColumnGetter, property, whereTemplate),
-                Parameters = source.Parameters.Concat(parameters),
+                Parameters = source.Parameters.Concat(parameters).DistinctBy(p => p.ParameterName),
                 PropertyLinkers = source.PropertyLinkers
             };
         }
@@ -691,7 +692,7 @@ namespace CloudEntity.Core.Data.Entity
             {
                 Factory = this,
                 NodeBuilders = this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetInnerJoinBuilder),
-                Parameters = source.Parameters.Concat(otherSource.Parameters),
+                Parameters = source.Parameters.Concat(otherSource.Parameters).DistinctBy(p => p.ParameterName),
                 PropertyLinkers = propertyLinkers.ToArray()
             };
         }
@@ -717,7 +718,7 @@ namespace CloudEntity.Core.Data.Entity
             {
                 Factory = this,
                 NodeBuilders = this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetLeftJoinBuilder),
-                Parameters = source.Parameters.Concat(otherSource.Parameters),
+                Parameters = source.Parameters.Concat(otherSource.Parameters).DistinctBy(p => p.ParameterName),
                 PropertyLinkers = propertyLinkers.ToArray()
             };
         }
@@ -901,10 +902,11 @@ namespace CloudEntity.Core.Data.Entity
             //初始化Sql表达式节点集合 和 Sql参数节点集合
             List<INodeBuilder> nodeBuilders = new List<INodeBuilder>();
             List<IDbDataParameter> parameters = new List<IDbDataParameter>();
+            HashSet<string> paraameterNames = new HashSet<string>();
             //加载Sql表达式节点集合 和 Sql参数节点集合
             foreach (Expression<Func<TModel, bool>> predicate in predicates)
             {
-                foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(this._whereVisitorFactory, predicate.Parameters[0], predicate.Body))
+                foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(this._whereVisitorFactory, predicate.Parameters[0], predicate.Body, paraameterNames))
                 {
                     nodeBuilders.Add(nodeBuilderPair.Key);
                     parameters.AddRange(nodeBuilderPair.Value);
@@ -914,7 +916,7 @@ namespace CloudEntity.Core.Data.Entity
             return new DbView<TModel>(this, this._dbHelper, this._commandTreeFactory, source.InnerQuerySql)
             {
                 NodeBuilders = source.NodeBuilders.Concat(nodeBuilders),
-                Parameters = source.Parameters.Concat(parameters),
+                Parameters = source.Parameters.Concat(parameters).DistinctBy(p => p.ParameterName),
             };
         }
         /// <summary>
@@ -933,7 +935,7 @@ namespace CloudEntity.Core.Data.Entity
             return new DbView<TModel>(this, this._dbHelper, this._commandTreeFactory, source.InnerQuerySql)
             {
                 NodeBuilders = this.GetQueryNodeBuilders(source.NodeBuilders, this._columnGetter, property, whereTemplate),
-                Parameters = source.Parameters.Concat(parameters),
+                Parameters = source.Parameters.Concat(parameters).DistinctBy(p => p.ParameterName),
             };
         }
         /// <summary>

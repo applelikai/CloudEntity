@@ -1,7 +1,6 @@
 ﻿using CloudEntity.CommandTrees;
 using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
-using CloudEntity.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -35,8 +34,9 @@ namespace CloudEntity.Internal.WhereVisitors
         /// </summary>
         /// <param name="parameterExpression">Lambda表达式的参数</param>
         /// <param name="bodyExpression">Lambda表达式的主体(或主体的一部分)</param>
+        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
         /// <returns>sql条件表达式节点及其附属的sql参数</returns>
-        public override KeyValuePair<INodeBuilder, IDbDataParameter[]> Visit(ParameterExpression parameterExpression, Expression bodyExpression)
+        public override KeyValuePair<INodeBuilder, IDbDataParameter[]> Visit(ParameterExpression parameterExpression, Expression bodyExpression, HashSet<string> parameterNames)
         {
             //获取一元表达式并检查该表达式是否满足解析条件
             UnaryExpression unaryExpression = bodyExpression as UnaryExpression;
@@ -53,7 +53,7 @@ namespace CloudEntity.Internal.WhereVisitors
             }
             //获取sql语句模板
             WhereVisitor whereVisitor = this.factory.GetVisitor(unaryExpression.Operand.NodeType);
-            KeyValuePair<INodeBuilder, IDbDataParameter[]> sqlBuilderPair = whereVisitor.Visit(parameterExpression, unaryExpression.Operand);
+            KeyValuePair<INodeBuilder, IDbDataParameter[]> sqlBuilderPair = whereVisitor.Visit(parameterExpression, unaryExpression.Operand, parameterNames);
             StringBuilder sqlTemplate = new StringBuilder();
             sqlBuilderPair.Key.Build(sqlTemplate);
             //替换sql语句模板中的操作符为相反类型的操作符(如LIKE 替换为NOT LIKE)

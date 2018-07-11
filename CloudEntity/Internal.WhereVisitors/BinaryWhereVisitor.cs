@@ -34,17 +34,18 @@ namespace CloudEntity.Internal.WhereVisitors
         /// </summary>
         /// <param name="parameterExpression">Lambda表达式的参数</param>
         /// <param name="bodyExpression">Lambda表达式的主体(或主体的一部分)</param>
+        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
         /// <returns>sql条件表达式节点及其附属的sql参数</returns>
-        public override KeyValuePair<INodeBuilder, IDbDataParameter[]> Visit(ParameterExpression parameterExpression, Expression bodyExpression)
+        public override KeyValuePair<INodeBuilder, IDbDataParameter[]> Visit(ParameterExpression parameterExpression, Expression bodyExpression, HashSet<string> parameterNames)
         {
             //获取二叉树表达式
             BinaryExpression binaryExpression = bodyExpression as BinaryExpression;
             //获取左sql表达式及其附属参数
             WhereVisitor leftVisitor = this.factory.GetVisitor(binaryExpression.Left.NodeType);
-            KeyValuePair<INodeBuilder, IDbDataParameter[]> leftPair = leftVisitor.Visit(parameterExpression, binaryExpression.Left);
+            KeyValuePair<INodeBuilder, IDbDataParameter[]> leftPair = leftVisitor.Visit(parameterExpression, binaryExpression.Left, parameterNames);
             //获取右sql表达式及其附属参数
             WhereVisitor rightVisitor = this.factory.GetVisitor(binaryExpression.Right.NodeType);
-            KeyValuePair<INodeBuilder, IDbDataParameter[]> rightPair = rightVisitor.Visit(parameterExpression, binaryExpression.Right);
+            KeyValuePair<INodeBuilder, IDbDataParameter[]> rightPair = rightVisitor.Visit(parameterExpression, binaryExpression.Right, parameterNames);
             //获取最终的sql条件表达式节点
             INodeBuilder nodeBuilder = new BinaryBuilder()
             {
