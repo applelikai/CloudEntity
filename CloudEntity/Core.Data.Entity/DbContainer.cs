@@ -344,9 +344,9 @@ namespace CloudEntity.Core.Data.Entity
                 case ExpressionType.MemberAccess:
                     IColumnMapper columnMapper = this._mapperContainer.GetColumnMapper(selector.Body.GetProperty());
                     if (string.IsNullOrEmpty(columnMapper.ColumnAlias))
-                        yield return new ColumnBuilder(columnMapper.ColumnAlias, string.Format("{0} {1}", columnMapper.ColumnFullName, columnMapper.ColumnAlias));
-                    else
                         yield return new ColumnBuilder(columnMapper.ColumnName, columnMapper.ColumnFullName);
+                    else
+                        yield return new ColumnBuilder(columnMapper.ColumnAlias, $"{columnMapper.ColumnFullName} {columnMapper.ColumnAlias}");
                     break;
                 //解析MemberInitExpression(e => new { PropertyA = e.Property1, PropertyB = a.Property2})
                 case ExpressionType.MemberInit:

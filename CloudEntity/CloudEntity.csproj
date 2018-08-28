@@ -5,13 +5,17 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Authors>李凯</Authors>
     <Company />
-    <Description>object relation mapping</Description>
+    <Description>基于.net core的类似于Entity Framework的orm框架，只要是支持ado.net访问的数据库，都可以通过自定义配置实用当前orm框架
+CloudEntity集成了基本的linq查询，实现了带有条件的修改(一条update批量修改) 和 带有条件的删除(一条delete批量删除)</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Version>1.0.8</Version>
-    <AssemblyVersion>1.0.8.0</AssemblyVersion>
-    <FileVersion>1.0.8.0</FileVersion>
+    <Version>1.0.9</Version>
+    <AssemblyVersion>1.0.9.0</AssemblyVersion>
+    <FileVersion>1.0.9.0</FileVersion>
     <RepositoryUrl>https://github.com/applelikai/CloudEntity</RepositoryUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/applelikai/CloudEntity</PackageProjectUrl>
+    <PackageTags>orm linq</PackageTags>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Data.Common" Version="4.3.0" />

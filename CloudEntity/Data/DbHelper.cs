@@ -37,6 +37,15 @@ namespace CloudEntity.Data
         /// <param name="connectionString">连接字符串</param>
         /// <returns>Connection对象</returns>
         protected abstract IDbConnection Connect(string connectionString);
+        /// <summary>
+        /// 创建Command对象
+        /// </summary>
+        /// <param name="connection">连接</param>
+        /// <returns>Command对象</returns>
+        protected virtual IDbCommand CreateCommand(IDbConnection connection)
+        {
+            return connection.CreateCommand();
+        }
 
         /// <summary>
         /// 初始化DbHelper
@@ -189,7 +198,7 @@ namespace CloudEntity.Data
                 if (connection.State != ConnectionState.Open)
                     connection.Open();
                 //创建Command对象
-                using (IDbCommand command = connection.CreateCommand())
+                using (IDbCommand command = this.CreateCommand(connection))
                 {
                     //指定并记录sql命令
                     command.CommandText = commandText;
@@ -220,7 +229,7 @@ namespace CloudEntity.Data
         public object GetScalar(string commandText, IDbTransaction transaction, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
         {
             //创建Command对象
-            using (IDbCommand command = transaction.Connection.CreateCommand())
+            using (IDbCommand command = this.CreateCommand(transaction.Connection))
             {
                 //指定并记录sql命令
                 command.CommandText = commandText;
@@ -256,7 +265,7 @@ namespace CloudEntity.Data
                 if (connection.State != ConnectionState.Open)
                     connection.Open();
                 //创建Command对象
-                using (IDbCommand command = connection.CreateCommand())
+                using (IDbCommand command = this.CreateCommand(connection))
                 {
                     //指定并记录sql命令
                     command.CommandText = commandText;
@@ -295,7 +304,7 @@ namespace CloudEntity.Data
                 if (connection.State != ConnectionState.Open)
                     connection.Open();
                 //创建Command对象
-                using (IDbCommand command = connection.CreateCommand())
+                using (IDbCommand command = this.CreateCommand(connection))
                 {
                     //指定并记录sql命令
                     command.CommandText = commandText;
@@ -356,7 +365,7 @@ namespace CloudEntity.Data
                 if (connection.State != ConnectionState.Open)
                     connection.Open();
                 //创建Command对象
-                using (IDbCommand command = connection.CreateCommand())
+                using (IDbCommand command = this.CreateCommand(connection))
                 {
                     //指定并记录sql命令
                     command.CommandText = commandText;
@@ -387,7 +396,7 @@ namespace CloudEntity.Data
         public int ExecuteUpdate(string commandText, IDbTransaction transaction, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
         {
             //开始执行命令
-            using (IDbCommand command = transaction.Connection.CreateCommand())
+            using (IDbCommand command = this.CreateCommand(transaction.Connection))
             {
                 //指定处理事故
                 command.Transaction = transaction;
