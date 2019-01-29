@@ -650,6 +650,28 @@ namespace CloudEntity.Core.Data.Entity
             };
         }
         /// <summary>
+        /// 创建查询部分字段的数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TElement">映射类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定查询项表达式</param>
+        /// <returns>查询部分字段的数据源</returns>
+        public IDbQuery<TEntity> CreateIncludedQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
+            where TEntity : class
+        {
+            //获取Table元数据解析器
+            ITableMapper tableMapper = this._mapperContainer.GetTableMapper(typeof(TEntity));
+            //返回新的查询对象
+            return new DbQuery<TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
+            {
+                Factory = this,
+                NodeBuilders = this.GetSelectedQueryNodeBuilders(source.NodeBuilders, selector, tableMapper),
+                Parameters = source.Parameters,
+                PropertyLinkers = source.PropertyLinkers
+            };
+        }
+        /// <summary>
         /// 创建根据某属性排好序的查询对象
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
@@ -697,6 +719,32 @@ namespace CloudEntity.Core.Data.Entity
             };
         }
         /// <summary>
+        /// 创建连接查询对象
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TOther">关联的实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="otherSource">关联对象的选择性查询数据源</param>
+        /// <param name="selector">指定关联实体类型的属性表达式</param>
+        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
+        /// <returns>连接查询对象</returns>
+        public IDbQuery<TEntity> CreateJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbSelectedQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
+            where TEntity : class
+            where TOther : class
+        {
+            //获取PropertyLinkers
+            IList<PropertyLinker> propertyLinkers = source.PropertyLinkers.ToList();
+            propertyLinkers.Add(new PropertyLinker(selector.Body.GetProperty()));
+            //返回新的查询对象
+            return new DbQuery<TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
+            {
+                Factory = this,
+                NodeBuilders = this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetInnerJoinBuilder),
+                Parameters = source.Parameters.Concat(otherSource.Parameters).DistinctBy(p => p.ParameterName),
+                PropertyLinkers = propertyLinkers.ToArray()
+            };
+        }
+        /// <summary>
         /// 创建左连接查询对象
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
@@ -713,6 +761,32 @@ namespace CloudEntity.Core.Data.Entity
             //获取PropertyLinkers
             IList<PropertyLinker> propertyLinkers = source.PropertyLinkers.ToList();
             propertyLinkers.Add(new PropertyLinker(selector.Body.GetProperty(), otherSource.PropertyLinkers));
+            //返回新的查询对象
+            return new DbQuery<TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
+            {
+                Factory = this,
+                NodeBuilders = this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetLeftJoinBuilder),
+                Parameters = source.Parameters.Concat(otherSource.Parameters).DistinctBy(p => p.ParameterName),
+                PropertyLinkers = propertyLinkers.ToArray()
+            };
+        }
+        /// <summary>
+        /// 创建左连接查询对象
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TOther">关联的实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="otherSource">关联对象的选择性查询数据源</param>
+        /// <param name="selector">指定关联实体类型的属性表达式</param>
+        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
+        /// <returns>左连接查询对象</returns>
+        public IDbQuery<TEntity> CreateLeftJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbSelectedQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
+            where TEntity : class
+            where TOther : class
+        {
+            //获取PropertyLinkers
+            IList<PropertyLinker> propertyLinkers = source.PropertyLinkers.ToList();
+            propertyLinkers.Add(new PropertyLinker(selector.Body.GetProperty()));
             //返回新的查询对象
             return new DbQuery<TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
             {

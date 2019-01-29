@@ -180,6 +180,23 @@ namespace CloudEntity.Data.Entity
             return source.Factory.CreateQuery(source, predicates);
         }
         /// <summary>
+        /// Extendable method: 选定属性查询
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TElement">包含项类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定查询项表达式</param>
+        /// <returns>查询选定属性的数据源</returns>
+        public static IDbQuery<TEntity> IncludeBy<TEntity, TElement>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
+            where TEntity : class
+        {
+            //非空检查
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            //创建新的查询数据源
+            return source.Factory.CreateIncludedQuery(source, selector);
+        }
+        /// <summary>
         /// Extendable method: order by
         /// </summary>
         /// <typeparam name="TEntity">object's type</typeparam>
@@ -236,6 +253,28 @@ namespace CloudEntity.Data.Entity
             return source.Factory.CreateJoinedQuery(source, otherSource, selector, predicate);
         }
         /// <summary>
+        /// Extendable method: 获取关联查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TOther">关联的实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="otherSource">关联对象的选择性查询数据源</param>
+        /// <param name="selector">指定关联实体类型的属性表达式</param>
+        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
+        /// <returns>关联查询数据源</returns>
+        public static IDbQuery<TEntity> Join<TEntity, TOther>(this IDbQuery<TEntity> source, IDbSelectedQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
+            where TEntity : class
+            where TOther : class
+        {
+            //非空检查
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(otherSource, nameof(otherSource));
+            Check.ArgumentNull(selector, nameof(selector));
+            Check.ArgumentNull(predicate, nameof(predicate));
+            //创建关联查询
+            return source.Factory.CreateJoinedQuery(source, otherSource, selector, predicate);
+        }
+        /// <summary>
         /// Extendable method: 获取左关联查询数据源
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
@@ -246,6 +285,28 @@ namespace CloudEntity.Data.Entity
         /// <param name="predicate">TEntity 与 TOther关系表达式</param>
         /// <returns>左关联查询数据源</returns>
         public static IDbQuery<TEntity> LeftJoin<TEntity, TOther>(this IDbQuery<TEntity> source, IDbQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
+            where TEntity : class
+            where TOther : class
+        {
+            //非空检查
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(otherSource, nameof(otherSource));
+            Check.ArgumentNull(selector, nameof(selector));
+            Check.ArgumentNull(predicate, nameof(predicate));
+            //创建关联查询
+            return source.Factory.CreateLeftJoinedQuery(source, otherSource, selector, predicate);
+        }
+        /// <summary>
+        /// Extendable method: 获取左关联查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TOther">关联的实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="otherSource">关联对象的选择性查询数据源</param>
+        /// <param name="selector">指定关联实体类型的属性表达式</param>
+        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
+        /// <returns>左关联查询数据源</returns>
+        public static IDbQuery<TEntity> LeftJoin<TEntity, TOther>(this IDbQuery<TEntity> source, IDbSelectedQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
             where TEntity : class
             where TOther : class
         {

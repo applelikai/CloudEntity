@@ -53,6 +53,16 @@ namespace CloudEntity.Data.Entity
         IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source, PropertyInfo property, string whereTemplate, params IDbDataParameter[] parameters)
             where TEntity : class;
         /// <summary>
+        /// 创建查询部分字段的数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TElement">包含项类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定查询项表达式</param>
+        /// <returns>查询部分字段的数据源</returns>
+        IDbQuery<TEntity> CreateIncludedQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
+            where TEntity : class;
+        /// <summary>
         /// 创建根据某属性排好序的查询对象
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
@@ -77,6 +87,19 @@ namespace CloudEntity.Data.Entity
             where TEntity : class
             where TOther : class;
         /// <summary>
+        /// 创建连接查询对象
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TOther">关联的实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="otherSource">关联对象的选择性查询数据源</param>
+        /// <param name="selector">指定关联实体类型的属性表达式</param>
+        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
+        /// <returns>连接查询对象</returns>
+        IDbQuery<TEntity> CreateJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbSelectedQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
+            where TEntity : class
+            where TOther : class;
+        /// <summary>
         /// 创建左连接查询对象
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
@@ -87,6 +110,19 @@ namespace CloudEntity.Data.Entity
         /// <param name="predicate">TEntity 与 TOther关系表达式</param>
         /// <returns>左连接查询对象</returns>
         IDbQuery<TEntity> CreateLeftJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
+            where TEntity : class
+            where TOther : class;
+        /// <summary>
+        /// 创建左连接查询对象
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TOther">关联的实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="otherSource">关联对象的选择性查询数据源</param>
+        /// <param name="selector">指定关联实体类型的属性表达式</param>
+        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
+        /// <returns>左连接查询对象</returns>
+        IDbQuery<TEntity> CreateLeftJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbSelectedQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
             where TEntity : class
             where TOther : class;
         /// <summary>
