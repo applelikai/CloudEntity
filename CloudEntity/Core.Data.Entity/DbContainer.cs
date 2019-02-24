@@ -16,7 +16,7 @@ namespace CloudEntity.Core.Data.Entity
 {
     /// <summary>
     /// 数据容器类
-    /// 李凯 Apple_Li
+    /// 李凯 Apple_Li 15150598493
     /// </summary>
     public sealed class DbContainer : IDbContainer, IDbFactory
     {
@@ -132,6 +132,45 @@ namespace CloudEntity.Core.Data.Entity
                     };
                 default:
                     throw new Exception(string.Format("unknow expression:{0]", expression));
+            }
+        }
+        /// <summary>
+        /// 获取列名迭代器
+        /// </summary>
+        /// <param name="selector">选定查询项表达式</param>
+        /// <returns>列名迭代器</returns>
+        private IEnumerable<string> GetColumnNames(LambdaExpression selector)
+        {
+            //解析Lambda Select表达式为nodeBuilders添加父类型为Select的子sql表达式节点
+            switch (selector.Body.NodeType)
+            {
+                //解析成员表达式(e => e.Property1)
+                case ExpressionType.MemberAccess:
+                    IColumnMapper columnMapper = _mapperContainer.GetColumnMapper(selector.Body.GetProperty());
+                    if (string.IsNullOrEmpty(columnMapper.ColumnAlias))
+                        yield return columnMapper.ColumnFullName;
+                    else
+                        yield return $"{columnMapper.ColumnFullName} {columnMapper.ColumnAlias}";
+                    break;
+                //解析NewExpression(e => new Model(e.Property1, e.Property2))
+                case ExpressionType.New:
+                    NewExpression newExpression = selector.Body as NewExpression;
+                    IEnumerable<MemberInfo> memberInfos = newExpression.Arguments.OfType<MemberExpression>().Select(m => m.Member);
+                    //为nodeBuilders添加父类型为Select的子sql表达式节点
+                    foreach (MemberInfo memberInfo in memberInfos)
+                    {
+                        //获取列Mapper对象
+                        IColumnMapper currentColumnMapper = _mapperContainer.GetColumnMapper(memberInfo);
+                        //若列的别名为空，则不使用别名
+                        if (string.IsNullOrEmpty(currentColumnMapper.ColumnAlias))
+                            yield return currentColumnMapper.ColumnFullName;
+                        //若别名不为空, 则使用别名
+                        else
+                            yield return $"{currentColumnMapper.ColumnFullName} {currentColumnMapper.ColumnAlias}";
+                    }
+                    break;
+                default:
+                    throw new Exception(string.Format("Unknow Expression: {0}", selector));
             }
         }
         /// <summary>
@@ -809,13 +848,11 @@ namespace CloudEntity.Core.Data.Entity
         public IDbPagedQuery<TEntity> CreatePagedQuery<TEntity>(IDbQuery<TEntity> source, Expression<Func<TEntity, object>> orderBySelector, int pageSize, int pageIndex = 1, bool isAsc = true)
             where TEntity : class
         {
-            //获取排序属性
-            IColumnMapper columnMapper = this._mapperContainer.GetColumnMapper(orderBySelector.Body.GetProperty());
             //创建分页查询数据源
             return new DbPagedQuery<TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
             {
                 PropertyLinkers = source.PropertyLinkers,
-                OrderByColumn = columnMapper.ColumnFullName,
+                OrderByColumns = this.GetColumnNames(orderBySelector).ToArray(),
                 IsAsc = isAsc,
                 NodeBuilders = source.NodeBuilders,
                 Parameters = source.Parameters,

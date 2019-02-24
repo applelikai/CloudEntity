@@ -27,9 +27,9 @@ namespace CloudEntity.Internal.Data.Entity
         /// </summary>
         internal PropertyLinker[] PropertyLinkers { private get; set; }
         /// <summary>
-        /// 排序的列
+        /// 排序的列数组
         /// </summary>
-        internal string OrderByColumn { private get; set; }
+        internal string[] OrderByColumns { private get; set; }
         /// <summary>
         /// 升序 还是 降序
         /// </summary>
@@ -119,7 +119,7 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TEntity> GetEnumerator()
         {
             //获取查询命令生成树(当前可默认获取到分页查询命令生成树)
-            ICommandTree queryTree = base.CommandTreeFactory.CreatePagingQueryTree(base.NodeBuilders, this.OrderByColumn, this.IsAsc);
+            ICommandTree queryTree = base.CommandTreeFactory.CreatePagingQueryTree(base.NodeBuilders, this.OrderByColumns, this.IsAsc);
             //获取sql参数集合
             IList<IDbDataParameter> parameters = base.Parameters.ToList();
             parameters.Add(base.DbHelper.Parameter("SkipCount", this.PageSize * (this.PageIndex - 1)));

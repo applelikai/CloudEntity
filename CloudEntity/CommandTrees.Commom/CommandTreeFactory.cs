@@ -228,10 +228,10 @@ namespace CloudEntity.CommandTrees.Commom
         /// 创建分页查询命令生成树
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
-        /// <param name="orderByColumn">排序的列</param>
+        /// <param name="orderByColumns">排序的列数组</param>
         /// <param name="isAsc">True:升序(False为降序)</param>
         /// <returns>分页查询命令生成树</returns>
-        public abstract ICommandTree CreatePagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, string orderByColumn, bool isAsc = true);
+        public abstract ICommandTree CreatePagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, string[] orderByColumns, bool isAsc = true);
         /// <summary>
         /// 创建With As 查询命令生成树
         /// </summary>
