@@ -144,7 +144,8 @@ namespace CloudEntity.Core.Data.Entity
             //解析Lambda Select表达式为nodeBuilders添加父类型为Select的子sql表达式节点
             switch (selector.Body.NodeType)
             {
-                //解析成员表达式(e => e.Property1)
+                //解析转换表达式以及成员表达式(e => e.Property1)
+                case ExpressionType.Convert:
                 case ExpressionType.MemberAccess:
                     IColumnMapper columnMapper = _mapperContainer.GetColumnMapper(selector.Body.GetProperty());
                     if (string.IsNullOrEmpty(columnMapper.ColumnAlias))
@@ -379,7 +380,8 @@ namespace CloudEntity.Core.Data.Entity
             //解析Lambda Select表达式为nodeBuilders添加父类型为Select的子sql表达式节点
             switch (selector.Body.NodeType)
             {
-                //解析成员表达式(e => e.Property1)
+                //解析转换表达式及其成员表达式(e => e.Property1)
+                case ExpressionType.Convert:
                 case ExpressionType.MemberAccess:
                     IColumnMapper columnMapper = this._mapperContainer.GetColumnMapper(selector.Body.GetProperty());
                     if (string.IsNullOrEmpty(columnMapper.ColumnAlias))
