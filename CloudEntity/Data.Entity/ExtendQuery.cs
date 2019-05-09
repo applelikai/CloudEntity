@@ -197,40 +197,6 @@ namespace CloudEntity.Data.Entity
             return source.Factory.CreateIncludedQuery(source, selector);
         }
         /// <summary>
-        /// Extendable method: order by
-        /// </summary>
-        /// <typeparam name="TEntity">object's type</typeparam>
-        /// <typeparam name="TKey">object's property's type</typeparam>
-        /// <param name="source">source</param>
-        /// <param name="keySelector">Which property?</param>
-        /// <returns>source</returns>
-        public static IDbQuery<TEntity> OrderBy<TEntity, TKey>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector)
-            where TEntity : class
-        {
-            //非空验证
-            Check.ArgumentNull(source, nameof(source));
-            Check.ArgumentNull(keySelector, "keySelector");
-            //创建新的查询对象
-            return source.Factory.CreateSortedQuery(source, keySelector);
-        }
-        /// <summary>
-        /// Extendable method: order by descing
-        /// </summary>
-        /// <typeparam name="TEntity">object's type</typeparam>
-        /// <typeparam name="TKey">object's property's type</typeparam>
-        /// <param name="source">source</param>
-        /// <param name="keySelector">Which property?</param>
-        /// <returns>source</returns>
-        public static IDbQuery<TEntity> OrderByDescending<TEntity, TKey>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector)
-            where TEntity : class
-        {
-            //非空验证
-            Check.ArgumentNull(source, nameof(source));
-            Check.ArgumentNull(keySelector, nameof(keySelector));
-            //创建新的查询对象
-            return source.Factory.CreateSortedQuery(source, keySelector, false);
-        }
-        /// <summary>
         /// Extendable method: 获取关联查询数据源
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
@@ -488,41 +454,23 @@ namespace CloudEntity.Data.Entity
             //创建新的视图查询数据源
             return source.Factory.CreateView(source, predicates);
         }
-        /// <summary>
-        /// Extendable method: 对视图查询数据源按某属性升序排序
-        /// </summary>
-        /// <typeparam name="TModel">视图对象类型</typeparam>
-        /// <typeparam name="TKey">对象属性类型</typeparam>
-        /// <param name="source">视图查询数据源</param>
-        /// <param name="keySelector">指定对象某属性的表达式(根据此属性排序)</param>
-        /// <returns>排好序的视图查询数据源</returns>
-        public static IDbView<TModel> OrderBy<TModel, TKey>(this IDbView<TModel> source, Expression<Func<TModel, TKey>> keySelector)
-            where TModel : class, new()
-        {
-            //非空验证
-            Check.ArgumentNull(source, nameof(source));
-            Check.ArgumentNull(keySelector, nameof(keySelector));
-            //创建新的视图查询数据源并返回
-            return source.Factory.CreateSortedView(source, keySelector);
-        }
-        /// <summary>
-        /// Extendable method: 对视图查询数据源按某属性降序排序
-        /// </summary>
-        /// <typeparam name="TModel">视图对象类型</typeparam>
-        /// <typeparam name="TKey">对象属性类型</typeparam>
-        /// <param name="source">视图查询数据源</param>
-        /// <param name="keySelector">指定对象某属性的表达式(根据此属性排序)</param>
-        /// <returns>排好序的视图查询数据源</returns>
-        public static IDbView<TModel> OrderByDescending<TModel, TKey>(this IDbView<TModel> source, Expression<Func<TModel, TKey>> keySelector)
-            where TModel : class, new()
-        {
-            //非空验证
-            Check.ArgumentNull(source, nameof(source));
-            Check.ArgumentNull(keySelector, nameof(keySelector));
-            //创建新的视图查询数据源并返回
-            return source.Factory.CreateSortedView(source, keySelector, false);
-        }
 
+        /// <summary>
+        /// Extendable method: 获取分页查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">排好序的数据源</param>
+        /// <param name="pageSize">每页的元素数量</param>
+        /// <param name="pageIndex">当前第几页</param>
+        /// <returns>分页查询数据源</returns>
+        public static IDbPagedQuery<TEntity> Paging<TEntity>(this IDbSortedQuery<TEntity> source, int pageSize, int pageIndex = 1)
+            where TEntity : class
+        {
+            //非空检查
+            Check.ArgumentNull(source, nameof(source));
+            //执行分页查询
+            return source.Factory.CreatePagedQuery(source, pageSize, pageIndex);
+        }
         /// <summary>
         /// Extendable method: 获取按某属性升序排序的分页查询数据源
         /// </summary>
@@ -531,7 +479,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="orderBySelector">指定排序属性</param>
         /// <param name="pageSize">每页的元素数量</param>
         /// <param name="pageIndex">当前第几页</param>
-        /// <returns>TEntity类型的元素迭代器</returns>
+        /// <returns>分页查询数据源</returns>
         public static IDbPagedQuery<TEntity> PagingBy<TEntity>(this IDbQuery<TEntity> source, Expression<Func<TEntity, object>> orderBySelector, int pageSize, int pageIndex = 1)
             where TEntity : class
         {
@@ -555,7 +503,7 @@ namespace CloudEntity.Data.Entity
             //非空检查
             Check.ArgumentNull(source, nameof(source));
             //执行分页查询
-            return source.Factory.CreatePagedQuery(source, orderBySelector, pageSize, pageIndex, false);
+            return source.Factory.CreatePagedQuery(source, orderBySelector, pageSize, pageIndex, true);
         }
 
         /// <summary>

@@ -46,9 +46,18 @@ namespace CloudEntity.Internal.Data.Entity
             AccessorLinker[] accessorLinkers = this.PropertyLinkers.Select(l => l.ToAccessorLinker(base.MapperContainer)).ToArray();
             return this.objectAccessor.CreateEntity(tableMapper, reader, columnNames, accessorLinkers);
         }
-        
+
         /// <summary>
-        /// 创建DbQuery对象
+        /// 获取所有的sql表达式节点
+        /// </summary>
+        /// <returns>所有的sql表达式节点</returns>
+        protected virtual IEnumerable<INodeBuilder> GetNodeBuilders()
+        {
+            return base.NodeBuilders;
+        }
+
+        /// <summary>
+        /// 初始化
         /// </summary>
         /// <param name="mapperContainer">Mapper容器</param>
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
@@ -65,7 +74,7 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TEntity> GetEnumerator()
         {
             //创建CommandTree
-            ICommandTree queryTree = base.CommandTreeFactory.CreateQueryTree(base.NodeBuilders);
+            ICommandTree queryTree = base.CommandTreeFactory.CreateQueryTree(this.GetNodeBuilders());
             //执行查询
             foreach (TEntity entity in base.DbHelper.GetResults(this.CreateEntity, queryTree.Compile(), parameters: base.Parameters.ToArray()))
                 yield return entity;

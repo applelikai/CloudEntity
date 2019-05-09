@@ -10,6 +10,7 @@ namespace CloudEntity.Data.Entity
     /// </summary>
     public interface IDbFactory
     {
+        #region 创建统计查询数据源
         /// <summary>
         /// 创建统计查询对象
         /// </summary>
@@ -25,6 +26,8 @@ namespace CloudEntity.Data.Entity
         /// <param name="lambdaExpression">指定对象某属性的表达式</param>
         /// <returns>统计查询对象</returns>
         IDbScalar CreateScalar(IDbBase dbBase, string functionName, LambdaExpression lambdaExpression);
+        #endregion
+        #region 创建查询数据源
         /// <summary>
         /// 创建新的查询数据源
         /// </summary>
@@ -52,27 +55,8 @@ namespace CloudEntity.Data.Entity
         /// <returns>新的查询对象</returns>
         IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source, PropertyInfo property, string whereTemplate, params IDbDataParameter[] parameters)
             where TEntity : class;
-        /// <summary>
-        /// 创建查询部分字段的数据源
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TElement">包含项类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="selector">指定查询项表达式</param>
-        /// <returns>查询部分字段的数据源</returns>
-        IDbQuery<TEntity> CreateIncludedQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
-            where TEntity : class;
-        /// <summary>
-        /// 创建根据某属性排好序的查询对象
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TKey">实体某属性类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="keySelector">指定实体对象某属性的表达式</param>
-        /// <param name="isAsc">true:升序 false:降序</param>
-        /// <returns>排好序的查询对象</returns>
-        IDbQuery<TEntity> CreateSortedQuery<TEntity, TKey>(IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector, bool isAsc = true)
-            where TEntity : class;
+        #endregion
+        #region 创建关联查询数据源
         /// <summary>
         /// 创建连接查询对象
         /// </summary>
@@ -125,6 +109,42 @@ namespace CloudEntity.Data.Entity
         IDbQuery<TEntity> CreateLeftJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbSelectedQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
             where TEntity : class
             where TOther : class;
+        #endregion
+        #region 创建排序查询数据源
+        /// <summary>
+        /// 创建根据某属性排好序的查询对象
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TKey">实体某属性类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="keySelector">指定实体对象某属性的表达式</param>
+        /// <param name="isDesc">true:降序 false:升序</param>
+        /// <returns>排好序的查询对象</returns>
+        IDbSortedQuery<TEntity> CreateSortedQuery<TEntity, TKey>(IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector, bool isDesc = false)
+            where TEntity : class;
+        /// <summary>
+        /// 创建根据某属性排好序的查询对象
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TKey">实体某属性类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="keySelector">指定实体对象某属性的表达式</param>
+        /// <param name="isDesc">true:降序 false:升序</param>
+        /// <returns>排好序的查询对象</returns>
+        IDbSortedQuery<TEntity> CreateSortedQuery<TEntity, TKey>(IDbSortedQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector, bool isDesc = false)
+            where TEntity : class;
+        #endregion
+        #region 创建分页查询数据源
+        /// <summary>
+        /// 创建分页查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">排好序的数据源</param>
+        /// <param name="pageSize">每页元素数量</param>
+        /// <param name="pageIndex">当前第几页</param>
+        /// <returns>分页查询数据源</returns>
+        IDbPagedQuery<TEntity> CreatePagedQuery<TEntity>(IDbSortedQuery<TEntity> source, int pageSize, int pageIndex)
+            where TEntity : class;
         /// <summary>
         /// 创建分页查询数据源
         /// </summary>
@@ -133,9 +153,21 @@ namespace CloudEntity.Data.Entity
         /// <param name="orderBySelector">指定排序属性的表达式</param>
         /// <param name="pageSize">每页元素数量</param>
         /// <param name="pageIndex">当前第几页</param>
-        /// <param name="isAsc">true:升序 false:降序</param>
+        /// <param name="isDesc">是否降序</param>
         /// <returns>分页查询数据源</returns>
-        IDbPagedQuery<TEntity> CreatePagedQuery<TEntity>(IDbQuery<TEntity> source, Expression<Func<TEntity, object>> orderBySelector, int pageSize, int pageIndex = 1, bool isAsc = true)
+        IDbPagedQuery<TEntity> CreatePagedQuery<TEntity>(IDbQuery<TEntity> source, Expression<Func<TEntity, object>> orderBySelector, int pageSize, int pageIndex, bool isDesc = false)
+            where TEntity : class;
+        #endregion
+        #region 创建包含项或选定项查询数据源
+        /// <summary>
+        /// 创建查询部分字段的数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TElement">包含项类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定查询项表达式</param>
+        /// <returns>查询部分字段的数据源</returns>
+        IDbQuery<TEntity> CreateIncludedQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
             where TEntity : class;
         /// <summary>
         /// 创建TOP选定项查询数据源
@@ -177,6 +209,8 @@ namespace CloudEntity.Data.Entity
         /// <returns>去除重复项查询数据源</returns>
         IDbSelectedQuery<TElement> CreateDistinctQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
             where TEntity : class;
+        #endregion
+        #region 创建sql视图查询数据源
         /// <summary>
         /// 创建视图查询数据源
         /// </summary>
@@ -208,5 +242,6 @@ namespace CloudEntity.Data.Entity
         /// <returns>排好序的视图查询数据源</returns>
         IDbView<TModel> CreateSortedView<TModel, TKey>(IDbView<TModel> source, Expression<Func<TModel, TKey>> keySelector, bool isAsc = true)
             where TModel : class, new();
+        #endregion
     }
 }

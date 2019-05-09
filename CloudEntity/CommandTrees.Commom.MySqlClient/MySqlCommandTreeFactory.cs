@@ -9,12 +9,6 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
     public class MySqlCommandTreeFactory : CommandTreeFactory
     {
         /// <summary>
-        /// 创建生成MySql的命令生成树的工厂
-        /// </summary>
-        public MySqlCommandTreeFactory()
-            : base('@') { }
-
-        /// <summary>
         /// 创建读取节点信息的Helper
         /// </summary>
         /// <returns>读取节点信息的Helper</returns>
@@ -32,6 +26,12 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         {
             return new MySqlUpdateTree(tableFullName, tableAlias, base.ParameterMarker);
         }
+
+        /// <summary>
+        /// 创建生成MySql的命令生成树的工厂
+        /// </summary>
+        public MySqlCommandTreeFactory()
+            : base('@') { }
         /// <summary>
         /// 创建TOP查询sql的生成树
         /// </summary>
@@ -51,18 +51,17 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// 创建分页查询命令生成树
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
-        /// <param name="orderByColumns">排序的列数组</param>
-        /// <param name="isAsc">True:升序(False为降序)</param>
+        /// <param name="sortChildBuilders">排序的子节点集</param>
         /// <returns>分页查询命令生成树</returns>
-        public override ICommandTree CreatePagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, string[] orderByColumns, bool isAsc = true)
+        public override ICommandTree CreatePagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, IEnumerable<ISqlBuilder> sortChildBuilders)
         {
             //创建MySql分页查询命令生成树
             MySqlPagingQueryTree queryTree = new MySqlPagingQueryTree(base.ParameterMarker);
             //填充MySql分页查询命令生成树的各个节点
             base.LoadQueryTree(queryTree, queryChildBuilders);
             //填充OrderBy节点
-            foreach (string orderByColumn in orderByColumns)
-                queryTree.OrderBy.Append(new SqlBuilder("{0} {1}", orderByColumn, isAsc ? "ASC" : "DESC"));
+            foreach (ISqlBuilder nodeBuilder in sortChildBuilders)
+                queryTree.OrderBy.Append(nodeBuilder);
             //返回MySql分页查询命令生成树
             return queryTree;
         }

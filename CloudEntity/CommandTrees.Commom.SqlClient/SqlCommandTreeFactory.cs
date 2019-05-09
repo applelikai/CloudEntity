@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace CloudEntity.CommandTrees.Commom.SqlClient
 {
@@ -9,13 +10,6 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
     public class SqlCommandTreeFactory : CommandTreeFactory
     {
         /// <summary>
-        /// 创建针对sql server的sql驱动
-        /// </summary>
-        public SqlCommandTreeFactory()
-            : base('@')
-        { }
-
-        /// <summary>
         /// 创建读取节点信息的Helper
         /// </summary>
         /// <returns>读取节点信息的Helper</returns>
@@ -25,16 +19,20 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
         }
 
         /// <summary>
+        /// 创建针对sql server的sql驱动
+        /// </summary>
+        public SqlCommandTreeFactory()
+            : base('@') { }
+        /// <summary>
         /// 创建分页查询命令生成树
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
-        /// <param name="orderByColumns">排序的列数组</param>
-        /// <param name="isAsc">True:升序(False为降序)</param>
+        /// <param name="sortChildBuilders">排序的子节点集</param>
         /// <returns>分页查询命令生成树</returns>
-        public override ICommandTree CreatePagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, string[] orderByColumns, bool isAsc = true)
+        public override ICommandTree CreatePagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, IEnumerable<ISqlBuilder> sortChildBuilders)
         {
             //创建分页查询命令生成树
-            SqlOrderByPagingQueryTree queryTree = new SqlOrderByPagingQueryTree(base.ParameterMarker, orderByColumns, isAsc);
+            SqlOrderByPagingQueryTree queryTree = new SqlOrderByPagingQueryTree(base.ParameterMarker, sortChildBuilders.ToArray());
             //填充分页查询命令生成树各个节点
             base.LoadQueryTree(queryTree, queryChildBuilders);
             //返回分页查询命令生成树

@@ -12,13 +12,12 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
         /// 创建分页查询命令生成树
         /// </summary>
         /// <param name="parameterMarker">sql参数标识符号</param>
-        /// <param name="orderByColumns">排序列数组</param>
-        /// <param name="isAsc">是否是升序</param>
-        public SqlOrderByPagingQueryTree(char parameterMarker, string[] orderByColumns, bool isAsc)
+        /// <param name="sortBuilders">排序节点数组</param>
+        public SqlOrderByPagingQueryTree(char parameterMarker, ISqlBuilder[] sortBuilders)
             : base(parameterMarker)
         {
             //添加RowNumber查询列
-            ISqlBuilder rowNumberBuilder = new RowNumberBuilder(orderByColumns, isAsc);
+            ISqlBuilder rowNumberBuilder = new RowNumberBuilder(sortBuilders);
             base.Select.Append(rowNumberBuilder);
         }
         /// <summary>

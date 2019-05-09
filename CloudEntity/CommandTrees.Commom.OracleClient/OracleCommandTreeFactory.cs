@@ -27,18 +27,17 @@ namespace CloudEntity.CommandTrees.Commom.OracleClient
         /// 创建分页查询命令生成树
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
-        /// <param name="orderByColumns">排序的列数组</param>
-        /// <param name="isAsc">True:升序(False为降序)</param>
+        /// <param name="sortChildBuilders">排序的子节点集</param>
         /// <returns>分页查询命令生成树</returns>
-        public override ICommandTree CreatePagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, string[] orderByColumns, bool isAsc = true)
+        public override ICommandTree CreatePagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, IEnumerable<ISqlBuilder> sortChildBuilders)
         {
             //创建Oracle分页sql生成树
             OraclePagingQueryTree queryTree = new OraclePagingQueryTree(base.ParameterMarker);
             //加载Oracle分页sql生成树
             base.LoadQueryTree(queryTree, queryChildBuilders);
             //填充OrderBy节点
-            foreach (string orderByColumn in orderByColumns)
-                queryTree.OrderBy.Append(new SqlBuilder("{0} {1}", orderByColumn, isAsc ? "ASC" : "DESC"));
+            foreach (ISqlBuilder nodeBuilder in sortChildBuilders)
+                queryTree.OrderBy.Append(nodeBuilder);
             //返回Oracle分页sql生成树
             return queryTree;
         }

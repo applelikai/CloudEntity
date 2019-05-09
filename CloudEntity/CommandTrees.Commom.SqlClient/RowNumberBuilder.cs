@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace CloudEntity.CommandTrees.Commom.SqlClient
@@ -11,23 +10,17 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
     internal class RowNumberBuilder : ISqlBuilder
     {
         /// <summary>
-        /// 列名数组
+        /// 排序节点的子节点集合
         /// </summary>
-        private string[] _columnNames;
-        /// <summary>
-        /// True:升序(False为降序)
-        /// </summary>
-        private bool _isAsc;
+        private ISqlBuilder[] _sortBuilders;
 
         /// <summary>
         /// 初始化
         /// </summary>
-        /// <param name="columnNames">列名数组</param>
-        /// <param name="isAsc">True:升序(False为降序)</param>
-        public RowNumberBuilder(string[] columnNames, bool isAsc)
+        /// <param name="sortBuilders">排序节点集合</param>
+        public RowNumberBuilder(ISqlBuilder[] sortBuilders)
         {
-            this._columnNames = columnNames;
-            this._isAsc = isAsc;
+            _sortBuilders = sortBuilders;
         }
         /// <summary>
         /// 拼接sql语句
@@ -39,12 +32,11 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
             commandText.Append("ROW_NUMBER()");
             commandText.Append(" OVER(ORDER BY");
             //拼接排序列
-            for (int i = 0; i < this._columnNames.Length; i++)
+            for (int i = 0; i < _sortBuilders.Length; i++)
             {
                 commandText.Append(" ");
-                commandText.Append(this._columnNames[i]);
-                commandText.Append(this._isAsc ? string.Empty : " DESC");
-                if (i + 1 < this._columnNames.Length)
+                _sortBuilders[i].Build(commandText);
+                if (i + 1 < _sortBuilders.Length)
                     commandText.Append(',');
             }
             //拼接结尾
