@@ -63,7 +63,7 @@ namespace CloudEntity.Data.Entity
             //非空验证
             Check.ArgumentNull(source, nameof(source));
             Check.ArgumentNull(selector, nameof(selector));
-            Check.ArgumentNull(selectorSource, "selectorSource");
+            Check.ArgumentNull(selectorSource, nameof(selectorSource));
             //获取sql表达式模板
             PropertyInfo property = selector.Body.GetProperty();
             StringBuilder sqlTemplate = new StringBuilder();
@@ -91,8 +91,38 @@ namespace CloudEntity.Data.Entity
             //非空验证
             Check.ArgumentNull(source, nameof(source));
             Check.ArgumentNull(selector, nameof(selector));
-            Check.ArgumentNull(left, "left");
-            Check.ArgumentNull(right, "right");
+            Check.ArgumentNull(left, nameof(left));
+            Check.ArgumentNull(right, nameof(right));
+            //获取sql表达式模板
+            PropertyInfo property = selector.Body.GetProperty();
+            string sqlTemplate = string.Format("BETWEEN ${0}Left AND ${0}Right", property.Name);
+            //获取sql参数
+            IDbDataParameter[] parameters = new IDbDataParameter[]
+            {
+                source.ParameterFactory.Parameter(string.Concat(property.Name, "Left"), left),
+                source.ParameterFactory.Parameter(string.Concat(property.Name, "Right"), right)
+            };
+            //创建新数据源
+            return source.Factory.CreateQuery(source, property, sqlTemplate, parameters);
+        }
+        /// <summary>
+        /// Extendable method: 过滤数据源中属性在一定范围内的实体
+        /// </summary>
+        /// <typeparam name="TEntity">对象类型</typeparam>
+        /// <typeparam name="TProperty">属性类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定对象可空类型属性表达式</param>
+        /// <param name="left">最小值</param>
+        /// <param name="right">最大值</param>
+        public static IDbQuery<TEntity> Between<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty?>> selector, TProperty left, TProperty right)
+            where TEntity : class
+            where TProperty : struct
+        {
+            //非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            Check.ArgumentNull(left, nameof(left));
+            Check.ArgumentNull(right, nameof(right));
             //获取sql表达式模板
             PropertyInfo property = selector.Body.GetProperty();
             string sqlTemplate = string.Format("BETWEEN ${0}Left AND ${0}Right", property.Name);

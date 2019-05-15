@@ -109,7 +109,7 @@ namespace CloudEntity.Internal.WhereVisitors
             for (int i = 0; i < sqlParameterValues.Count; i++)
             {
                 //拼接sql表达式
-                sqlTemplate.Append("\n<######>");
+                sqlTemplate.Append("\n       ");
                 sqlTemplate.Append(i == 0 ? '(' : ' ');
                 sqlTemplate.AppendFormat("${0}", parameterName);
                 sqlTemplate.AppendFormat("{0}{1}", i, (i + 1 == sqlParameterValues.Count) ? ")" : ",");
