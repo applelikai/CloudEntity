@@ -17,7 +17,7 @@ namespace CloudEntity.Mapping
         public static IColumnMapper GetColumnMapper(this IMapperContainer mapperContainer, MemberInfo memberInfo)
         {
             //获取当前实体类型的Table元数据解析器
-            ITableMapper tableMapper = mapperContainer.GetTableMapper(memberInfo.DeclaringType);
+            ITableMapper tableMapper = mapperContainer.GetTableMapper(memberInfo.ReflectedType);
             //获取Column元数据解析器
             return tableMapper.GetColumnMapper(memberInfo.Name);
         }
@@ -30,7 +30,7 @@ namespace CloudEntity.Mapping
         public static IColumnMapper GetColumnMapper(this IMapperContainer mapperContainer, PropertyInfo property)
         {
             //获取当前实体类型的Table元数据解析器
-            ITableMapper tableMapper = mapperContainer.GetTableMapper(property.DeclaringType);
+            ITableMapper tableMapper = mapperContainer.GetTableMapper(property.ReflectedType);
             //获取Column元数据解析器
             return tableMapper.GetColumnMapper(property.Name);
         }
