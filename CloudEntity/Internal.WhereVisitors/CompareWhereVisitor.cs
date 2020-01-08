@@ -70,9 +70,9 @@ namespace CloudEntity.Internal.WhereVisitors
             switch (binaryExpression.NodeType)
             {
                 case ExpressionType.Equal:
-                    return new NodeBuilder(SqlType.Where, "{0} IS NULL", base.GetColumnFullName(expression.GetProperty()));
+                    return new NodeBuilder(SqlType.Where, "{0} IS NULL", base.GetColumnFullName(expression.GetMemberExpression()));
                 case ExpressionType.NotEqual:
-                    return new NodeBuilder(SqlType.Where, "{0} IS NOT NULL", base.GetColumnFullName(expression.GetProperty()));
+                    return new NodeBuilder(SqlType.Where, "{0} IS NOT NULL", base.GetColumnFullName(expression.GetMemberExpression()));
             };
             return null;
         }

@@ -92,7 +92,7 @@ namespace CloudEntity.Core.Data.Entity
         /// <returns>sql成员表达式节点</returns>
         private ISqlBuilder GetSqlBuilder(Expression expression)
         {
-            IColumnMapper columnMapper = this._mapperContainer.GetColumnMapper(expression.GetProperty());
+            IColumnMapper columnMapper = this._mapperContainer.GetColumnMapper(expression.GetMemberExpression());
             return new SqlBuilder(columnMapper.ColumnFullName);
         }
         /// <summary>
@@ -132,46 +132,6 @@ namespace CloudEntity.Core.Data.Entity
                     };
                 default:
                     throw new Exception(string.Format("unknow expression:{0]", expression));
-            }
-        }
-        /// <summary>
-        /// 获取列名迭代器
-        /// </summary>
-        /// <param name="selector">选定查询项表达式</param>
-        /// <returns>列名迭代器</returns>
-        private IEnumerable<string> GetColumnNames(LambdaExpression selector)
-        {
-            //解析Lambda Select表达式为nodeBuilders添加父类型为Select的子sql表达式节点
-            switch (selector.Body.NodeType)
-            {
-                //解析转换表达式以及成员表达式(e => e.Property1)
-                case ExpressionType.Convert:
-                case ExpressionType.MemberAccess:
-                    IColumnMapper columnMapper = _mapperContainer.GetColumnMapper(selector.Body.GetProperty());
-                    if (string.IsNullOrEmpty(columnMapper.ColumnAlias))
-                        yield return columnMapper.ColumnFullName;
-                    else
-                        yield return $"{columnMapper.ColumnFullName} {columnMapper.ColumnAlias}";
-                    break;
-                //解析NewExpression(e => new Model(e.Property1, e.Property2))
-                case ExpressionType.New:
-                    NewExpression newExpression = selector.Body as NewExpression;
-                    IEnumerable<MemberInfo> memberInfos = newExpression.Arguments.OfType<MemberExpression>().Select(m => m.Member);
-                    //为nodeBuilders添加父类型为Select的子sql表达式节点
-                    foreach (MemberInfo memberInfo in memberInfos)
-                    {
-                        //获取列Mapper对象
-                        IColumnMapper currentColumnMapper = _mapperContainer.GetColumnMapper(memberInfo);
-                        //若列的别名为空，则不使用别名
-                        if (string.IsNullOrEmpty(currentColumnMapper.ColumnAlias))
-                            yield return currentColumnMapper.ColumnFullName;
-                        //若别名不为空, 则使用别名
-                        else
-                            yield return $"{currentColumnMapper.ColumnFullName} {currentColumnMapper.ColumnAlias}";
-                    }
-                    break;
-                default:
-                    throw new Exception(string.Format("Unknow Expression: {0}", selector));
             }
         }
         /// <summary>
@@ -229,7 +189,7 @@ namespace CloudEntity.Core.Data.Entity
         private IEnumerable<INodeBuilder> GetFunctionNodeBuilders(IEnumerable<INodeBuilder> nodeBuilders, string functionName, LambdaExpression lambdaExpression)
         {
             //获取Sql函数表达式节点
-            IColumnMapper columnMapper = this._mapperContainer.GetColumnMapper(lambdaExpression.Body.GetProperty());
+            IColumnMapper columnMapper = this._mapperContainer.GetColumnMapper(lambdaExpression.Body.GetMemberExpression());
             yield return new NodeBuilder(SqlType.Select, "{0}({1})", functionName, columnMapper.ColumnFullName);
             //获取其他的sql表达式节点
             foreach (INodeBuilder nodeBuilder in nodeBuilders)
@@ -248,16 +208,16 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         /// <param name="nodeBuilders">源Sql表达式节点集合</param>
         /// <param name="columnGetter">列获取器</param>
-        /// <param name="property">属性</param>
+        /// <param name="memberExpression">指定对象成员表达式</param>
         /// <param name="whereTemplate">sql条件表达式</param>
         /// <returns>条件查询Sql表达式节点集合</returns>
-        private IEnumerable<INodeBuilder> GetQueryNodeBuilders(IEnumerable<INodeBuilder> nodeBuilders, IColumnGetter columnGetter, PropertyInfo property, string whereTemplate)
+        private IEnumerable<INodeBuilder> GetQueryNodeBuilders(IEnumerable<INodeBuilder> nodeBuilders, IColumnGetter columnGetter, MemberExpression memberExpression, string whereTemplate)
         {
             //返回原先的Sql表达式节点
             foreach (INodeBuilder nodeBuilder in nodeBuilders)
                 yield return nodeBuilder;
             //返回新增的查询条件表达式节点
-            yield return new NodeBuilder(SqlType.Where, "{0} {1}", columnGetter.GetColumnFullName(property), whereTemplate);
+            yield return new NodeBuilder(SqlType.Where, "{0} {1}", columnGetter.GetColumnFullName(memberExpression), whereTemplate);
         }
         /// <summary>
         /// 获取排序查询Sql表达式节点集合
@@ -273,7 +233,7 @@ namespace CloudEntity.Core.Data.Entity
             foreach (INodeBuilder nodeBuilder in nodeBuilders)
                 yield return nodeBuilder;
             //生成并返回OrderBy节点的子节点
-            string columnFullName = columnGetter.GetColumnFullName(selector.Body.GetProperty());
+            string columnFullName = columnGetter.GetColumnFullName(selector.Body.GetMemberExpression());
             yield return new NodeBuilder(SqlType.OrderBy, "{0} {1}", columnFullName, isAsc ? "ASC" : "DESC");
         }
         /// <summary>
@@ -383,7 +343,7 @@ namespace CloudEntity.Core.Data.Entity
                 //解析转换表达式及其成员表达式(e => e.Property1)
                 case ExpressionType.Convert:
                 case ExpressionType.MemberAccess:
-                    IColumnMapper columnMapper = _mapperContainer.GetColumnMapper(selector.Body.GetProperty());
+                    IColumnMapper columnMapper = _mapperContainer.GetColumnMapper(selector.Body.GetMemberExpression());
                     if (string.IsNullOrEmpty(columnMapper.ColumnAlias))
                         yield return new ColumnBuilder(columnMapper.ColumnName, columnMapper.ColumnFullName);
                     else
@@ -491,7 +451,7 @@ namespace CloudEntity.Core.Data.Entity
                 case ExpressionType.Convert:
                 case ExpressionType.MemberAccess:
                     //生成并返回OrderBy节点的子节点
-                    string columnFullName = _mapperContainer.GetColumnMapper(selector.Body.GetProperty()).ColumnFullName;
+                    string columnFullName = _mapperContainer.GetColumnMapper(selector.Body.GetMemberExpression()).ColumnFullName;
                     yield return new NodeBuilder(SqlType.OrderBy, "{0}{1}", columnFullName, isDesc ? " DESC" : string.Empty);
                     break;
                 //解析NewExpression(e => new Model(e.Property1, e.Property2))
@@ -773,18 +733,18 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
         /// <param name="source">数据源</param>
-        /// <param name="property">属性</param>
+        /// <param name="memberExpression">指定对象成员表达式</param>
         /// <param name="whereTemplate">sql条件表达式</param>
         /// <param name="parameters">sql参数</param>
         /// <returns>新的查询对象</returns>
-        public IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source, PropertyInfo property, string whereTemplate, params IDbDataParameter[] parameters)
+        public IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source, MemberExpression memberExpression, string whereTemplate, params IDbDataParameter[] parameters)
             where TEntity : class
         {
             //返回新的查询对象
             return new DbQuery<TEntity>(this._mapperContainer, this._commandTreeFactory, this.DbHelper)
             {
                 Factory = this,
-                NodeBuilders = this.GetQueryNodeBuilders(source.NodeBuilders, this._mapperColumnGetter, property, whereTemplate),
+                NodeBuilders = this.GetQueryNodeBuilders(source.NodeBuilders, this._mapperColumnGetter, memberExpression, whereTemplate),
                 Parameters = source.Parameters.Concat(parameters).DistinctBy(p => p.ParameterName),
                 PropertyLinkers = source.PropertyLinkers
             };
@@ -1154,17 +1114,17 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         /// <typeparam name="TModel">视图模型对象</typeparam>
         /// <param name="source">视图查询数据源</param>
-        /// <param name="property">属性</param>
+        /// <param name="memberExpression">指定对象属性表达式</param>
         /// <param name="whereTemplate">sql条件表达式模板</param>
         /// <param name="parameters">sql参数数组</param>
         /// <returns>新的视图查询数据源</returns>
-        public IDbView<TModel> CreateView<TModel>(IDbView<TModel> source, PropertyInfo property, string whereTemplate, params IDbDataParameter[] parameters)
+        public IDbView<TModel> CreateView<TModel>(IDbView<TModel> source, MemberExpression memberExpression, string whereTemplate, params IDbDataParameter[] parameters)
             where TModel : class, new()
         {
             //创建并返回视图查询数据源
             return new DbView<TModel>(this, this._dbHelper, this._commandTreeFactory, source.InnerQuerySql)
             {
-                NodeBuilders = this.GetQueryNodeBuilders(source.NodeBuilders, this._columnGetter, property, whereTemplate),
+                NodeBuilders = this.GetQueryNodeBuilders(source.NodeBuilders, this._columnGetter, memberExpression, whereTemplate),
                 Parameters = source.Parameters.Concat(parameters).DistinctBy(p => p.ParameterName),
             };
         }

@@ -49,11 +49,11 @@ namespace CloudEntity.Data.Entity
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
         /// <param name="source">数据源</param>
-        /// <param name="property">属性</param>
+        /// <param name="memberExpression">指定对象成员表达式</param>
         /// <param name="whereTemplate">sql条件表达式</param>
         /// <param name="parameters">sql参数</param>
         /// <returns>新的查询对象</returns>
-        IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source, PropertyInfo property, string whereTemplate, params IDbDataParameter[] parameters)
+        IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source, MemberExpression memberExpression, string whereTemplate, params IDbDataParameter[] parameters)
             where TEntity : class;
         #endregion
         #region 创建关联查询数据源
@@ -225,11 +225,11 @@ namespace CloudEntity.Data.Entity
         /// </summary>
         /// <typeparam name="TModel">视图模型对象</typeparam>
         /// <param name="source">视图查询数据源</param>
-        /// <param name="property">属性</param>
+        /// <param name="memberExpression">指定对象成员表达式</param>
         /// <param name="whereTemplate">sql条件表达式模板</param>
         /// <param name="parameters">sql参数数组</param>
         /// <returns>新的视图查询数据源</returns>
-        IDbView<TModel> CreateView<TModel>(IDbView<TModel> source, PropertyInfo property, string whereTemplate, params IDbDataParameter[] parameters)
+        IDbView<TModel> CreateView<TModel>(IDbView<TModel> source, MemberExpression memberExpression, string whereTemplate, params IDbDataParameter[] parameters)
             where TModel : class, new();
         /// <summary>
         /// 创建根据某属性排好序的视图查询数据源

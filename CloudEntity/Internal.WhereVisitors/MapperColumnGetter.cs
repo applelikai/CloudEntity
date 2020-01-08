@@ -1,6 +1,7 @@
 ﻿using CloudEntity.Mapping;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace CloudEntity.Internal.WhereVisitors
@@ -13,7 +14,7 @@ namespace CloudEntity.Internal.WhereVisitors
         /// <summary>
         /// mapper容器
         /// </summary>
-        private IMapperContainer mapperContainer;
+        private IMapperContainer _mapperContainer;
 
         /// <summary>
         /// 创建列获取器
@@ -21,16 +22,16 @@ namespace CloudEntity.Internal.WhereVisitors
         /// <param name="mapperContainer">mapper容器</param>
         public MapperColumnGetter(IMapperContainer mapperContainer)
         {
-            this.mapperContainer = mapperContainer;
+            _mapperContainer = mapperContainer;
         }
         /// <summary>
         /// 获取列全名
         /// </summary>
-        /// <param name="property">属性</param>
+        /// <param name="memberExpression">指定属性表达式</param>
         /// <returns>列的全名(临时表名.列名)</returns>
-        public string GetColumnFullName(PropertyInfo property)
+        public string GetColumnFullName(MemberExpression memberExpression)
         {
-            return this.mapperContainer.GetColumnMapper(property).ColumnFullName;
+            return _mapperContainer.GetColumnMapper(memberExpression).ColumnFullName;
         }
     }
 }

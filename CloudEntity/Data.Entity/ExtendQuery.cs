@@ -31,21 +31,21 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(selector, nameof(selector));
             Check.ArgumentNull(values, nameof(values));
             //获取sql表达式模板
-            PropertyInfo property = selector.Body.GetProperty();
+            MemberExpression memberExpression = selector.Body.GetMemberExpression();
             StringBuilder sqlTemplate = new StringBuilder();
             sqlTemplate.AppendLine(isIn ? "IN " : "NOT IN ");
             for (int i = 0; i < values.Length; i++)
             {
                 sqlTemplate.AppendFormat("\t{0}", i == 0 ? '(' : ' ');
-                sqlTemplate.AppendFormat("${0}", property.Name);
+                sqlTemplate.AppendFormat("${0}", memberExpression.Member.Name);
                 sqlTemplate.AppendFormat("{0}{1}", i, (i + 1 == values.Length) ? ")" : ",\n");
             }
             //获取原始参数集合
             IDbDataParameter[] parameters = new IDbDataParameter[values.Length];
             for (int i = 0; i < values.Length; i++)
-                parameters[i] = source.ParameterFactory.Parameter(string.Concat(property.Name, i), values[i]);
+                parameters[i] = source.ParameterFactory.Parameter(string.Concat(memberExpression.Member.Name, i), values[i]);
             //过滤获取新数据源
-            return source.Factory.CreateQuery(source, property, sqlTemplate.ToString(), parameters.ToArray());
+            return source.Factory.CreateQuery(source, memberExpression, sqlTemplate.ToString(), parameters.ToArray());
         }
         /// <summary>
         /// Extendable method: 过滤数据源中属性包含(或不包含)某些值的实体(生成Sql IN表达式)
@@ -65,7 +65,7 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(selector, nameof(selector));
             Check.ArgumentNull(selectorSource, nameof(selectorSource));
             //获取sql表达式模板
-            PropertyInfo property = selector.Body.GetProperty();
+            MemberExpression memberExpression = selector.Body.GetMemberExpression();
             StringBuilder sqlTemplate = new StringBuilder();
             sqlTemplate.AppendLine(isIn ? "IN " : "NOT IN ");
             sqlTemplate.Append("\t(");
@@ -73,7 +73,7 @@ namespace CloudEntity.Data.Entity
             sqlTemplate.Append(")");
             sqlTemplate.Replace("\n ", "\n\t");
             //过滤获取新数据源
-            return source.Factory.CreateQuery(source, property, sqlTemplate.ToString(), selectorSource.Parameters.ToArray());
+            return source.Factory.CreateQuery(source, memberExpression, sqlTemplate.ToString(), selectorSource.Parameters.ToArray());
         }
         /// <summary>
         /// Extendable method: 过滤数据源中属性在一定范围内的实体
@@ -94,16 +94,16 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(left, nameof(left));
             Check.ArgumentNull(right, nameof(right));
             //获取sql表达式模板
-            PropertyInfo property = selector.Body.GetProperty();
-            string sqlTemplate = string.Format("BETWEEN ${0}Left AND ${0}Right", property.Name);
+            MemberExpression memberExpression = selector.Body.GetMemberExpression();
+            string sqlTemplate = string.Format("BETWEEN ${0}Left AND ${0}Right", memberExpression.Member.Name);
             //获取sql参数
             IDbDataParameter[] parameters = new IDbDataParameter[]
             {
-                source.ParameterFactory.Parameter(string.Concat(property.Name, "Left"), left),
-                source.ParameterFactory.Parameter(string.Concat(property.Name, "Right"), right)
+                source.ParameterFactory.Parameter(string.Concat(memberExpression.Member.Name, "Left"), left),
+                source.ParameterFactory.Parameter(string.Concat(memberExpression.Member.Name, "Right"), right)
             };
             //创建新数据源
-            return source.Factory.CreateQuery(source, property, sqlTemplate, parameters);
+            return source.Factory.CreateQuery(source, memberExpression, sqlTemplate, parameters);
         }
         /// <summary>
         /// Extendable method: 过滤数据源中属性在一定范围内的实体
@@ -124,16 +124,16 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(left, nameof(left));
             Check.ArgumentNull(right, nameof(right));
             //获取sql表达式模板
-            PropertyInfo property = selector.Body.GetProperty();
-            string sqlTemplate = string.Format("BETWEEN ${0}Left AND ${0}Right", property.Name);
+            MemberExpression memberExpression = selector.Body.GetMemberExpression();
+            string sqlTemplate = string.Format("BETWEEN ${0}Left AND ${0}Right", memberExpression.Member.Name);
             //获取sql参数
             IDbDataParameter[] parameters = new IDbDataParameter[]
             {
-                source.ParameterFactory.Parameter(string.Concat(property.Name, "Left"), left),
-                source.ParameterFactory.Parameter(string.Concat(property.Name, "Right"), right)
+                source.ParameterFactory.Parameter(string.Concat(memberExpression.Member.Name, "Left"), left),
+                source.ParameterFactory.Parameter(string.Concat(memberExpression.Member.Name, "Right"), right)
             };
             //创建新数据源
-            return source.Factory.CreateQuery(source, property, sqlTemplate, parameters);
+            return source.Factory.CreateQuery(source, memberExpression, sqlTemplate, parameters);
         }
         /// <summary>
         /// Extendable method: 解析表达式为 {Column} LIKE ${Property} as ParameterName
@@ -151,12 +151,12 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(selector, nameof(selector));
             Check.ArgumentNull(value, "value");
             //获取sql条件表达式
-            PropertyInfo property = selector.Body.GetProperty();
-            string sqlTemplate = string.Format("{0} ${1}_{2}", isLike ? "LIKE" : "NOT LIKE", property.DeclaringType.Name, property.Name);
+            MemberExpression memberExpression = selector.Body.GetMemberExpression();
+            string sqlTemplate = string.Format("{0} ${1}_{2}", isLike ? "LIKE" : "NOT LIKE", memberExpression.Expression.Type.Name, memberExpression.Member.Name);
             //获取参数
-            IDbDataParameter parameter = source.ParameterFactory.Parameter(string.Format("{0}_{1}", property.DeclaringType.Name, property.Name), value);
+            IDbDataParameter parameter = source.ParameterFactory.Parameter(string.Format("{0}_{1}", memberExpression.Expression.Type.Name, memberExpression.Member.Name), value);
             //创建新的数据源
-            return source.Factory.CreateQuery(source, property, sqlTemplate, parameter);
+            return source.Factory.CreateQuery(source, memberExpression, sqlTemplate, parameter);
         }
         /// <summary>
         /// Extendable method: 过滤获取包含数据源中某属性值为空(或非空)的元素的新数据源
@@ -175,7 +175,7 @@ namespace CloudEntity.Data.Entity
             //拼接sql
             string sqlTemplate = isNull ? "IS NULL" : "IS NOT NULL";
             //创建新的数据源
-            return source.Factory.CreateQuery(source, selector.Body.GetProperty(), sqlTemplate);
+            return source.Factory.CreateQuery(source, selector.Body.GetMemberExpression(), sqlTemplate);
         }
         /// <summary>
         /// Extendable method: 筛选数据源符合条件的对象
@@ -333,21 +333,21 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(selector, nameof(selector));
             Check.ArgumentNull(values, nameof(values));
             //获取sql表达式模板
-            PropertyInfo property = selector.Body.GetProperty();
+            MemberExpression memberExpression = selector.Body.GetMemberExpression();
             StringBuilder sqlTemplate = new StringBuilder();
             sqlTemplate.AppendLine(isIn ? "IN " : "NOT IN ");
             for (int i = 0; i < values.Length; i++)
             {
                 sqlTemplate.AppendFormat("\t {0}", i == 0 ? '(' : ' ');
-                sqlTemplate.AppendFormat("${0}", property.Name);
+                sqlTemplate.AppendFormat("${0}", memberExpression.Member.Name);
                 sqlTemplate.AppendFormat("{0}{1}", i, (i + 1 == values.Length) ? ")" : ",\n");
             }
             //获取原始参数集合
             IDbDataParameter[] parameters = new IDbDataParameter[values.Length];
             for (int i = 0; i < values.Length; i++)
-                parameters[i] = source.ParameterFactory.Parameter(string.Concat(property.Name, i), values[i]);
+                parameters[i] = source.ParameterFactory.Parameter(string.Concat(memberExpression.Member.Name, i), values[i]);
             //过滤获取新数据源
-            return source.Factory.CreateView(source, property, sqlTemplate.ToString(), parameters.ToArray());
+            return source.Factory.CreateView(source, memberExpression, sqlTemplate.ToString(), parameters.ToArray());
         }
         /// <summary>
         /// Extendable method: 过滤数据源中属性包含(或不包含)某些值的实体(生成Sql IN表达式)
@@ -367,7 +367,7 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(selector, nameof(selector));
             Check.ArgumentNull(selectorSource, nameof(selectorSource));
             //获取sql表达式模板
-            PropertyInfo property = selector.Body.GetProperty();
+            MemberExpression memberExpression = selector.Body.GetMemberExpression();
             StringBuilder sqlTemplate = new StringBuilder();
             sqlTemplate.AppendLine(isIn ? "IN " : "NOT IN ");
             sqlTemplate.Append("\t(");
@@ -375,7 +375,7 @@ namespace CloudEntity.Data.Entity
             sqlTemplate.Append(")");
             sqlTemplate.Replace("\n ", "\n      ");
             //过滤获取新数据源
-            return source.Factory.CreateView(source, property, sqlTemplate.ToString(), selectorSource.Parameters.ToArray());
+            return source.Factory.CreateView(source, memberExpression, sqlTemplate.ToString(), selectorSource.Parameters.ToArray());
         }
         /// <summary>
         /// Extendable method: 执行区间查询获取视图查询数据源
@@ -397,16 +397,16 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(left, nameof(left));
             Check.ArgumentNull(right, nameof(right));
             //获取sql表达式模板
-            PropertyInfo property = selector.Body.GetProperty();
-            string sqlTemplate = string.Format("BETWEEN ${0}Left AND ${0}Right", property.Name);
+            MemberExpression memberExpression = selector.Body.GetMemberExpression();
+            string sqlTemplate = string.Format("BETWEEN ${0}Left AND ${0}Right", memberExpression.Member.Name);
             //获取sql参数
             IDbDataParameter[] parameters = new IDbDataParameter[]
             {
-                source.ParameterFactory.Parameter(string.Concat(property.Name, "Left"), left),
-                source.ParameterFactory.Parameter(string.Concat(property.Name, "Right"), right)
+                source.ParameterFactory.Parameter(string.Concat(memberExpression.Member.Name, "Left"), left),
+                source.ParameterFactory.Parameter(string.Concat(memberExpression.Member.Name, "Right"), right)
             };
             //创建新的视图查询数据源
-            return source.Factory.CreateView(source, property, sqlTemplate, parameters);
+            return source.Factory.CreateView(source, memberExpression, sqlTemplate, parameters);
         }
         /// <summary>
         /// Extendable method: 执行模糊查询获取视图查询数据源
@@ -425,12 +425,12 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(selector, nameof(selector));
             Check.ArgumentNull(value, nameof(value));
             //获取sql条件表达式
-            PropertyInfo property = selector.Body.GetProperty();
-            string sqlTemplate = string.Format("{0} ${1}", isLike ? "LIKE" : "NOT LIKE", property.Name);
+            MemberExpression memberExpression = selector.Body.GetMemberExpression();
+            string sqlTemplate = string.Format("{0} ${1}", isLike ? "LIKE" : "NOT LIKE", memberExpression.Member.Name);
             //获取参数
-            IDbDataParameter parameter = source.ParameterFactory.Parameter(property.Name, value);
+            IDbDataParameter parameter = source.ParameterFactory.Parameter(memberExpression.Member.Name, value);
             //创建新的视图查询数据源
-            return source.Factory.CreateView(source, property, sqlTemplate, parameter);
+            return source.Factory.CreateView(source, memberExpression, sqlTemplate, parameter);
         }
         /// <summary>
         /// Extendable method: 执行非空或可空查询获取视图查询数据源
@@ -450,7 +450,7 @@ namespace CloudEntity.Data.Entity
             //拼接sql
             string sqlTemplate = isNull ? "IS NULL" : "IS NOT NULL";
             //创建新的视图查询数据源
-            return source.Factory.CreateView(source, selector.Body.GetProperty(), sqlTemplate);
+            return source.Factory.CreateView(source, selector.Body.GetMemberExpression(), sqlTemplate);
         }
         /// <summary>
         /// Extendable method: 筛选并获取筛选后的视图查询数据源

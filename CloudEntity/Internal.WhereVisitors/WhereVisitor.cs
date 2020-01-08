@@ -25,13 +25,13 @@ namespace CloudEntity.Internal.WhereVisitors
         private IColumnGetter columnGetter;
 
         /// <summary>
-        /// 获取当前属性Mapping的完整列名
+        /// 获取当前指定成员对应的完整列名
         /// </summary>
-        /// <param name="property">属性</param>
-        /// <returns>当前属性Mapping的完整列名</returns>
-        protected string GetColumnFullName(PropertyInfo property)
+        /// <param name="memberExpression">指定对象成员的表达式</param>
+        /// <returns>当前指定成员对应的完整列名</returns>
+        protected string GetColumnFullName(MemberExpression memberExpression)
         {
-            return this.columnGetter.GetColumnFullName(property);
+            return this.columnGetter.GetColumnFullName(memberExpression);
         }
         /// <summary>
         /// 创建sql参数
@@ -68,12 +68,12 @@ namespace CloudEntity.Internal.WhereVisitors
             //若当前表达式节点包含参数表达式
             if (expression.ContainsParameterExpression(parameterExpression))
             {
-                //获取属性元数据解析器
-                PropertyInfo property = expression.GetProperty();
+                //获取成员表达式
+                MemberExpression memberExpression = expression.GetMemberExpression();
                 //获取参数名
-                parameterName = string.Format("{0}_{1}", property.ReflectedType.Name, property.Name);
+                parameterName = string.Format("{0}_{1}", memberExpression.Expression.Type.Name, memberExpression.Member.Name);
                 //获取sql表达式节点(指定列名)
-                return new SqlBuilder(this.GetColumnFullName(property));
+                return new SqlBuilder(this.GetColumnFullName(memberExpression));
             }
             //若当前表达式节点不包含参数表达式
             //1.获取参数名

@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Linq.Expressions;
+using System.Reflection;
 
 namespace CloudEntity.Internal.WhereVisitors
 {
@@ -10,8 +11,8 @@ namespace CloudEntity.Internal.WhereVisitors
         /// <summary>
         /// 获取列全名
         /// </summary>
-        /// <param name="property">属性</param>
+        /// <param name="memberExpression">指定属性表达式</param>
         /// <returns>列的全名(临时表名.列名)</returns>
-        string GetColumnFullName(PropertyInfo property);
+        string GetColumnFullName(MemberExpression memberExpression);
     }
 }

@@ -5,26 +5,53 @@ using CloudEntity.Test.Entities;
 using CloudEntity.Test.Models;
 using CloudEntity.Test.MySqlClient;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 
 public class Program
 {
+    /// <summary>
+    /// 数据容器
+    /// </summary>
+    private static IDbContainer _container;
+
+    /// <summary>
+    /// 分页获取分类列表
+    /// </summary>
+    /// <typeparam name="TCategory">分类类型</typeparam>
+    /// <returns>分类分页列表</returns>
+    private static IDbPagedQuery<TCategory> GetCategories<TCategory>()
+        where TCategory : CategoryBase
+    {
+        //获取分类数据源
+        IDbQuery<TCategory> categories = _container.List<TCategory>().Like(c => c.CategoryName, "%商");
+        //返回分类分页数据源
+        return categories.PagingByDescending(c => c.CreatedTime, 10);
+    }
+    /// <summary>
+    /// 开始执行
+    /// </summary>
+    /// <param name="args">控制台参数</param>
     private static void Main(string[] args)
     {
-        //获取数据容器
-        string connectionString = "Data Source=localhost;Initial Catalog=MemberSys;User Id=root;SslMode=None;";
-        IDbContainer container = DbContainer.GetContainer<MySqlInitializer>(connectionString);
-        //执行其他操作
-        string searchName = "Apple";
-        IDbQuery<Category> categories = container.List<Category>()
-            .Where(c => !c.CategoryName.Equals(searchName));
-        IDbQuery<Member> members = container.List<Member>()
-            .Join(categories, m => m.MemberCategory, (m, c) => m.CategoryId == c.CategoryId)
-            .Where(m => m.MemberName.Equals(searchName));
-        foreach (Member member in members)
+        //获取公司分类列表
+        IEnumerable<CompanyCategory> categories = Program.GetCategories<CompanyCategory>();
+        //遍历公司分类列表
+        foreach (CompanyCategory category in categories)
         {
-            Console.WriteLine($"{member.MemberCategory.CategoryName} {member.MemberName}");
+            Console.WriteLine(category.CategoryName);
         }
+    }
+
+    /// <summary>
+    /// 静态初始化
+    /// </summary>
+    static Program()
+    {
+        //获取连接字符串
+        string connectionString = "Data Source=39.106.212.169;User Id=root;Password=123456;Initial Catalog=cheij_management;";
+        //获取数据容器
+        _container = DbContainer.GetContainer<MySqlInitializer>(connectionString);
     }
 }
