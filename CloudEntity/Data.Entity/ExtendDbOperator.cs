@@ -94,7 +94,25 @@ namespace CloudEntity.Data.Entity
             //执行删除数据源中所有的实体
             return dbOperator.RemoveAll(entities);
         }
-
+        
+        /// <summary>
+        /// ExtendMethod: 批量修改符合条件的实体对象的某些属性值
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="dbOperator">实体数据操作对象</param>
+        /// <param name="model">存储所有待修改的实体统一修改的属性值</param>
+        /// <param name="entities">实体数据源</param>
+        /// <returns>被修改值的实体元素数量</returns>
+        public static int SetAll<TEntity>(this IDbOperator<TEntity> dbOperator, object model, IDbQuery<TEntity> entities)
+            where TEntity : class
+        {
+            //非空检查
+            Check.ArgumentNull(dbOperator, nameof(dbOperator));
+            Check.ArgumentNull(model, nameof(model));
+            Check.ArgumentNull(entities, nameof(entities));
+            //执行批量修改
+            return dbOperator.SaveAll(ExtendDbOperator.GetSetParameters(model), entities);
+        }
         /// <summary>
         /// ExtendMethod: 批量修改符合条件的实体对象的某些属性值
         /// </summary>
@@ -113,6 +131,32 @@ namespace CloudEntity.Data.Entity
             IDbQuery<TEntity> entities = dbOperator.Factory.CreateQuery<TEntity>().Filter(predicates);
             //执行批量修改
             return dbOperator.SaveAll(ExtendDbOperator.GetSetParameters(model), entities);
+        }
+        /// <summary>
+        /// ExtendMethod: 批量修改当前数据源中符合条件的实体某属性的值
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TProperty">对象属性类型</typeparam>
+        /// <param name="dbOperator">实体数据操作对象</param>
+        /// <param name="selector">指定对象某属性的表达式</param>
+        /// <param name="value">属性值</param>
+        /// <param name="entities">实体数据源</param>
+        /// <returns>被修改值的实体元素数量</returns>
+        public static int SetAll<TEntity, TProperty>(this IDbOperator<TEntity> dbOperator, Expression<Func<TEntity, TProperty>> selector, TProperty value, IDbQuery<TEntity> entities)
+            where TEntity : class
+        {
+            //非空检查
+            Check.ArgumentNull(dbOperator, nameof(dbOperator));
+            Check.ArgumentNull(selector, nameof(selector));
+            Check.ArgumentNull(value, nameof(value));
+            Check.ArgumentNull(entities, nameof(entities));
+            //获取属性参数字典
+            IDictionary<string, object> setParameters = new Dictionary<string, object>()
+            {
+                {selector.Body.GetMemberName(), value}
+            };
+            //执行批量修改
+            return dbOperator.SaveAll(setParameters, entities);
         }
         /// <summary>
         /// ExtendMethod: 批量修改当前数据源中符合条件的实体某属性的值

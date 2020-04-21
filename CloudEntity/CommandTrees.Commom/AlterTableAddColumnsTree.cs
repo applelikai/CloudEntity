@@ -58,8 +58,8 @@ namespace CloudEntity.CommandTrees.Commom
                 //拼接数据类型
                 commandText.AppendFormat("{0} ", columnNode.SqlDataType ?? this.columnNodeHelper.GetSqlType(columnNode.SourceType));
                 //拼接数据类型长度
-                if (columnNode.Length > 0)
-                    commandText.AppendFormat("({0}) ", columnNode.Length);
+                if (columnNode.Length != null && columnNode.Decimals != null)
+                    commandText.AppendFormat("({0}, {1}) ", columnNode.Length, columnNode.Decimals);
                 //拼接默认值
                 if (columnNode.IsDefault)
                 {

@@ -1,6 +1,8 @@
 ﻿using CloudEntity.CommandTrees;
 using CloudEntity.Data;
 using CloudEntity.Mapping;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CloudEntity.Internal.Data.Entity
 {
@@ -19,12 +21,17 @@ namespace CloudEntity.Internal.Data.Entity
         private int topCount;
 
         /// <summary>
+        /// 排序sql表达式节点集合
+        /// </summary>
+        public IEnumerable<INodeBuilder> SortBuilders { get; set; }
+
+        /// <summary>
         /// 创建查询命令生成树
         /// </summary>
         /// <returns>查询命令生成树</returns>
         protected override ICommandTree CreateQueryTree()
         {
-            return base.CommandTreeFactory.CreateTopQueryTree(base.NodeBuilders, this.topCount);
+            return base.CommandTreeFactory.CreateTopQueryTree(base.NodeBuilders.Concat(this.SortBuilders), this.topCount);
         }
 
         /// <summary>

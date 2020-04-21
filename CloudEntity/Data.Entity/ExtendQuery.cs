@@ -543,7 +543,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">数据源</param>
         /// <param name="topCount">查询的前几条的元素数量</param>
         /// <returns>TOP查询数据源</returns>
-        public static IDbSelectedQuery<TEntity> Top<TEntity>(this IDbQuery<TEntity> source, int topCount)
+        public static IDbSelectedQuery<TEntity> Top<TEntity>(this IDbSortedQuery<TEntity> source, int topCount)
             where TEntity : class
         {
             //非空检查
@@ -561,7 +561,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="topCount">查询的前几条的元素数量</param>
         /// <param name="selector">指定选定项的表达式</param>
         /// <returns>TOP选定项查询数据源</returns>
-        public static IDbSelectedQuery<TResult> Top<TEntity, TResult>(this IDbQuery<TEntity> source, int topCount, Expression<Func<TEntity, TResult>> selector)
+        public static IDbSelectedQuery<TResult> Top<TEntity, TResult>(this IDbSortedQuery<TEntity> source, int topCount, Expression<Func<TEntity, TResult>> selector)
             where TEntity : class
         {
             //非空检查
