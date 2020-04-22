@@ -60,6 +60,8 @@ namespace CloudEntity.CommandTrees.Commom
                 //拼接数据类型长度
                 if (columnNode.Length != null && columnNode.Decimals != null)
                     commandText.AppendFormat("({0}, {1}) ", columnNode.Length, columnNode.Decimals);
+                else if (columnNode.Length != null)
+                    commandText.AppendFormat("({0})", columnNode.Length);
                 //拼接默认值
                 if (columnNode.IsDefault)
                 {
