@@ -29,6 +29,8 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
                 case "Decimal":
                 case "Double":
                     return "DECIMAL";
+                case "Single":
+                    return "FLOAT";
                 case "Int16":
                 case "Int32":
                 case "Int64":
