@@ -481,7 +481,7 @@ namespace CloudEntity.Core.Data.Entity
             DbContainer._containerSets = new Dictionary<Type, ContainerSet>();
         }
         /// <summary>
-        /// 获取数据容器
+        /// 获取连接池中的数据容器
         /// </summary>
         /// <typeparam name="TInitializer">初始化器类型</typeparam>
         /// <param name="connectionString">连接字符串</param>
@@ -504,7 +504,7 @@ namespace CloudEntity.Core.Data.Entity
             }
         }
         /// <summary>
-        /// 获取数据容器
+        /// 获取连接池中的数据容器
         /// </summary>
         /// <param name="initializerType">初始化器类型</param>
         /// <param name="connectionString">连接字符串</param>
@@ -513,20 +513,30 @@ namespace CloudEntity.Core.Data.Entity
         {
             Start:
             //若当前初始化器类型的容器集存在,直接获取数据容器
-            if (DbContainer._containerSets.ContainsKey(initializerType))
-                return DbContainer._containerSets[initializerType].GetContainer(connectionString);
+            if (_containerSets.ContainsKey(initializerType))
+                return _containerSets[initializerType].GetContainer(connectionString);
             //进入临界区
-            lock (DbContainer._containersLocker)
+            lock (_containersLocker)
             {
                 //若当前初始化器类型的容器集不存在，则创建并添加
-                if (!DbContainer._containerSets.ContainsKey(initializerType))
+                if (!_containerSets.ContainsKey(initializerType))
                 {
                     DbInitializer initializer = Activator.CreateInstance(initializerType) as DbInitializer;
-                    DbContainer._containerSets.Add(initializerType, new ContainerSet(initializer));
+                    _containerSets.Add(initializerType, new ContainerSet(initializer));
                 }
                 //回到Start
                 goto Start;
             }
+        }
+        /// <summary>
+        /// 获取新建数据容器
+        /// </summary>
+        /// <param name="connectionString">连接字符串</param>
+        /// <param name="initializer">初始化器</param>
+        /// <returns>数据容器</returns>
+        public static IDbContainer Create(string connectionString, DbInitializer initializer)
+        {
+            return new DbContainer(connectionString, initializer);
         }
 
         /// <summary>
