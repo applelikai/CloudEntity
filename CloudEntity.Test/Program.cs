@@ -51,7 +51,9 @@ public class Program
     {
         //获取连接字符串
         string connectionString = "Data Source=39.106.212.169;User Id=root;Password=123456;Initial Catalog=cheij_management;";
+        //初始化数据容器
+        DbContainer.Init<MySqlInitializer>(connectionString);
         //获取数据容器
-        _container = DbContainer.GetContainer<MySqlInitializer>(connectionString);
+        _container = DbContainer.Get(connectionString);
     }
 }

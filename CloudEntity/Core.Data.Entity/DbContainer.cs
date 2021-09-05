@@ -73,9 +73,9 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         private static object _containersLocker;
         /// <summary>
-        /// 容器集字典
+        /// 数据容器字典
         /// </summary>
-        private static IDictionary<Type, ContainerSet> _containerSets;
+        private static IDictionary<string, IDbContainer> _containers;
 
         /// <summary>
         /// 操作数据库的DbHelper
@@ -477,66 +477,85 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         static DbContainer()
         {
-            DbContainer._containersLocker = new object();
-            DbContainer._containerSets = new Dictionary<Type, ContainerSet>();
+            _containersLocker = new object();
+            _containers = new Dictionary<string, IDbContainer>();
         }
         /// <summary>
-        /// 获取连接池中的数据容器
+        /// 初始化数据容器池中的数据容器
         /// </summary>
-        /// <typeparam name="TInitializer">初始化器类型</typeparam>
+        /// <typeparam name="TInitializer">数据库初始化器类型</typeparam>
         /// <param name="connectionString">连接字符串</param>
-        /// <returns>数据容器</returns>
-        public static IDbContainer GetContainer<TInitializer>(string connectionString)
+        public static void Init<TInitializer>(string connectionString)
             where TInitializer : DbInitializer, new()
         {
-            Start:
-            //若当前初始化器类型的容器集存在,直接获取数据容器
-            if (DbContainer._containerSets.ContainsKey(typeof(TInitializer)))
-                return DbContainer._containerSets[typeof(TInitializer)].GetContainer(connectionString);
-            //进入临界区
-            lock (DbContainer._containersLocker)
-            {
-                //若当前初始化器类型的容器集不存在，则创建并添加
-                if (!DbContainer._containerSets.ContainsKey(typeof(TInitializer)))
-                    DbContainer._containerSets.Add(typeof(TInitializer), new ContainerSet(new TInitializer()));
-                //回到Start
-                goto Start;
-            }
-        }
-        /// <summary>
-        /// 获取连接池中的数据容器
-        /// </summary>
-        /// <param name="initializerType">初始化器类型</param>
-        /// <param name="connectionString">连接字符串</param>
-        /// <returns>数据容器</returns>
-        public static IDbContainer GetContainer(Type initializerType, string connectionString)
-        {
-            Start:
-            //若当前初始化器类型的容器集存在,直接获取数据容器
-            if (_containerSets.ContainsKey(initializerType))
-                return _containerSets[initializerType].GetContainer(connectionString);
-            //进入临界区
+            //非空检查
+            Check.ArgumentNull(connectionString, nameof(connectionString));
+            //若字典中包含当前连接字符串的数据容器则直接退出
+            if (_containers.ContainsKey(connectionString))
+                return;
+            //进入临界区(单线程模式)
             lock (_containersLocker)
             {
-                //若当前初始化器类型的容器集不存在，则创建并添加
-                if (!_containerSets.ContainsKey(initializerType))
+                //若当前数据容器不存在，则创建并添加至字典中
+                if (!_containers.ContainsKey(connectionString))
                 {
-                    DbInitializer initializer = Activator.CreateInstance(initializerType) as DbInitializer;
-                    _containerSets.Add(initializerType, new ContainerSet(initializer));
+                    //创建数据库初始化器
+                    DbInitializer initializer = new TInitializer();
+                    //创建并添加数据容器
+                    _containers.Add(connectionString, new DbContainer(connectionString, initializer));
                 }
-                //回到Start
-                goto Start;
             }
         }
         /// <summary>
-        /// 获取新建数据容器
+        /// 初始化数据容器池中的数据容器
         /// </summary>
         /// <param name="connectionString">连接字符串</param>
-        /// <param name="initializer">初始化器</param>
-        /// <returns>数据容器</returns>
-        public static IDbContainer Create(string connectionString, DbInitializer initializer)
+        /// <param name="initializer">数据库初始化器</param>
+        public static void Init(string connectionString, DbInitializer initializer)
         {
-            return new DbContainer(connectionString, initializer);
+            //非空检查
+            Check.ArgumentNull(connectionString, nameof(connectionString));
+            Check.ArgumentNull(initializer, nameof(initializer));
+            //若字典中包含当前连接字符串的数据容器则直接退出
+            if (_containers.ContainsKey(connectionString))
+                return;
+            //进入临界区(单线程模式)
+            lock (_containersLocker)
+            {
+                //若当前数据容器不存在，则创建并添加至字典中
+                if (!_containers.ContainsKey(connectionString))
+                {
+                    //创建并添加数据容器
+                    _containers.Add(connectionString, new DbContainer(connectionString, initializer));
+                }
+            }
+        }
+        /// <summary>
+        /// 获取(若不存在则创建)数据容器
+        /// </summary>
+        /// <param name="connectionString">连接字符串</param>
+        /// <param name="initializer">初始化器(第一次获取创建数据容器时需要)</param>
+        /// <returns>数据容器</returns>
+        public static IDbContainer Get(string connectionString, DbInitializer initializer = null)
+        {
+            //非空检查
+            Check.ArgumentNull(connectionString, nameof(connectionString));
+            //开始
+            Start:
+            //若字典中包含当前连接字符串的数据容器则直接获取
+            if (_containers.ContainsKey(connectionString))
+                return _containers[connectionString];
+            //若需要创建数据容器,则检查初始化器是否为空
+            Check.ArgumentNull(initializer, nameof(initializer));
+            //进入临界区(单线程模式)
+            lock (_containersLocker)
+            {
+                //若当前数据容器不存在，则创建并添加至字典中
+                if (!_containers.ContainsKey(connectionString))
+                    _containers.Add(connectionString, new DbContainer(connectionString, initializer));
+            }
+            //回到Start
+            goto Start;
         }
 
         /// <summary>
