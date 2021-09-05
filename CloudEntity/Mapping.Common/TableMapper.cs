@@ -44,13 +44,10 @@ namespace CloudEntity.Mapping.Common
                 {
                     //若columnMappers为空，则创建
                     if (this.columnMappers == null)
-                    {
-                        this.columnMappers = new Dictionary<string, IColumnMapper>();
-                        this.LoadColumnMappers(columnMappers);
-                    }
-                    //回到开始
-                    goto Start;
+                        this.columnMappers = this.GetColumnMapperDictionary();
                 }
+                //回到开始
+                goto Start;
             }
         }
 
@@ -131,11 +128,13 @@ namespace CloudEntity.Mapping.Common
         /// <returns>ColumnMapper对象</returns>
         protected abstract IColumnMapper CreateColumnMapper(PropertyInfo property);
         /// <summary>
-        /// 设置列与属性的映射
+        /// 获取列与属性的映射对象字典
         /// </summary>
-        /// <param name="columnMappers">列与属性的映射对象字典</param>
-        protected virtual void LoadColumnMappers(IDictionary<string, IColumnMapper> columnMappers)
+        /// <returns>列与属性的映射对象字典</returns>
+        protected virtual IDictionary<string, IColumnMapper> GetColumnMapperDictionary()
         {
+            //初始化字典
+            IDictionary<string, IColumnMapper> columnMappers = new Dictionary<string, IColumnMapper>();
             //遍历所有属性
             foreach (PropertyInfo property in this.EntityType.GetRuntimeProperties())
             {
@@ -148,6 +147,8 @@ namespace CloudEntity.Mapping.Common
                 //创建ColumnMapper并添加
                 columnMappers.Add(property.Name, this.CreateColumnMapper(property));
             }
+            //获取字典
+            return columnMappers;
         }
 
         /// <summary>
@@ -201,19 +202,23 @@ namespace CloudEntity.Mapping.Common
             };
         }
         /// <summary>
+        /// 获取列与属性的映射对象字典
+        /// </summary>
+        /// <returns>列与属性的映射对象字典</returns>
+        protected override IDictionary<string, IColumnMapper> GetColumnMapperDictionary()
+        {
+            //获取Column映射设置对象
+            ColumnMapSetter<TEntity> columnMapSetter = new ColumnMapSetter<TEntity>(base.Header.TableAlias);
+            //设置列与属性的映射关系
+            this.SetColumnMappers(columnMapSetter);
+            //列与属性的映射对象字典
+            return columnMapSetter.GetColumnMappers();
+        }
+        /// <summary>
         /// 设置列与属性的映射关系
         /// </summary>
         /// <param name="setter">列与属性的关系的设置器</param>
         protected abstract void SetColumnMappers(IColumnMapSetter<TEntity> setter);
-        /// <summary>
-        /// 设置列与属性的映射
-        /// </summary>
-        /// <param name="columnMappers">列与属性的映射对象字典</param>
-        protected override void LoadColumnMappers(IDictionary<string, IColumnMapper> columnMappers)
-        {
-            this.SetColumnMappers(new ColumnMapSetter<TEntity>(base.Header.TableAlias, columnMappers));
-            base.LoadColumnMappers(columnMappers);
-        }
 
         /// <summary>
         /// 创建TableMapper对象

@@ -1,6 +1,7 @@
 ﻿using CloudEntity.Mapping;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -10,17 +11,21 @@ namespace CloudEntity.Internal.Mapping
     /// 设置当前对象列的映射关系的类
     /// </summary>
     /// <typeparam name="TEntity">实体</typeparam>
-    internal class ColumnMapSetter <TEntity> : IColumnMapSetter<TEntity>
+    internal class ColumnMapSetter<TEntity> : IColumnMapSetter<TEntity>
         where TEntity : class
     {
         /// <summary>
         /// 表的别名
         /// </summary>
-        private string tableAlias;
+        private string _tableAlias;
+        /// <summary>
+        /// 实体类型
+        /// </summary>
+        private Type _entityType;
         /// <summary>
         /// 列和属性的映射对象字典
         /// </summary>
-        private IDictionary<string, IColumnMapper> columnMappers;
+        private IDictionary<string, IColumnMapper> _columnMappers;
 
         /// <summary>
         /// 获取该列是否允许为空
@@ -41,16 +46,39 @@ namespace CloudEntity.Internal.Mapping
                     return true;
             }
         }
+        /// <summary>
+        /// 获取初始化的列和属性的映射对象字典
+        /// </summary>
+        /// <returns>列和属性的映射对象字典</returns>
+        private IDictionary<string, IColumnMapper> GetInitColumnMappers()
+        {
+            //初始化ColumnMapper字典
+            IDictionary<string, IColumnMapper> columnMappers = new Dictionary<string, IColumnMapper>();
+            //遍历所有属性,加载ColumnMapper字典
+            foreach (PropertyInfo property in _entityType.GetRuntimeProperties())
+            {
+                //若当前属性不满足Mapping条件，本次循环
+                if (!Check.IsCanMapping(property))
+                    continue;
+                //添加初始化项目，为之后的ColumnMapper占位
+                columnMappers.Add(property.Name, null);
+            }
+            //获取ColumnMapper字典
+            return columnMappers;
+        }
 
         /// <summary>
         /// 创建设置列与属性映射关系的对象
         /// </summary>
         /// <param name="tableAlias">表的别名</param>
-        /// <param name="columnMappers">列与属性映射对象的字典</param>
-        public ColumnMapSetter(string tableAlias, IDictionary<string, IColumnMapper> columnMappers)
+        public ColumnMapSetter(string tableAlias)
         {
-            this.tableAlias = tableAlias;
-            this.columnMappers = columnMappers;
+            //初始化值
+            _tableAlias = tableAlias;
+            _entityType = typeof(TEntity);
+            //初始化ColumnMapper字典
+            _columnMappers = this.GetInitColumnMappers();
+            
         }
         /// <summary>
         /// 设置列的映射
@@ -66,20 +94,38 @@ namespace CloudEntity.Internal.Mapping
             PropertyInfo property = selector.Body.GetProperty();
             if (!Check.IsCanMapping(property))
                 throw new Exception(string.Format("Can not map property {0}", property.Name));
-            if (this.columnMappers.ContainsKey(property.Name))
-                return null;
             //创建ColumnMapper
             ColumnMapper columnMapper = new ColumnMapper(property)
             {
                 ColumnAction = action,
                 ColumnName = columnName ?? property.Name,
-                ColumnFullName = string.Format("{0}.{1}", this.tableAlias, columnName ?? property.Name),
+                ColumnFullName = string.Format("{0}.{1}", _tableAlias, columnName ?? property.Name),
                 AllowNull = allowNull != null ? allowNull.Value : this.GetAllowNull(action)
             };
-            //添加columnMapper
-            this.columnMappers.Add(property.Name, columnMapper);
+            //指定columnMapper
+            this._columnMappers[property.Name] = columnMapper;
             //饭hi列属性设置器
             return new ColumnSetter(columnMapper);
+        }
+        /// <summary>
+        /// 获取列和属性的映射对象字典
+        /// </summary>
+        /// <returns>列和属性的映射对象字典</returns>
+        public IDictionary<string, IColumnMapper> GetColumnMappers()
+        {
+            //检查ColumnMapper字典中的所有空项
+            foreach (KeyValuePair<string, IColumnMapper> keyValuePair in _columnMappers.Where(p => p.Value == null))
+            {
+                //获取属性
+                PropertyInfo property = _entityType.GetProperty(keyValuePair.Key);
+                //指定列Mapping对象
+                _columnMappers[keyValuePair.Key] = new ColumnMapper(property)
+                {
+                    ColumnFullName = string.Format("{0}.{1}", _tableAlias, property.Name)
+                };
+            }
+            //获取ColumnMapper字典
+            return _columnMappers;
         }
     }
 }
