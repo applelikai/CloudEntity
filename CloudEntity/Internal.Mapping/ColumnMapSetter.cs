@@ -113,13 +113,15 @@ namespace CloudEntity.Internal.Mapping
         /// <returns>列和属性的映射对象字典</returns>
         public IDictionary<string, IColumnMapper> GetColumnMappers()
         {
+            //获取所有空项的key数组
+            string[] keys = _columnMappers.Where(pair => pair.Value == null).Select(pair => pair.Key).ToArray();
             //检查ColumnMapper字典中的所有空项
-            foreach (KeyValuePair<string, IColumnMapper> keyValuePair in _columnMappers.Where(p => p.Value == null))
+            foreach (string key in keys)
             {
                 //获取属性
-                PropertyInfo property = _entityType.GetProperty(keyValuePair.Key);
+                PropertyInfo property = _entityType.GetProperty(key);
                 //指定列Mapping对象
-                _columnMappers[keyValuePair.Key] = new ColumnMapper(property)
+                _columnMappers[key] = new ColumnMapper(property)
                 {
                     ColumnFullName = string.Format("{0}.{1}", _tableAlias, property.Name)
                 };
