@@ -7,41 +7,72 @@ namespace CloudEntity.CommandTrees.Commom
     /// <summary>
     /// 为Table添加列的语句生成树
     /// </summary>
-    internal class AlterTableAddColumnsTree : ICommandTree
+    public class AlterTableAddColumnsTree : ICommandTree
     {
-        private string tableFullName;               //表名
-        private ColumnNodeHelper columnNodeHelper;  //获取列节点信息的Helper
-        private IList<IColumnNode> columnNodes;     //列节点集合
-        
+        /// <summary>
+        /// 数据库架构名
+        /// </summary>
+        private string _schemaName;
+        /// <summary>
+        /// 表名
+        /// </summary>
+        private string _tableName;
+        /// <summary>
+        /// 获取列节点信息的Helper
+        /// </summary>
+        private ColumnNodeHelper _columnNodeHelper;
         /// <summary>
         /// 列节点集合
         /// </summary>
-        private IList<IColumnNode> ColumnNodes
+        private IList<IColumnNode> _columnNodes;
+
+        /// <summary>
+        /// 拼接ALTER TABLE
+        /// </summary>
+        /// <param name="commandText">待拼接的sql</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="schemaName">数据库架构名</param>
+        protected virtual void AppendAlterTable(StringBuilder commandText, string tableName, string schemaName)
         {
-            get { return this.columnNodes ?? (this.columnNodes = new List<IColumnNode>()); }
+            //若架构名为空 则直接拼接[ALTER 表名]
+            if (string.IsNullOrEmpty(schemaName))
+                commandText.Append($"ALTER TABLE {tableName}");
+            //若不为空，则拼接[ALTER 架构名.表名]
+            else
+                commandText.Append($"ALTER TABLE {schemaName}.{tableName}");
+        }
+        /// <summary>
+        /// 拼接添加列名
+        /// </summary>
+        /// <param name="commandText">待拼接的sql</param>
+        /// <param name="columnName">列名</param>
+        protected virtual void AppendAddColumn(StringBuilder commandText, string columnName)
+        {
+            commandText.Append($" ADD {columnName}");
         }
 
         /// <summary>
         /// 创建为Table添加列的语句生成树
         /// </summary>
-        /// <param name="tableFullName">完整的Table名</param>
         /// <param name="columnNodeHelper">获取列节点信息的Helper</param>
-        internal AlterTableAddColumnsTree(string tableFullName, ColumnNodeHelper columnNodeHelper)
+        /// <param name="tableName">表名</param>
+        /// <param name="schemaName">数据库架构名</param>
+        public AlterTableAddColumnsTree(ColumnNodeHelper columnNodeHelper, string tableName, string schemaName)
         {
-            this.tableFullName = tableFullName;
-            this.columnNodeHelper = columnNodeHelper;
+            _columnNodeHelper = columnNodeHelper;
+            _tableName = tableName;
+            _schemaName = schemaName;
+            _columnNodes = new List<IColumnNode>();
         }
-        
         /// <summary>
         /// 添加列节点
         /// </summary>
         /// <param name="columnNode">列节点</param>
-        internal void Add(IColumnNode columnNode)
+        public void Add(IColumnNode columnNode)
         {
-            if (this.ColumnNodes.Count(n => n.ColumnName.Equals(columnNode.ColumnName)) == 0)
-                this.ColumnNodes.Add(columnNode);
+            if (_columnNodes.Count(n => n.ColumnName.Equals(columnNode.ColumnName)) == 0)
+                _columnNodes.Add(columnNode);
         }
-
         /// <summary>
         /// 拼接为Table添加列的sql
         /// </summary>
@@ -49,25 +80,25 @@ namespace CloudEntity.CommandTrees.Commom
         public void Build(StringBuilder commandText)
         {
             //遍历所有的Column节点
-            foreach (ColumnNode columnNode in this.ColumnNodes)
+            foreach (ColumnNode columnNode in _columnNodes)
             {
                 //拼接表名
-                commandText.AppendFormat("ALTER TABLE {0} ", this.tableFullName);
+                this.AppendAlterTable(commandText, _tableName, _schemaName);
                 //拼接列名
-                commandText.AppendFormat("ADD {0} ", columnNode.ColumnName);
+                this.AppendAddColumn(commandText, columnNode.ColumnName);
                 //拼接数据类型
-                commandText.AppendFormat("{0} ", columnNode.SqlDataType ?? this.columnNodeHelper.GetSqlType(columnNode.SourceType));
+                commandText.AppendFormat(" {0}", columnNode.SqlDataType ?? this._columnNodeHelper.GetSqlType(columnNode.SourceType));
                 //拼接数据类型长度
                 if (columnNode.Length != null && columnNode.Decimals != null)
-                    commandText.AppendFormat("({0}, {1}) ", columnNode.Length, columnNode.Decimals);
+                    commandText.AppendFormat("({0}, {1})", columnNode.Length, columnNode.Decimals);
                 else if (columnNode.Length != null)
                     commandText.AppendFormat("({0})", columnNode.Length);
                 //拼接默认值
                 if (columnNode.IsDefault)
                 {
-                    string defaultValue = this.columnNodeHelper.GetDefaultValue(columnNode.SourceType);
+                    string defaultValue = _columnNodeHelper.GetDefaultValue(columnNode.SourceType);
                     if (!string.IsNullOrEmpty(defaultValue))
-                        commandText.AppendFormat("DEFAULT {0}", defaultValue);
+                        commandText.AppendFormat(" DEFAULT {0}", defaultValue);
                 }
                 //拼接换行
                 commandText.AppendLine();

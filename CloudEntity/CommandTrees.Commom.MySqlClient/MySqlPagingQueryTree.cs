@@ -13,9 +13,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// </summary>
         /// <param name="parameterMarker">sql参数标识符号</param>
         public MySqlPagingQueryTree(char parameterMarker)
-            : base(parameterMarker)
-        {
-        }
+            : base(parameterMarker) { }
         /// <summary>
         /// 构建sql命令
         /// </summary>
@@ -24,6 +22,8 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         {
             base.Build(commandText);
             //拼接MySql分页条件
+            //  @SkipCount:跳过之前的多少行
+            //  @NextCount:获取之后的多少行
             commandText.AppendLine();
             commandText.Append("     LIMIT @SkipCount, @NextCount");
         }

@@ -9,22 +9,28 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
     internal class MySqlUpdateTree : UpdateTree
     {
         /// <summary>
-        /// 创建用于MySql的Update命令生成树
+        /// 初始化
         /// </summary>
-        /// <param name="tableFullName">完整表名</param>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
         /// <param name="tableAlias">临时表名</param>
         /// <param name="parameterMarker">sql参数标识符</param>
-        internal MySqlUpdateTree(string tableFullName, string tableAlias, char parameterMarker)
-            : base(tableFullName, tableAlias, parameterMarker) { }
-
+        public MySqlUpdateTree(string schemaName, string tableName, string tableAlias, char parameterMarker)
+            : base(schemaName, tableName, tableAlias, parameterMarker) { }
         /// <summary>
         /// 拼接sql
         /// </summary>
         /// <param name="commandText">待拼接的sql</param>
         public override void Build(StringBuilder commandText)
         {
-            commandText.AppendFormat("UPDATE {0} {1}\n", base.TableFullName, base.TableAlias);
+            //拼接UPDATE
+            if (string.IsNullOrEmpty(base.SchemaName))
+                commandText.AppendFormat("UPDATE {0} {1}\n", base.TableName, base.TableAlias);
+            else
+                commandText.AppendFormat("UPDATE {0}.{1} {2}\n", base.SchemaName, base.TableName, base.TableAlias);
+            //拼接SET
             this.Set.Build(commandText);
+            //拼接WHERE
             this.Where.Build(commandText);
         }
     }

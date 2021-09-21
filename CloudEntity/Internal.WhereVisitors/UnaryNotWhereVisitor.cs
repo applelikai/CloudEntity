@@ -1,6 +1,7 @@
 ﻿using CloudEntity.CommandTrees;
 using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
+using CloudEntity.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -16,18 +17,19 @@ namespace CloudEntity.Internal.WhereVisitors
     internal class UnaryNotWhereVisitor : WhereVisitor
     {
         //创建表达式解析器的工厂
-        private IWhereVisitorFactory factory;
+        private IWhereVisitorFactory _factory;
 
         /// <summary>
         /// 创建非表达式解析对象
         /// </summary>
         /// <param name="parameterFactory">sql参数创建对象</param>
-        /// <param name="columnGetter">列名获取器</param>
+        /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
+        /// <param name="mapperContainer">Mapper对象容器</param>
         /// <param name="factory">创建表达式解析器的工厂</param>
-        public UnaryNotWhereVisitor(IParameterFactory parameterFactory, IColumnGetter columnGetter, IWhereVisitorFactory factory)
-            : base(parameterFactory, columnGetter)
+        public UnaryNotWhereVisitor(IParameterFactory parameterFactory, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer, IWhereVisitorFactory factory)
+            : base(parameterFactory, commandTreeFactory, mapperContainer)
         {
-            this.factory = factory;
+            _factory = factory;
         }
         /// <summary>
         /// 解析非表达式,生成sql条件表达式节点及其附属的sql参数
@@ -52,7 +54,7 @@ namespace CloudEntity.Internal.WhereVisitors
                     throw new Exception(string.Format("Unknow Expression:{0}", unaryExpression.ToString()));
             }
             //获取sql语句模板
-            WhereVisitor whereVisitor = this.factory.GetVisitor(unaryExpression.Operand.NodeType);
+            WhereVisitor whereVisitor = this._factory.GetVisitor(unaryExpression.Operand.NodeType);
             KeyValuePair<INodeBuilder, IDbDataParameter[]> sqlBuilderPair = whereVisitor.Visit(parameterExpression, unaryExpression.Operand, parameterNames);
             StringBuilder sqlTemplate = new StringBuilder();
             sqlBuilderPair.Key.Build(sqlTemplate);

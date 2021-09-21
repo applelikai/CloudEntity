@@ -16,6 +16,17 @@ namespace CloudEntity.CommandTrees.Commom.OracleClient
         {
             return new OracleColumnNodeHelper();
         }
+        /// <summary>
+        /// 创建Delete命令生成树
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="tableAlias">临时表名</param>
+        /// <returns>Delete命令生成树</returns>
+        protected override DeleteTree CreateDeleteTree(string schemaName, string tableName, string tableAlias)
+        {
+            return new OracleDeleteTree(schemaName, tableName, tableAlias, base.ParameterMarker);
+        }
 
         /// <summary>
         /// 创建针对Oracle的sql驱动

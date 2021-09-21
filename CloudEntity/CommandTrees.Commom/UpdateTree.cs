@@ -8,31 +8,54 @@ namespace CloudEntity.CommandTrees.Commom
     /// </summary>
     public class UpdateTree : CommandTree
     {
-        private string tableAlias;                  //临时表名
-        private string tableFullName;               //表全名
-        private IBuilderCollection setCollection;   //Set语句生成器
-        private IBuilderCollection whereCollection; //where语句生成器
+        /// <summary>
+        /// 数据库架构名
+        /// </summary>
+        private string _schemaName;
+        /// <summary>
+        /// 表名
+        /// </summary>
+        private string _tableName;
+        /// <summary>
+        /// 临时表名
+        /// </summary>
+        private string _tableAlias;
+        /// <summary>
+        /// Set语句生成器
+        /// </summary>
+        private IBuilderCollection _setCollection;
+        /// <summary>
+        /// where语句生成器
+        /// </summary>
+        private IBuilderCollection _whereCollection;
 
+        /// <summary>
+        /// 数据库架构名
+        /// </summary>
+        protected string SchemaName
+        {
+            get { return _schemaName; }
+        }
+        /// <summary>
+        /// 表名
+        /// </summary>
+        protected string TableName
+        {
+            get { return _tableName; }
+        }
         /// <summary>
         /// 临时表名
         /// </summary>
         protected string TableAlias
         {
-            get { return this.tableAlias; }
-        }
-        /// <summary>
-        /// 完整表名
-        /// </summary>
-        protected string TableFullName
-        {
-            get { return this.tableFullName; }
+            get { return _tableAlias; }
         }
         /// <summary>
         /// Set语句生成器
         /// </summary>
         public IBuilderCollection Set
         {
-            get { return this.setCollection ?? (this.setCollection = new BuilderCollection("   SET ", "       ", ",\n", "\n")); }
+            get { return this._setCollection ?? (this._setCollection = new BuilderCollection("   SET ", "       ", ",\n", "\n")); }
         }
         /// <summary>
         /// where语句生成器
@@ -43,10 +66,10 @@ namespace CloudEntity.CommandTrees.Commom
             {
                 Start:
                 //若whereCollection不为空,直接返回
-                if (this.whereCollection != null)
-                    return this.whereCollection;
+                if (this._whereCollection != null)
+                    return this._whereCollection;
                 //创建whereCollection
-                this.whereCollection = new BuilderCollection()
+                this._whereCollection = new BuilderCollection()
                 {
                     TitleLeftSpace = " WHERE ",
                     BodyLeftSpace = "   AND ",
@@ -61,25 +84,33 @@ namespace CloudEntity.CommandTrees.Commom
         /// <summary>
         /// 创建Update命令生成树
         /// </summary>
-        /// <param name="tableFullName">表全名</param>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
         /// <param name="tableAlias">临时表名</param>
         /// <param name="parameterMarker">sql参数标识符</param>
-        internal UpdateTree(string tableFullName, string tableAlias, char parameterMarker)
+        public UpdateTree(string schemaName, string tableName, string tableAlias, char parameterMarker)
             : base(parameterMarker)
         {
-            this.tableFullName = tableFullName;
-            this.tableAlias = tableAlias;
+            _schemaName = schemaName;
+            _tableName = tableName;
+            _tableAlias = tableAlias;
         }
-
         /// <summary>
         /// 拼接sql
         /// </summary>
         /// <param name="commandText">待拼接的sql</param>
         public override void Build(StringBuilder commandText)
         {
-            commandText.AppendFormat("UPDATE {0}\n", this.tableAlias);
+            //拼接UPDATE
+            commandText.AppendFormat("UPDATE {0}\n", _tableAlias);
+            //拼接SET
             this.Set.Build(commandText);
-            commandText.AppendFormat("  FROM {0} {1}\n", this.tableFullName, this.tableAlias);
+            //拼接FROM
+            if (string.IsNullOrEmpty(_schemaName))
+                commandText.AppendFormat("  FROM {0} {1}\n", _tableName, _tableAlias);
+            else
+                commandText.AppendFormat("  FROM {0}.{1} {2}\n", _schemaName, _tableName, _tableAlias);
+            //拼接WHERE
             this.Where.Build(commandText);
         }
     }

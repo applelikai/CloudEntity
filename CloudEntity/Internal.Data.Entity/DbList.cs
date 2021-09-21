@@ -53,16 +53,12 @@ namespace CloudEntity.Internal.Data.Entity
                 //获取Select节点的子节点集合
                 foreach (IColumnMapper columnMapper in base.TableMapper.GetColumnMappers())
                 {
-                    //若列的别名为空，则不使用别名
-                    if (string.IsNullOrEmpty(columnMapper.ColumnAlias))
-                        yield return new ColumnBuilder(columnMapper.ColumnName, columnMapper.ColumnFullName);
-                    //若别名不为空, 则使用别名
-                    else
-                        yield return new ColumnBuilder(columnMapper.ColumnAlias, string.Format("{0} {1}", columnMapper.ColumnFullName, columnMapper.ColumnAlias));
+                    //依次获取列节点
+                    yield return base.CommandTreeFactory.GetColumnBuilder(base.TableMapper.Header.TableAlias, columnMapper.ColumnName, columnMapper.ColumnAlias);
                 }
-                //获取From节点的子节点集合
-                string tableFullName = string.Format("{0} {1}", base.TableMapper.Header.TableFullName, base.TableMapper.Header.TableAlias);
-                yield return new TableBuilder(base.TableMapper.Header.TableName, tableFullName);
+                //获取From节点的子Table表达式节点
+                ITableHeader tableHeader = base.TableMapper.Header;
+                yield return base.CommandTreeFactory.GetTableBuilder(tableHeader.TableName, tableHeader.TableAlias, tableHeader.SchemaName);
             }
         }
         /// <summary>
@@ -92,8 +88,7 @@ namespace CloudEntity.Internal.Data.Entity
                 yield return nodeBuilder;
             //获取Where节点的子节点集合
             IColumnMapper keyColumnMapper = base.TableMapper.KeyMapper;
-            yield return new NodeBuilder(SqlType.Where, "{0} = ${1}", keyColumnMapper.ColumnFullName, keyColumnMapper.Property.Name);
-            
+            yield return base.CommandTreeFactory.GetEqualsBuilder(this.TableMapper.Header.TableAlias, keyColumnMapper.ColumnName, keyColumnMapper.Property.Name);
         }
         /// <summary>
         /// 获取根据ID统计单条记录是否存在命令生成树的子节点
@@ -103,12 +98,12 @@ namespace CloudEntity.Internal.Data.Entity
         {
             //获取Select节点的子节点集合
             yield return new NodeBuilder(SqlType.Select, "COUNT(*)");
-            //获取From节点的子节点集合
-            string tableFullName = string.Format("{0} {1}", base.TableMapper.Header.TableFullName, base.TableMapper.Header.TableAlias);
-            yield return new TableBuilder(base.TableMapper.Header.TableName, tableFullName);
+            //获取From节点的子Table表达式节点
+            ITableHeader tableHeader = base.TableMapper.Header;
+            yield return base.CommandTreeFactory.GetTableBuilder(tableHeader.TableName, tableHeader.TableAlias, tableHeader.SchemaName);
             //获取Where节点的子节点集合
             IColumnMapper keyColumnMapper = base.TableMapper.KeyMapper;
-            yield return new NodeBuilder(SqlType.Where, "{0} = ${1}", keyColumnMapper.ColumnFullName, keyColumnMapper.Property.Name);
+            yield return base.CommandTreeFactory.GetEqualsBuilder(this.TableMapper.Header.TableAlias, keyColumnMapper.ColumnName, keyColumnMapper.Property.Name);
         }
         /// <summary>
         /// 创建实体对象

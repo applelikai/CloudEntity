@@ -16,7 +16,7 @@ namespace CloudEntity.CommandTrees.Commom
         /// <summary>
         /// 获取列节点信息的Helper
         /// </summary>
-        private ColumnNodeHelper ColumnNodeHelper
+        protected ColumnNodeHelper ColumnNodeHelper
         {
             get { return this.columnNodeHelper ?? (this.columnNodeHelper = this.CreateColumnNodeHelper()); }
         }
@@ -40,24 +40,56 @@ namespace CloudEntity.CommandTrees.Commom
         /// <returns>读取节点信息的Helper</returns>
         protected abstract ColumnNodeHelper CreateColumnNodeHelper();
         /// <summary>
-        /// 创建Delete命令生成树
+        /// 创建建表语句生成树
         /// </summary>
-        /// <param name="tableFullName">完整表名</param>
-        /// <param name="tableAlias">临时表名</param>
-        /// <returns>Delete命令生成树</returns>
-        protected virtual DeleteTree CreateDeleteTree(string tableFullName, string tableAlias)
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <returns>建表语句生成树</returns>
+        protected virtual BuildTableTree CreateBuildTableTree(string schemaName, string tableName)
         {
-            return new DeleteTree(tableFullName, tableAlias, this.ParameterMarker);
+            return new BuildTableTree(this.ColumnNodeHelper, tableName, schemaName);
+        }
+        /// <summary>
+        /// 创建为Table添加列的语句生成树
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <returns>为Table添加列的语句生成树</returns>
+        protected virtual AlterTableAddColumnsTree CreateAlterTableAddColumnsTree(string schemaName, string tableName)
+        {
+            return new AlterTableAddColumnsTree(this.ColumnNodeHelper, tableName, schemaName);
+        }
+        /// <summary>
+        /// 创建Insert命令生成树
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <returns>Insert命令生成树</returns>
+        protected virtual InsertTree CreateInsertTree(string schemaName, string tableName)
+        {
+            return new InsertTree(schemaName, tableName, this.ParameterMarker);
         }
         /// <summary>
         /// 创建Update命令生成树
         /// </summary>
-        /// <param name="tableFullName">完整表名</param>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
         /// <param name="tableAlias">临时表名</param>
         /// <returns>Update命令生成树</returns>
-        protected virtual UpdateTree CreateUpdateTree(string tableFullName, string tableAlias)
+        protected virtual UpdateTree CreateUpdateTree(string schemaName, string tableName, string tableAlias)
         {
-            return new UpdateTree(tableFullName, tableAlias, this.ParameterMarker);
+            return new UpdateTree(schemaName, tableName, tableAlias, this.ParameterMarker);
+        }
+        /// <summary>
+        /// 创建Delete命令生成树
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="tableAlias">临时表名</param>
+        /// <returns>Delete命令生成树</returns>
+        protected virtual DeleteTree CreateDeleteTree(string schemaName, string tableName, string tableAlias)
+        {
+            return new DeleteTree(schemaName, tableName, tableAlias, this.ParameterMarker);
         }
         /// <summary>
         /// 加载查询命令生成树
@@ -89,16 +121,124 @@ namespace CloudEntity.CommandTrees.Commom
             }
         }
 
+        #region 获取sql表达式节点
+        /// <summary>
+        /// 获取sql参数表达式
+        /// </summary>
+        /// <param name="parameterName">参数名称</param>
+        /// <returns>sql参数表达式</returns>
+        public ISqlBuilder GetParameterBuilder(string parameterName)
+        {
+            return new SqlBuilder("{0}{1}", this.ParameterMarker, parameterName);
+        }
+        /// <summary>
+        /// 获取基础Column节点
+        /// </summary>
+        /// <param name="tableAlias">表别名</param>
+        /// <param name="columnName">列名</param>
+        /// <returns>基础Column节点</returns>
+        public virtual ISqlBuilder GetColumnBuilder(string tableAlias, string columnName)
+        {
+            return new SqlBuilder("{0}.{1}", tableAlias, columnName);
+        }
+        /// <summary>
+        /// 获取sql column节点生成类
+        /// </summary>
+        /// <param name="tableAlias">表别名</param>
+        /// <param name="columnName">列名</param>
+        /// <param name="columnAlias">列别名</param>
+        /// <returns>sql column节点生成类</returns>
+        public virtual INodeBuilder GetColumnBuilder(string tableAlias, string columnName, string columnAlias)
+        {
+            //若列的别名为空，则不使用别名
+            if (string.IsNullOrEmpty(columnAlias))
+                return new ColumnBuilder(columnName, $"{tableAlias}.{columnName}");
+            //若列的别名不为空, 则使用别名
+            return new ColumnBuilder(columnAlias, $"{tableAlias}.{columnName} {columnAlias}");
+        }
+        /// <summary>
+        /// 获取Sql函数表达式节点
+        /// </summary>
+        /// <param name="tableAlias">表别名</param>
+        /// <param name="columnName">列名</param>
+        /// <param name="functionName">sql函数名</param>
+        /// <returns>Sql函数表达式节点</returns>
+        public virtual INodeBuilder GetFunctionNodeBuilder(string tableAlias, string columnName, string functionName)
+        {
+            return new NodeBuilder(SqlType.Select, "{0}({1}.{2})", functionName, tableAlias, columnName);
+        }
+        /// <summary>
+        /// 获取UPDATE SET节点的子sql表达式节点
+        /// </summary>
+        /// <param name="tableAlias">表别名</param>
+        /// <param name="columnName">列名</param>
+        /// <param name="parameterName">参数名</param>
+        /// <returns>UPDATE SET节点的子sql表达式节点</returns>
+        public virtual INodeBuilder GetUpdateSetChildBuilder(string tableAlias, string columnName, string parameterName)
+        {
+            return new NodeBuilder(SqlType.UpdateSet, $"{tableAlias}.{columnName} = {this.ParameterMarker}{parameterName}");
+        }
+        /// <summary>
+        /// 获取Table表达式节点
+        /// </summary>
+        /// <param name="tableName">表名</param>
+        /// <param name="tableAlias">表别名</param>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <returns>Table表达式节点</returns>
+        public virtual INodeBuilder GetTableBuilder(string tableName, string tableAlias, string schemaName)
+        {
+            //若架构名为空，则获取空架构名的Table节点
+            if (string.IsNullOrEmpty(schemaName))
+                return new TableBuilder(tableAlias, $"{tableName} {tableAlias}");
+            //若架构名不为空，则获取有架构名的Table节点
+            return new TableBuilder(tableAlias, $"{schemaName}.{tableName} {tableAlias}");
+        }
+        /// <summary>
+        /// 获取Where节点的子表达式节点
+        /// </summary>
+        /// <param name="tableAlias">表别名</param>
+        /// <param name="columnName">列名</param>
+        /// <param name="rightSqlExpression">右边的sql条件表达式</param>
+        /// <returns>Where节点的子表达式节点</returns>
+        public virtual INodeBuilder GetWhereChildBuilder(string tableAlias, string columnName, string rightSqlExpression)
+        {
+            return new NodeBuilder(SqlType.Where, $"{tableAlias}.{columnName} {rightSqlExpression}");
+        }
+        /// <summary>
+        /// 获取等于条件表达式节点
+        /// </summary>
+        /// <param name="tableAlias">表别名</param>
+        /// <param name="columnName">列名</param>
+        /// <param name="parameterName">参数名</param>
+        /// <returns>等于条件表达式节点</returns>
+        public virtual INodeBuilder GetEqualsBuilder(string tableAlias, string columnName, string parameterName)
+        {
+            return new NodeBuilder(SqlType.Where, $"{tableAlias}.{columnName} = {this.ParameterMarker}{parameterName}");
+        }
+        /// <summary>
+        /// 获取OrderBy节点的子节点表达式
+        /// </summary>
+        /// <param name="tableAlias">表别名</param>
+        /// <param name="columnName">列名</param>
+        /// <param name="isDesc">是否为降序[true:降序 false:升序]</param>
+        /// <returns>OrderBy节点的子节点表达式</returns>
+        public virtual INodeBuilder GetOrderByChildBuilder(string tableAlias, string columnName, bool isDesc)
+        {
+            return new NodeBuilder(SqlType.OrderBy, "{0}.{1} {2}", tableAlias, columnName, isDesc ? "DESC" : string.Empty);
+        }
+        #endregion
+        #region 获取sql命令生成树
         /// <summary>
         /// 创建建表语句生成树
         /// </summary>
-        /// <param name="tableFullName">table全名</param>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
         /// <param name="columnNodes">列节点迭代器</param>
         /// <returns>建表语句生成树</returns>
-        public ICommandTree CreateBuildTableTree(string tableFullName, IEnumerable<IColumnNode> columnNodes)
+        public ICommandTree CreateBuildTableTree(string schemaName, string tableName, IEnumerable<IColumnNode> columnNodes)
         {
             //创建建表语句生成树
-            BuildTableTree buildTableTree = new BuildTableTree(tableFullName, this.ColumnNodeHelper);
+            BuildTableTree buildTableTree = this.CreateBuildTableTree(schemaName, tableName);
             //为建表语句生成树添加列节点
             foreach (IColumnNode columnNode in columnNodes)
                 buildTableTree.Add(columnNode);
@@ -108,13 +248,14 @@ namespace CloudEntity.CommandTrees.Commom
         /// <summary>
         /// 创建为Table添加列的语句生成树
         /// </summary>
-        /// <param name="tableFullName">table全名</param>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
         /// <param name="columnNodes">列节点迭代器</param>
         /// <returns>为Table添加列的语句生成树</returns>
-        public ICommandTree CreateAlterTableAddColumnsTree(string tableFullName, IEnumerable<IColumnNode> columnNodes)
+        public ICommandTree CreateAlterTableAddColumnsTree(string schemaName, string tableName, IEnumerable<IColumnNode> columnNodes)
         {
             //创建为Table添加列的语句生成树
-            AlterTableAddColumnsTree alterTableAddColumnsTree = new AlterTableAddColumnsTree(tableFullName, this.ColumnNodeHelper);
+            AlterTableAddColumnsTree alterTableAddColumnsTree = this.CreateAlterTableAddColumnsTree(schemaName, tableName);
             //为命令生成树添加列节点
             foreach (IColumnNode columnNode in columnNodes)
                 alterTableAddColumnsTree.Add(columnNode);
@@ -124,13 +265,14 @@ namespace CloudEntity.CommandTrees.Commom
         /// <summary>
         /// 创建Insert命令生成树
         /// </summary>
-        /// <param name="tableFullName">完整表名</param>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">完整表名</param>
         /// <param name="insertNodes">Insert命令生成树子节点</param>
         /// <returns>Insert命令生成树</returns>
-        public ICommandTree CreateInsertTree(string tableFullName, IEnumerable<KeyValuePair<string, string>> insertNodes)
+        public ICommandTree CreateInsertTree(string schemaName, string tableName, IEnumerable<KeyValuePair<string, string>> insertNodes)
         {
             //创建Insert命令生成树
-            InsertTree insertTree = new InsertTree(tableFullName, this.ParameterMarker);
+            InsertTree insertTree = this.CreateInsertTree(schemaName, tableName);
             //为Insert命令生成树添加节点
             foreach (KeyValuePair<string, string> insertNodePair in insertNodes)
                 insertTree.Append(insertNodePair.Key, insertNodePair.Value);
@@ -140,14 +282,15 @@ namespace CloudEntity.CommandTrees.Commom
         /// <summary>
         /// 创建Delete命令生成树
         /// </summary>
-        /// <param name="tableFullName">完整的表名</param>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
         /// <param name="tableAlias">临时表名</param>
         /// <param name="whereChildBuilders">Where语句段子节点集合</param>
         /// <returns>Delete命令生成树</returns>
-        public ICommandTree CreateDeleteTree(string tableFullName, string tableAlias, IEnumerable<ISqlBuilder> whereChildBuilders)
+        public ICommandTree CreateDeleteTree(string schemaName, string tableName, string tableAlias, IEnumerable<ISqlBuilder> whereChildBuilders)
         {
             //创建Delete命令生成树
-            DeleteTree deleteTree = this.CreateDeleteTree(tableFullName, tableAlias);
+            DeleteTree deleteTree = this.CreateDeleteTree(schemaName, tableName, tableAlias);
             //为Delete命令生成树的Where节点添加子节点
             foreach (ISqlBuilder sqlBuilder in whereChildBuilders)
                 deleteTree.Where.Append(sqlBuilder);
@@ -157,14 +300,15 @@ namespace CloudEntity.CommandTrees.Commom
         /// <summary>
         /// 创建Update命令生成树
         /// </summary>
-        /// <param name="tableFullName">完整表名</param>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
         /// <param name="tableAlias">临时表名</param>
         /// <param name="updateChildBuilders">Update命令生成树的子节点集合</param>
         /// <returns>Update命令生成树</returns>
-        public ICommandTree CreateUpdateTree(string tableFullName, string tableAlias, IEnumerable<INodeBuilder> updateChildBuilders)
+        public ICommandTree CreateUpdateTree(string schemaName, string tableName, string tableAlias, IEnumerable<INodeBuilder> updateChildBuilders)
         {
             //创建Update命令生成树
-            UpdateTree updateTree = this.CreateUpdateTree(tableFullName, tableAlias);
+            UpdateTree updateTree = this.CreateUpdateTree(schemaName, tableName, tableAlias);
             //为Update命令生成树添加子节点
             foreach (INodeBuilder nodeBuilder in updateChildBuilders)
             {
@@ -260,5 +404,6 @@ namespace CloudEntity.CommandTrees.Commom
             //返回with as查询命令生成树
             return withAsQueryTree;
         }
+        #endregion
     }
 }

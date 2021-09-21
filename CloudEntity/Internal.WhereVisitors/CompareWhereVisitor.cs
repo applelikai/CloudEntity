@@ -1,6 +1,7 @@
 ﻿using CloudEntity.CommandTrees;
 using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
+using CloudEntity.Mapping;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -70,9 +71,9 @@ namespace CloudEntity.Internal.WhereVisitors
             switch (binaryExpression.NodeType)
             {
                 case ExpressionType.Equal:
-                    return new NodeBuilder(SqlType.Where, "{0} IS NULL", base.GetColumnFullName(expression.GetMemberExpression()));
+                    return base.GetWhereChildBuilder(expression.GetMemberExpression(), "IS NULL");
                 case ExpressionType.NotEqual:
-                    return new NodeBuilder(SqlType.Where, "{0} IS NOT NULL", base.GetColumnFullName(expression.GetMemberExpression()));
+                    return base.GetWhereChildBuilder(expression.GetMemberExpression(), "IS NOT NULL");
             };
             return null;
         }
@@ -81,11 +82,10 @@ namespace CloudEntity.Internal.WhereVisitors
         /// 创建比较类型表达式解析对象
         /// </summary>
         /// <param name="parameterFactory">sql参数创建对象</param>
-        /// <param name="columnGetter">列获取器</param>
-        public CompareWhereVisitor(IParameterFactory parameterFactory, IColumnGetter columnGetter)
-            : base(parameterFactory, columnGetter)
-        {
-        }
+        /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
+        /// <param name="mapperContainer">Mapper对象容器</param>
+        public CompareWhereVisitor(IParameterFactory parameterFactory, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
+            : base(parameterFactory, commandTreeFactory, mapperContainer) { }
         /// <summary>
         /// 解析查询条件表达式,生成sql条件表达式节点及其附属的sql参数
         /// </summary>
@@ -115,9 +115,9 @@ namespace CloudEntity.Internal.WhereVisitors
             };
             //确定二叉树sql表达式节点的sql参数节点
             if (binaryBuilder.LeftBuilder == null)
-                binaryBuilder.LeftBuilder = new SqlBuilder("${0}", parameterName);
+                binaryBuilder.LeftBuilder = base.GetParameterBuilder(parameterName);
             if (binaryBuilder.RightBuilder == null)
-                binaryBuilder.RightBuilder = new SqlBuilder("${0}", parameterName);
+                binaryBuilder.RightBuilder = base.GetParameterBuilder(parameterName);
             //获取其附属参数数组
             IDbDataParameter[] sqlParameters = base.GetParameters(parameterNames, parameterName, parameterValue).ToArray();
             //返回最终的sql参数表达式及其附属参数

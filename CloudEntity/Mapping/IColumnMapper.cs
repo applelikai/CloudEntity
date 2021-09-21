@@ -20,10 +20,6 @@ namespace CloudEntity.Mapping
         /// </summary>
         string ColumnName { get; }
         /// <summary>
-        /// 列的全名
-        /// </summary>
-        string ColumnFullName { get; }
-        /// <summary>
         /// 列的别名（可以为空）
         /// </summary>
         string ColumnAlias { get; }

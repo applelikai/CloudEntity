@@ -16,18 +16,19 @@ namespace CloudEntity.Internal.WhereVisitors
     internal class BinaryWhereVisitor : WhereVisitor
     {
         //创建表达式解析器的工厂
-        private IWhereVisitorFactory factory;
+        private IWhereVisitorFactory _factory;
 
         /// <summary>
         /// 创建二叉树表达式解析对象
         /// </summary>
         /// <param name="parameterFactory">sql参数创建对象</param>
-        /// <param name="columnGetter">列名获取器</param>
+        /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
+        /// <param name="mapperContainer">Mapper容器</param>
         /// <param name="factory">创建表达式解析器的工厂</param>
-        public BinaryWhereVisitor(IParameterFactory parameterFactory, IColumnGetter columnGetter, IWhereVisitorFactory factory)
-            : base(parameterFactory, columnGetter)
+        public BinaryWhereVisitor(IParameterFactory parameterFactory, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer, IWhereVisitorFactory factory)
+            : base(parameterFactory, commandTreeFactory, mapperContainer)
         {
-            this.factory = factory;
+            _factory = factory;
         }
         /// <summary>
         /// 解析查询条件表达式,生成sql条件表达式节点及其附属的sql参数
@@ -41,10 +42,10 @@ namespace CloudEntity.Internal.WhereVisitors
             //获取二叉树表达式
             BinaryExpression binaryExpression = bodyExpression as BinaryExpression;
             //获取左sql表达式及其附属参数
-            WhereVisitor leftVisitor = this.factory.GetVisitor(binaryExpression.Left.NodeType);
+            WhereVisitor leftVisitor = this._factory.GetVisitor(binaryExpression.Left.NodeType);
             KeyValuePair<INodeBuilder, IDbDataParameter[]> leftPair = leftVisitor.Visit(parameterExpression, binaryExpression.Left, parameterNames);
             //获取右sql表达式及其附属参数
-            WhereVisitor rightVisitor = this.factory.GetVisitor(binaryExpression.Right.NodeType);
+            WhereVisitor rightVisitor = this._factory.GetVisitor(binaryExpression.Right.NodeType);
             KeyValuePair<INodeBuilder, IDbDataParameter[]> rightPair = rightVisitor.Visit(parameterExpression, binaryExpression.Right, parameterNames);
             //获取最终的sql条件表达式节点
             INodeBuilder nodeBuilder = new BinaryBuilder()

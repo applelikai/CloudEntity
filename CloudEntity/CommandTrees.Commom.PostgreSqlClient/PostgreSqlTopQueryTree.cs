@@ -1,12 +1,12 @@
 ﻿using System.Text;
 
-namespace CloudEntity.CommandTrees.Commom.MySqlClient
+namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
 {
     /// <summary>
-    /// Mysql的top查询命令生成树
-    /// 李凯 Apple_Li
+    /// PostgreSql的top查询命令生成树
+    /// 李凯 Apple_Li 2021/09/19
     /// </summary>
-    internal class MySqlTopQueryTree : QueryTree
+    internal class PostgreSqlTopQueryTree : QueryTree
     {
         /// <summary>
         /// 查询的前几条的元素数量
@@ -18,7 +18,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// </summary>
         /// <param name="parameterMarker">sql参数标识符号</param>
         /// <param name="topCount">查询的前几条的元素数量</param>
-        public MySqlTopQueryTree(char parameterMarker, int topCount)
+        public PostgreSqlTopQueryTree(char parameterMarker, int topCount)
             : base(parameterMarker)
         {
             _topCount = topCount;
@@ -30,7 +30,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         public override void Build(StringBuilder commandText)
         {
             base.Build(commandText);
-            //拼接MySql的top查询条件
+            //拼接PostgreSql的top查询条件
             commandText.AppendLine();
             commandText.AppendFormat("     LIMIT {0}", _topCount);
         }

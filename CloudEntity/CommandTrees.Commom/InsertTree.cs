@@ -3,59 +3,82 @@
 namespace CloudEntity.CommandTrees.Commom
 {
     /// <summary>
-    /// 查询命令生成树
+    /// Insert命令生成树
     /// 李凯 Apple_Li
     /// </summary>
-    internal class InsertTree : CommandTree
+    public class InsertTree : CommandTree
     {
         /// <summary>
-        /// 完整表名
+        /// 数据库架构名
         /// </summary>
-        private string tableFullName;
+        private string _schemaName;
+        /// <summary>
+        /// 表名
+        /// </summary>
+        private string _tableName;
         /// <summary>
         /// insert语句段生成器
         /// </summary>
-        private IBuilderCollection insertCollection;
+        private IBuilderCollection _insertCollection;
         /// <summary>
         /// Values语句段生成器
         /// </summary>
-        private IBuilderCollection valueCollection;
+        private IBuilderCollection _valueCollection;
 
         /// <summary>
         /// insert语句段生成器
         /// </summary>
-        private IBuilderCollection InsertCollection
+        protected IBuilderCollection InsertCollection
         {
-            get { return this.insertCollection ?? (this.insertCollection = new BuilderCollection("            (", "             ", ",\n", ")\n")); }
+            get { return _insertCollection ?? (_insertCollection = new BuilderCollection("            (", "             ", ",\n", ")\n")); }
         }
         /// <summary>
         /// Values语句段生成器
         /// </summary>
-        private IBuilderCollection ValueCollection
+        protected IBuilderCollection ValueCollection
         {
-            get { return this.valueCollection ?? (this.valueCollection = new BuilderCollection("     VALUES (", "             ", ",\n", ")\n")); }
+            get { return _valueCollection ?? (_valueCollection = new BuilderCollection("     VALUES (", "             ", ",\n", ")\n")); }
         }
 
         /// <summary>
-        /// 拼接Column及Parameter节点
+        /// 拼接INSERT INTO 表
         /// </summary>
-        /// <param name="columnName">列名</param>
-        /// <param name="parameterName">参数名</param>
-        internal void Append(string columnName, string parameterName)
+        /// <param name="commandText">待拼接的sql</param>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        protected virtual void AppendInsertTable(StringBuilder commandText, string schemaName, string tableName)
         {
-            this.InsertCollection.Append(new SqlBuilder(columnName));
-            this.ValueCollection.Append(new SqlBuilder("${0}", parameterName));
+            //若数据库架构名为空，则直接拼接表名
+            if (string.IsNullOrEmpty(schemaName))
+                commandText.AppendLine($"INSERT INTO {tableName}");
+            //否则则拼接架构名.表名
+            else
+                commandText.AppendLine($"INSERT INTO {schemaName}.{tableName}");
         }
 
         /// <summary>
         /// 创建Insert命令生成树
         /// </summary>
-        /// <param name="tableFullName">完整表名</param>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
         /// <param name="parameterMarker">Sql参数标识符号</param>
-        public InsertTree(string tableFullName, char parameterMarker)
+        public InsertTree(string schemaName, string tableName, char parameterMarker)
             : base(parameterMarker)
         {
-            this.tableFullName = tableFullName;
+            _schemaName = schemaName;
+            _tableName = tableName;
+        }
+        /// <summary>
+        /// 拼接Column及Parameter节点
+        /// </summary>
+        /// <param name="columnName">列名</param>
+        /// <param name="parameterName">参数名</param>
+        public virtual void Append(string columnName, string parameterName)
+        {
+            //添加Columns节点
+            this.InsertCollection.Append(new SqlBuilder(columnName));
+            //添加Values节点
+            this.ValueCollection.Append(base.GetParameterBuilder(parameterName));
         }
         /// <summary>
         /// 拼接sql
@@ -63,9 +86,11 @@ namespace CloudEntity.CommandTrees.Commom
         /// <param name="commandText">待拼接的sql</param>
         public override void Build(StringBuilder commandText)
         {
-            //开始拼接sql
-            commandText.AppendFormat("INSERT INTO {0}\n", this.tableFullName);
+            //拼接INSERT INTO 表
+            this.AppendInsertTable(commandText, _schemaName, _tableName);
+            //拼接列列表
             this.InsertCollection.Build(commandText);
+            //拼接值参数列表
             this.ValueCollection.Build(commandText);
         }
     }

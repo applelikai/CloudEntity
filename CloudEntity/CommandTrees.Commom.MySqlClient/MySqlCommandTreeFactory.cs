@@ -19,12 +19,13 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <summary>
         /// 创建Update命令生成树
         /// </summary>
-        /// <param name="tableFullName">完整表名</param>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
         /// <param name="tableAlias">临时表名</param>
         /// <returns>Update命令生成树</returns>
-        protected override UpdateTree CreateUpdateTree(string tableFullName, string tableAlias)
+        protected override UpdateTree CreateUpdateTree(string schemaName, string tableName, string tableAlias)
         {
-            return new MySqlUpdateTree(tableFullName, tableAlias, base.ParameterMarker);
+            return new MySqlUpdateTree(schemaName, tableName, tableAlias, base.ParameterMarker);
         }
 
         /// <summary>

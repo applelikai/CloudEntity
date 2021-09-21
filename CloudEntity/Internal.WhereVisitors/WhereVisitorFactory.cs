@@ -1,4 +1,5 @@
-﻿using CloudEntity.Data;
+﻿using CloudEntity.CommandTrees;
+using CloudEntity.Data;
 using CloudEntity.Mapping;
 using System;
 using System.Collections.Generic;
@@ -12,10 +13,26 @@ namespace CloudEntity.Internal.WhereVisitors
     /// </summary>
     public class WhereVisitorFactory : IWhereVisitorFactory
     {
-        private IParameterFactory parameterFactory;                     //参数创建工厂
-        private IColumnGetter columnGetter;                             //列获取器
-        private object locaker;                                         //线程锁
-        private IDictionary<ExpressionType, WhereVisitor> whereVisitors;//表达式解析器字典
+        /// <summary>
+        /// 创建参数的工厂
+        /// </summary>
+        private IParameterFactory _parameterFactory;
+        /// <summary>
+        /// 创建Sql命令生成树的工厂
+        /// </summary>
+        private ICommandTreeFactory _commandTreeFactory;
+        /// <summary>
+        /// Mapper容器
+        /// </summary>
+        private IMapperContainer _mapperContainer;
+        /// <summary>
+        /// 线程锁
+        /// </summary>
+        private object _locaker;
+        /// <summary>
+        /// 表达式解析器字典
+        /// </summary>
+        private IDictionary<ExpressionType, WhereVisitor> _whereVisitors;
 
         /// <summary>
         /// 创建表达式解析器
@@ -33,19 +50,19 @@ namespace CloudEntity.Internal.WhereVisitors
                 case ExpressionType.LessThanOrEqual:        //小于等于
                 case ExpressionType.Equal:                  //等于
                 case ExpressionType.NotEqual:               //不等于
-                    return new CompareWhereVisitor(this.parameterFactory, this.columnGetter);
+                    return new CompareWhereVisitor(_parameterFactory, _commandTreeFactory, _mapperContainer);
                 //创建方法调用表达式解析器
                 case ExpressionType.Call:
-                    return new MethodCallWhereVisitor(this.parameterFactory, this.columnGetter);
+                    return new MethodCallWhereVisitor(_parameterFactory, _commandTreeFactory, _mapperContainer);
                 //创建NOT一元表达式解析器
                 case ExpressionType.Not:
-                    return new UnaryNotWhereVisitor(this.parameterFactory, this.columnGetter, this);
+                    return new UnaryNotWhereVisitor(_parameterFactory, _commandTreeFactory, _mapperContainer, this);
                 //创建二叉树表达式解析器
                 case ExpressionType.And:
                 case ExpressionType.AndAlso:
                 case ExpressionType.Or:
                 case ExpressionType.OrElse:
-                    return new BinaryWhereVisitor(this.parameterFactory, this.columnGetter, this);
+                    return new BinaryWhereVisitor(_parameterFactory, _commandTreeFactory, _mapperContainer, this);
                 //其他类型的表达式不支持解析
                 default:
                     throw new Exception(string.Format("unsupported expression's type:{0}", expressionType));
@@ -56,17 +73,19 @@ namespace CloudEntity.Internal.WhereVisitors
         /// 创建获取表达式解析器的工厂
         /// </summary>
         /// <param name="parameterFactory">参数创建器</param>
-        /// <param name="columnGetter">列获取器</param>
-        public WhereVisitorFactory(IParameterFactory parameterFactory, IColumnGetter columnGetter)
+        /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
+        /// <param name="mapperContainer">Mapper容器</param>
+        public WhereVisitorFactory(IParameterFactory parameterFactory, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer = null)
         {
             //非空检查
             Check.ArgumentNull(parameterFactory, nameof(parameterFactory));
-            Check.ArgumentNull(columnGetter, nameof(columnGetter));
+            Check.ArgumentNull(commandTreeFactory, nameof(commandTreeFactory));
             //赋值
-            this.parameterFactory = parameterFactory;
-            this.columnGetter = columnGetter;
-            this.locaker = new object();
-            this.whereVisitors = new Dictionary<ExpressionType, WhereVisitor>();
+            _parameterFactory = parameterFactory;
+            _commandTreeFactory = commandTreeFactory;
+            _mapperContainer = mapperContainer;
+            _locaker = new object();
+            _whereVisitors = new Dictionary<ExpressionType, WhereVisitor>();
         }
         /// <summary>
         /// 创建表达式解析器
@@ -75,16 +94,16 @@ namespace CloudEntity.Internal.WhereVisitors
         /// <returns>表达式解析器</returns>
         public WhereVisitor GetVisitor(ExpressionType expressionType)
         {
-        Start:
+            Start:
             //若字典中存在当前类型的表达式解析器，则直接获取
-            if (this.whereVisitors.ContainsKey(expressionType))
-                return this.whereVisitors[expressionType];
+            if (this._whereVisitors.ContainsKey(expressionType))
+                return this._whereVisitors[expressionType];
             //进入单线程模式
-            lock (this.locaker)
+            lock (this._locaker)
             {
                 //若字典中不存在当前类型的表达式解析器则注册
-                if (!this.whereVisitors.ContainsKey(expressionType))
-                    this.whereVisitors.Add(expressionType, this.CreateWhereVisitor(expressionType));
+                if (!this._whereVisitors.ContainsKey(expressionType))
+                    this._whereVisitors.Add(expressionType, this.CreateWhereVisitor(expressionType));
                 //回到Start,重新获取当前类型的表达式解析器
                 goto Start;
             }

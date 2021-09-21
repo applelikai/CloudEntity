@@ -1,6 +1,7 @@
 ﻿using CloudEntity.CommandTrees;
 using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
+using CloudEntity.Mapping;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -64,9 +65,9 @@ namespace CloudEntity.Internal.WhereVisitors
             binaryBuilder.SqlOperator = this.GetSqlOperator(methodCallExpression.Method.Name, ref parameterValue);
             //确定二叉树sql表达式节点的sql参数节点
             if (binaryBuilder.LeftBuilder == null)
-                binaryBuilder.LeftBuilder = new SqlBuilder("${0}", parameterName);
+                binaryBuilder.LeftBuilder = base.GetParameterBuilder(parameterName);
             if (binaryBuilder.RightBuilder == null)
-                binaryBuilder.RightBuilder = new SqlBuilder("${0}", parameterName);
+                binaryBuilder.RightBuilder = base.GetParameterBuilder(parameterName);
             //检查解析表达式是否正确
             if (string.IsNullOrEmpty(binaryBuilder.SqlOperator))
                 throw new Exception(string.Format("Unknow Expression: {0}", methodCallExpression.ToString()));
@@ -126,11 +127,10 @@ namespace CloudEntity.Internal.WhereVisitors
         /// 创建Lambda表达式解析对象
         /// </summary>
         /// <param name="parameterFactory">sql参数创建对象</param>
-        /// <param name="columnGetter">列名获取器</param>
-        public MethodCallWhereVisitor(IParameterFactory parameterFactory, IColumnGetter columnGetter)
-            : base(parameterFactory, columnGetter)
-        {
-        }
+        /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
+        /// <param name="mapperContainer">Mapper对象容器</param>
+        public MethodCallWhereVisitor(IParameterFactory parameterFactory, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
+            : base(parameterFactory, commandTreeFactory, mapperContainer) { }
         /// <summary>
         /// 方法调用表达式,生成sql条件表达式节点及其附属的sql参数
         /// </summary>

@@ -10,7 +10,35 @@ namespace CloudEntity.Core.Data.Entity
     /// Table初始化器
     /// </summary>
     public abstract class TableInitializer
-    {        
+    {
+        /// <summary>
+        /// 获取删除Table的命令
+        /// </summary>
+        /// <param name="tableHeader">Table元数据</param>
+        /// <returns>删除Table的命令</returns>
+        protected virtual string GetDropTableCommand(ITableHeader tableHeader)
+        {
+            //若架构名为空则直接(DROP TABLE 表名)
+            if (string.IsNullOrEmpty(tableHeader.SchemaName))
+                return $"DROP TABLE {tableHeader.TableName}";
+            //若不为空则(DROP TABLE 架构名.表名)
+            return $"DROP TABLE {tableHeader.SchemaName}.{tableHeader.TableName}";
+        }
+        /// <summary>
+        /// 获取重命名Table的命令
+        /// </summary>
+        /// <param name="tableHeader">Table元数据</param>
+        /// <param name="oldTableName">原来的Table名</param>
+        /// <returns>重命名Table的命令</returns>
+        protected virtual string GetRenameTableCommand(ITableHeader tableHeader, string oldTableName)
+        {
+            //若架构名为空则直接(ALTER TABLE 旧表名 RENAME TO 新表名)
+            if (string.IsNullOrEmpty(tableHeader.SchemaName))
+                return $"ALTER TABLE {oldTableName} RENAME TO {tableHeader.TableName}";
+            //若不为空则(ALTER TABLE 架构名.旧表名 RENAME TO 架构名.新表名)
+            return string.Format("ALTER TABLE {0}.{1} RENAME TO {0}.{2}", tableHeader.SchemaName, oldTableName, tableHeader.TableName);
+        }
+
         /// <summary>
         /// 判断当前table是否存在
         /// </summary>
@@ -26,10 +54,12 @@ namespace CloudEntity.Core.Data.Entity
         /// <param name="tableMapper">Table元数据解析器</param>
         public int CreateTable(DbHelper dbHelper, ICommandTreeFactory commandTreeFactory, ITableMapper tableMapper)
         {
+            //获取TableHeader
+            ITableHeader tableHeader = tableMapper.Header;
             //获取ColumnNodes
             IEnumerable<IColumnNode> columnNodes = tableMapper.GetColumnMappers().Select(m => m.ToColumnNode());
             //获取建表语句生成树
-            ICommandTree buildTableTree = commandTreeFactory.CreateBuildTableTree(tableMapper.Header.TableFullName, columnNodes);
+            ICommandTree buildTableTree = commandTreeFactory.CreateBuildTableTree(tableHeader.SchemaName, tableHeader.TableName, columnNodes);
             //创建建表语句并执行
             return dbHelper.ExecuteUpdate(buildTableTree.Compile());
         }
@@ -40,7 +70,7 @@ namespace CloudEntity.Core.Data.Entity
         /// <param name="tableHeader">Table头信息</param>
         public int DropTable(DbHelper dbHelper, ITableHeader tableHeader)
         {
-            return dbHelper.ExecuteUpdate(string.Concat("DROP TABLE ", tableHeader.TableFullName));
+            return dbHelper.ExecuteUpdate(this.GetDropTableCommand(tableHeader));
         }
         /// <summary>
         /// 重命名表
@@ -49,9 +79,9 @@ namespace CloudEntity.Core.Data.Entity
         /// <param name="tableHeader">Table头信息</param>
         /// <param name="oldTableName">旧的表名</param>
         /// <returns>受影响的行数</returns>
-        public virtual int RenameTable(DbHelper dbHelper, ITableHeader tableHeader, string oldTableName)
+        public int RenameTable(DbHelper dbHelper, ITableHeader tableHeader, string oldTableName)
         {
-            return dbHelper.ExecuteUpdate(string.Format("ALTER TABLE {0} RENAME TO {1}", oldTableName, tableHeader.TableName));
+            return dbHelper.ExecuteUpdate(this.GetRenameTableCommand(tableHeader, oldTableName));
         }
     }
 }

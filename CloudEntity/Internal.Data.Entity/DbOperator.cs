@@ -1,5 +1,4 @@
 ﻿using CloudEntity.CommandTrees;
-using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
 using CloudEntity.Mapping;
@@ -130,9 +129,10 @@ namespace CloudEntity.Internal.Data.Entity
                     //获取所有的主键列的propertyMapper,添加唯一条件节点至Where节点
                     case ColumnAction.PrimaryAndIdentity:
                     case ColumnAction.PrimaryAndInsert:
-                        string columnName = columnMapper.ColumnFullName;    //获取列名
-                        string parameterName = columnMapper.Property.Name;  //获取(属性名所为)参数名
-                        yield return new NodeBuilder(SqlType.Where, "{0} = ${1}", columnName, parameterName);
+                        //获取table别名
+                        string tableAlias = this.TableMapper.Header.TableAlias;
+                        //依次获取等于sql条件表达式节点
+                        yield return this.CommandTreeFactory.GetEqualsBuilder(tableAlias, columnMapper.ColumnName, columnMapper.Property.Name);
                         continue;
                 }
             }
@@ -143,24 +143,24 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>Update命令生成树的所有子节点</returns>
         private IEnumerable<INodeBuilder> GetUpdateChildNodes()
         {
+            //获取table别名
+            string tableAlias = this.TableMapper.Header.TableAlias;
             //遍历所有的columnMapper对象
             foreach (IColumnMapper columnMapper in this.TableMapper.GetColumnMappers())
             {
-                string columnName = columnMapper.ColumnFullName;  //获取列名
-                string parameterName = columnMapper.Property.Name; //获取(属性名所为)参数名
-
+                //依次获取sql表达式节点
                 switch (columnMapper.ColumnAction)
                 {
                     //解析可编辑的列元数据，获取对应sql表达式节点添加至Set节点
                     case ColumnAction.InsertAndEdit:
                     case ColumnAction.Edit:
                     case ColumnAction.EditAndDefault:
-                        yield return new NodeBuilder(SqlType.UpdateSet, "{0} = ${1}", columnName, parameterName);
+                        yield return this.CommandTreeFactory.GetUpdateSetChildBuilder(tableAlias, columnMapper.ColumnName, columnMapper.Property.Name);
                         break;
                     //解析主键列，获取对应sql表达式节点添加至Where节点
                     case ColumnAction.PrimaryAndIdentity:
                     case ColumnAction.PrimaryAndInsert:
-                        yield return new NodeBuilder(SqlType.Where, "{0} = ${1}", columnName, parameterName);
+                        yield return this.CommandTreeFactory.GetEqualsBuilder(tableAlias, columnMapper.ColumnName, columnMapper.Property.Name);
                         break;
                 }
             }
@@ -171,6 +171,8 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>所有Property对应的Column的Update子sql表达式节点</returns>
         private IEnumerable<INodeBuilder> GetUpdateAllChildNodes()
         {
+            //获取table别名
+            string tableAlias = this.TableMapper.Header.TableAlias;
             //遍历所有的ColumnMapper对象
             foreach (IColumnMapper columnMapper in this.TableMapper.GetColumnMappers())
             {
@@ -181,12 +183,12 @@ namespace CloudEntity.Internal.Data.Entity
                     case ColumnAction.PrimaryAndInsert:
                     case ColumnAction.PrimaryAndIdentity:
                         //返回Where表达式的子节点
-                        yield return new NodeBuilder(SqlType.Where, "{0} = ${1}", columnMapper.ColumnFullName, columnMapper.Property.Name);
+                        yield return this.CommandTreeFactory.GetEqualsBuilder(tableAlias, columnMapper.ColumnName, columnMapper.Property.Name);
                         break;
                     //解析所有可编辑的列元数据，获取对应sql表达式节点添加至Set节点
                     default:
                         //返回Set表达式节点
-                        yield return new NodeBuilder(SqlType.UpdateSet, "{0} = ${1}", columnMapper.ColumnFullName, columnMapper.Property.Name);
+                        yield return this.CommandTreeFactory.GetUpdateSetChildBuilder(tableAlias, columnMapper.ColumnName, columnMapper.Property.Name);
                         break;
                 }
             }
@@ -199,12 +201,20 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="sqlParameters">附属的sql参数集合</param>
         private void LoadUpdateChildNodesAndParameters(IDictionary<string, object> setParameters, List<INodeBuilder> nodeBuilders, List<IDbDataParameter> sqlParameters)
         {
+            //获取table别名
+            string tableAlias = this.TableMapper.Header.TableAlias;
+            //遍历setParameters
             foreach (KeyValuePair<string, object> setPair in setParameters)
             {
+                //获取columnMapper
                 IColumnMapper columnMapper = this.TableMapper.GetColumnMapper(setPair.Key);
+                //获取参数名
                 string parameterName = string.Concat("New", columnMapper.Property.Name);
-                INodeBuilder setBuilder = new NodeBuilder(SqlType.UpdateSet, "{0} = ${1}", columnMapper.ColumnFullName, parameterName);
+                //获取Update Set的子sql表达式节点
+                INodeBuilder setBuilder = this.CommandTreeFactory.GetUpdateSetChildBuilder(tableAlias, columnMapper.ColumnName, parameterName);
+                //添加sql表达式节点
                 nodeBuilders.Add(setBuilder);
+                //添加sql参数
                 sqlParameters.Add(this.DbHelper.Parameter(parameterName, setPair.Value));
             }
         }
@@ -214,10 +224,12 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>Insert Sql</returns>
         private string GetInsertSql()
         {
-            return this.CommandTreeFactory.CreateInsertTree(
-                this.TableMapper.Header.TableFullName, 
-                this.GetInsertChildNodes())
-                .Compile();
+            //获取TableHeader对象
+            ITableHeader tableHeader = this.TableMapper.Header;
+            //获取命令生成树
+            ICommandTree commandTree = this.CommandTreeFactory.CreateInsertTree(tableHeader.SchemaName, tableHeader.TableName, this.GetInsertChildNodes());
+            //获取Insert命令
+            return commandTree.Compile();
         }
         /// <summary>
         /// 获取insert所有非自增列的sql
@@ -225,10 +237,12 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>insert所有非自增列的sql</returns>
         private string GetInsertAllSql()
         {
-            return this.CommandTreeFactory.CreateInsertTree(
-                this.TableMapper.Header.TableFullName, 
-                this.GetInsertAllChildNodes())
-                .Compile();
+            //获取TableHeader对象
+            ITableHeader tableHeader = this.TableMapper.Header;
+            //获取命令生成树
+            ICommandTree commandTree = this.CommandTreeFactory.CreateInsertTree(tableHeader.SchemaName, tableHeader.TableName, this.GetInsertAllChildNodes());
+            //获取Insert命令
+            return commandTree.Compile();
         }
         /// <summary>
         /// 获取Delete Sql
@@ -236,11 +250,12 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>Delete Sql</returns>
         private string GetDeleteSql()
         {
-            return this.CommandTreeFactory.CreateDeleteTree(
-                this.TableMapper.Header.TableFullName,
-                this.TableMapper.Header.TableAlias,
-                this.GetDeleteChildNodes())
-                .Compile();
+            //获取TableHeader对象
+            ITableHeader tableHeader = this.TableMapper.Header;
+            //获取命令生成树
+            ICommandTree commandTree = this.CommandTreeFactory.CreateDeleteTree(tableHeader.SchemaName, tableHeader.TableName, tableHeader.TableAlias, this.GetDeleteChildNodes());
+            //获取Insert命令
+            return commandTree.Compile();
         }
         /// <summary>
         /// 获取Update Sql
@@ -248,11 +263,12 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>Update Sql</returns>
         private string GetUpdateSql()
         {
-            return this.CommandTreeFactory.CreateUpdateTree(
-                this.TableMapper.Header.TableFullName,
-                this.TableMapper.Header.TableAlias,
-                this.GetUpdateChildNodes())
-                .Compile();
+            //获取TableHeader对象
+            ITableHeader tableHeader = this.TableMapper.Header;
+            //获取命令生成树
+            ICommandTree commandTree = this.CommandTreeFactory.CreateUpdateTree(tableHeader.SchemaName, tableHeader.TableName, tableHeader.TableAlias, this.GetUpdateChildNodes());
+            //获取Insert命令
+            return commandTree.Compile();
         }
         /// <summary>
         /// 获取update所有非主键列的sql
@@ -260,11 +276,12 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>update所有非主键列的sql</returns>
         private string GetUpdateAllSql()
         {
-            return this.CommandTreeFactory.CreateUpdateTree(
-                this.TableMapper.Header.TableFullName, 
-                this.TableMapper.Header.TableAlias,
-                this.GetUpdateAllChildNodes())
-                .Compile();;
+            //获取TableHeader对象
+            ITableHeader tableHeader = this.TableMapper.Header;
+            //获取命令生成树
+            ICommandTree commandTree = this.CommandTreeFactory.CreateUpdateTree(tableHeader.SchemaName, tableHeader.TableName, tableHeader.TableAlias, this.GetUpdateAllChildNodes());
+            //获取Insert命令
+            return commandTree.Compile();
         }
 
         /// <summary>
@@ -280,7 +297,9 @@ namespace CloudEntity.Internal.Data.Entity
             {
                 if (commandText.Contains(string.Concat(this.CommandTreeFactory.ParameterMarker, columnMapper.Property.Name)))
                 {
+                    //获取参数值
                     object value = this.EntityAccessor.GetValue(columnMapper.Property.Name, entity);
+                    //依次获取参数
                     yield return this.DbHelper.Parameter(columnMapper.Property.Name, value);
                 }
             }
@@ -399,7 +418,8 @@ namespace CloudEntity.Internal.Data.Entity
             Check.ArgumentNull(entities, nameof(entities));
             //创建Delete命令生成树
             ICommandTree deleteTree = this.CommandTreeFactory.CreateDeleteTree(
-                this.TableMapper.Header.TableFullName,
+                this.TableMapper.Header.SchemaName,
+                this.TableMapper.Header.TableName,
                 this.TableMapper.Header.TableAlias,
                 entities.NodeBuilders.Where(b => b.ParentNodeType == SqlType.Where));
             //执行并返回DB受影响行数
@@ -472,7 +492,8 @@ namespace CloudEntity.Internal.Data.Entity
             sqlParameters.AddRange(entities.Parameters);
             //创建Update命令生成树
             ICommandTree updateTree = this.CommandTreeFactory.CreateUpdateTree(
-                this.TableMapper.Header.TableFullName,
+                this.TableMapper.Header.SchemaName,
+                this.TableMapper.Header.TableName,
                 this.TableMapper.Header.TableAlias,
                 nodeBuilders);
             //执行并返回DB受影响行数

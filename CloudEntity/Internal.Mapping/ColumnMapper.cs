@@ -9,9 +9,9 @@ namespace CloudEntity.Internal.Mapping
     internal class ColumnMapper : IColumnMapper
     {
         /// <summary>
-        /// 列名(或者列的别名)
+        /// 列名
         /// </summary>
-        private string columnName;
+        private string _columnName;
 
         /// <summary>
         /// 当前Mapping的属性
@@ -26,13 +26,9 @@ namespace CloudEntity.Internal.Mapping
         /// </summary>
         public string ColumnName
         {
-            get { return this.columnName ?? (this.columnName = this.Property.Name); }
-            set { this.columnName = value; }
+            get { return _columnName ?? (_columnName = this.Property.Name); }
+            set { _columnName = value; }
         }
-        /// <summary>
-        /// 列的全名
-        /// </summary>
-        public string ColumnFullName { get; set; }
         /// <summary>
         /// 列的别名（可以为空）
         /// </summary>
@@ -60,7 +56,9 @@ namespace CloudEntity.Internal.Mapping
         /// <param name="property">属性</param>
         public ColumnMapper(PropertyInfo property)
         {
+            //非空检查
             Check.ArgumentNull(property, nameof(property));
+            //赋值
             this.Property = property;
             this.AllowNull = true;
         }

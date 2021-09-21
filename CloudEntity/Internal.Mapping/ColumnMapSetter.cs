@@ -23,6 +23,10 @@ namespace CloudEntity.Internal.Mapping
         /// </summary>
         private Type _entityType;
         /// <summary>
+        /// 列名获取对象
+        /// </summary>
+        private IColumnNameGetter _columnNameGetter;
+        /// <summary>
         /// 列和属性的映射对象字典
         /// </summary>
         private IDictionary<string, IColumnMapper> _columnMappers;
@@ -71,11 +75,13 @@ namespace CloudEntity.Internal.Mapping
         /// 创建设置列与属性映射关系的对象
         /// </summary>
         /// <param name="tableAlias">表的别名</param>
-        public ColumnMapSetter(string tableAlias)
+        /// <param name="columnNameGetter">列名获取对象</param>
+        public ColumnMapSetter(string tableAlias, IColumnNameGetter columnNameGetter)
         {
             //初始化值
             _tableAlias = tableAlias;
             _entityType = typeof(TEntity);
+            _columnNameGetter = columnNameGetter;
             //初始化ColumnMapper字典
             _columnMappers = this.GetInitColumnMappers();
             
@@ -94,12 +100,14 @@ namespace CloudEntity.Internal.Mapping
             PropertyInfo property = selector.Body.GetProperty();
             if (!Check.IsCanMapping(property))
                 throw new Exception(string.Format("Can not map property {0}", property.Name));
+            //获取列名
+            if (string.IsNullOrEmpty(columnName))
+                columnName = _columnNameGetter.GetColumnName(property.Name);
             //创建ColumnMapper
             ColumnMapper columnMapper = new ColumnMapper(property)
             {
                 ColumnAction = action,
-                ColumnName = columnName ?? property.Name,
-                ColumnFullName = string.Format("{0}.{1}", _tableAlias, columnName ?? property.Name),
+                ColumnName = columnName,
                 AllowNull = allowNull != null ? allowNull.Value : this.GetAllowNull(action)
             };
             //指定columnMapper
@@ -120,10 +128,12 @@ namespace CloudEntity.Internal.Mapping
             {
                 //获取属性
                 PropertyInfo property = _entityType.GetProperty(key);
+                //获取列名
+                string columnName = _columnNameGetter.GetColumnName(property.Name);
                 //指定列Mapping对象
                 _columnMappers[key] = new ColumnMapper(property)
                 {
-                    ColumnFullName = string.Format("{0}.{1}", _tableAlias, property.Name)
+                    ColumnName = columnName
                 };
             }
             //获取ColumnMapper字典

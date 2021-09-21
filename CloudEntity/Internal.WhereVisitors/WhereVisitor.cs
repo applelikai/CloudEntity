@@ -5,7 +5,6 @@ using CloudEntity.Mapping;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace CloudEntity.Internal.WhereVisitors
 {
@@ -18,42 +17,47 @@ namespace CloudEntity.Internal.WhereVisitors
         /// <summary>
         /// sql参数创建对象
         /// </summary>
-        private IParameterFactory parameterFactory;
+        private IParameterFactory _parameterFactory;
         /// <summary>
-        /// 列获取器
+        /// 创建Sql命令生成树的工厂
         /// </summary>
-        private IColumnGetter columnGetter;
+        private ICommandTreeFactory _commandTreeFactory;
+        /// <summary>
+        /// Mapper容器
+        /// </summary>
+        private IMapperContainer _mapperContainer;
 
+        #region sql表达式生成
         /// <summary>
-        /// 获取当前指定成员对应的完整列名
+        /// 获取sql参数表达式
         /// </summary>
-        /// <param name="memberExpression">指定对象成员的表达式</param>
-        /// <returns>当前指定成员对应的完整列名</returns>
-        protected string GetColumnFullName(MemberExpression memberExpression)
+        /// <param name="parameterName">参数名</param>
+        /// <returns>sql参数表达式</returns>
+        protected ISqlBuilder GetParameterBuilder(string parameterName)
         {
-            return this.columnGetter.GetColumnFullName(memberExpression);
+            //获取sql参数表达式
+            return _commandTreeFactory.GetParameterBuilder(parameterName);
         }
         /// <summary>
-        /// 创建sql参数
+        /// 获取基本类型的sql表达式节点
         /// </summary>
-        /// <param name="name">参数名</param>
-        /// <param name="value">参数值</param>
-        /// <returns>sql参数</returns>
-        protected IDbDataParameter CreateParameter(string name, object value)
+        /// <param name="memberExpression">成员表达式</param>
+        /// <returns>基本类型的sql表达式节点</returns>
+        protected ISqlBuilder GetColumnBuilder(MemberExpression memberExpression)
         {
-            return this.parameterFactory.Parameter(name, value);
-        }
-        /// <summary>
-        /// 获取sql参数列表
-        /// </summary>
-        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
-        /// <param name="name">参数名</param>
-        /// <param name="value">参数值</param>
-        /// <returns>sql参数列表</returns>
-        protected IEnumerable<IDbDataParameter> GetParameters(HashSet<string> parameterNames, string name, object value)
-        {
-            if (parameterNames.Add(name))
-                yield return this.parameterFactory.Parameter(name, value);
+            //若Mapper容器为空
+            if (_mapperContainer == null)
+            {
+                //则直接获取针对 WITH AS 临时表的sql表达式
+                return new SqlBuilder("t.{0}", memberExpression.Member.Name);
+            }
+            //若不为空,则获取针对表的sql表达式
+            // 获取当前实体类型的Table元数据解析器
+            ITableMapper tableMapper = _mapperContainer.GetTableMapper(memberExpression.Expression.Type);
+            // 获取columnMapper
+            IColumnMapper columnMapper = tableMapper.GetColumnMapper(memberExpression.Member.Name);
+            // 获取sql列节点生成器
+            return _commandTreeFactory.GetColumnBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName);
         }
         /// <summary>
         /// 解析表达式 获取基本类型的sql表达式节点 或 (参数名和参数值)
@@ -73,7 +77,7 @@ namespace CloudEntity.Internal.WhereVisitors
                 //获取参数名
                 parameterName = string.Format("{0}_{1}", memberExpression.Expression.Type.Name, memberExpression.Member.Name);
                 //获取sql表达式节点(指定列名)
-                return new SqlBuilder(this.GetColumnFullName(memberExpression));
+                return this.GetColumnBuilder(memberExpression);
             }
             //若当前表达式节点不包含参数表达式
             //1.获取参数名
@@ -84,20 +88,69 @@ namespace CloudEntity.Internal.WhereVisitors
             //返回空
             return null;
         }
+        /// <summary>
+        /// 获取Where节点的子sql表达式节点
+        /// </summary>
+        /// <param name="memberExpression">成员表达式</param>
+        /// <param name="rightSqlExpression">右边的sql条件表达式</param>
+        /// <returns>Where节点的子sql表达式节点</returns>
+        protected INodeBuilder GetWhereChildBuilder(MemberExpression memberExpression, string rightSqlExpression)
+        {
+            //若Mapper容器为空
+            if (_mapperContainer == null)
+            {
+                //则直接获取针对 WITH AS 临时表的sql表达式
+                return new NodeBuilder(SqlType.Where, "t.{0} {1}", memberExpression.Member.Name, rightSqlExpression);
+            }
+            //若不为空,则获取针对实体类对应的表的sql表达式
+            // 获取当前实体类型的Table元数据解析器
+            ITableMapper tableMapper = _mapperContainer.GetTableMapper(memberExpression.Expression.Type);
+            // 获取columnMapper
+            IColumnMapper columnMapper = tableMapper.GetColumnMapper(memberExpression.Member.Name);
+            // 获取Where节点的子sql表达式节点
+            return _commandTreeFactory.GetWhereChildBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, rightSqlExpression);
+        }
+        #endregion
+        #region sql参数生成
+        /// <summary>
+        /// 创建sql参数
+        /// </summary>
+        /// <param name="name">参数名</param>
+        /// <param name="value">参数值</param>
+        /// <returns>sql参数</returns>
+        protected IDbDataParameter CreateParameter(string name, object value)
+        {
+            return _parameterFactory.Parameter(name, value);
+        }
+        /// <summary>
+        /// 获取sql参数列表
+        /// </summary>
+        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
+        /// <param name="name">参数名</param>
+        /// <param name="value">参数值</param>
+        /// <returns>sql参数列表</returns>
+        protected IEnumerable<IDbDataParameter> GetParameters(HashSet<string> parameterNames, string name, object value)
+        {
+            if (parameterNames.Add(name))
+                yield return _parameterFactory.Parameter(name, value);
+        }
+        #endregion
 
         /// <summary>
         /// 创建Lambda表达式解析对象
         /// </summary>
         /// <param name="parameterFactory">sql参数创建对象</param>
-        /// <param name="columnGetter">列名获取器</param>
-        public WhereVisitor(IParameterFactory parameterFactory, IColumnGetter columnGetter)
+        /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
+        /// <param name="mapperContainer">Mapper对象容器</param>
+        public WhereVisitor(IParameterFactory parameterFactory, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
         {
             //非空检查
             Check.ArgumentNull(parameterFactory, nameof(parameterFactory));
-            Check.ArgumentNull(columnGetter, nameof(columnGetter));
+            Check.ArgumentNull(commandTreeFactory, nameof(commandTreeFactory));
             //赋值
-            this.parameterFactory = parameterFactory;
-            this.columnGetter = columnGetter;
+            _parameterFactory = parameterFactory;
+            _commandTreeFactory = commandTreeFactory;
+            _mapperContainer = mapperContainer;
         }
         /// <summary>
         /// 解析查询条件表达式,生成sql条件表达式节点及其附属的sql参数
