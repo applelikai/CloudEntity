@@ -26,7 +26,7 @@ namespace CloudEntity.Mapping
         /// <summary>
         /// 数据类型
         /// </summary>
-        string DataType { get; }
+        DataType DataType { get; }
         /// <summary>
         /// 长度
         /// </summary>

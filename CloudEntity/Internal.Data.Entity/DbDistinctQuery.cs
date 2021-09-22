@@ -19,7 +19,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>查询命令生成树</returns>
         protected override ICommandTree CreateQueryTree()
         {
-            return base.CommandTreeFactory.CreateDistinctQueryTree(base.NodeBuilders);
+            return base.CommandTreeFactory.GetDistinctQueryTree(base.NodeBuilders);
         }
 
         /// <summary>

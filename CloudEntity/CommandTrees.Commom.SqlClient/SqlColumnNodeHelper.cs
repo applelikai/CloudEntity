@@ -44,6 +44,29 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
             }
         }
         /// <summary>
+        /// 获取最终的sql数据类型
+        /// </summary>
+        /// <param name="dataType">数据类型</param>
+        /// <returns>最终的sql数据类型</returns>
+        public override string GetSqlType(DataType dataType)
+        {
+            switch (dataType)
+            {
+                case DataType.Integer:
+                    return "INT";
+                case DataType.Double:
+                    return "DECIMAL";
+                case DataType.DateTime:
+                    return "DATETIME2";
+                case DataType.Boolean:
+                    return "BIT";
+                case DataType.Json:
+                    return "TEXT";
+                default:
+                    return dataType.ToString().ToUpper();
+            }
+        }
+        /// <summary>
         /// 获取类型默认值
         /// </summary>
         /// <param name="dataType">数据类型</param>
@@ -62,6 +85,35 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
                 case "Decimal":
                     return "0";
                 //默认为空
+                default:
+                    return string.Empty;
+            }
+        }
+        /// <summary>
+        /// 获取类型默认值
+        /// </summary>
+        /// <param name="dataType">数据类型</param>
+        /// <returns>默认值</returns>
+        public override string GetDefaultValue(DataType dataType)
+        {
+            switch (dataType)
+            {
+                //数字类型默认值
+                case DataType.SmallInt:
+                case DataType.Integer:
+                case DataType.BigInt:
+                case DataType.Float:
+                case DataType.Real:
+                case DataType.Double:
+                case DataType.Decimal:
+                case DataType.Money:
+                    return "0";
+                //日期时间类型默认值
+                case DataType.Date:
+                case DataType.Time:
+                case DataType.DateTime:
+                    return "GETDATE()";
+                //其他
                 default:
                     return string.Empty;
             }

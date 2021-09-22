@@ -105,7 +105,7 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TModel> GetEnumerator()
         {
             //创建CommandTree
-            ICommandTree queryTree = this.commandTreeFactory.CreateWithAsQueryTree(this.InnerQuerySql, this.NodeBuilders);
+            ICommandTree queryTree = this.commandTreeFactory.GetWithAsQueryTree(this.InnerQuerySql, this.NodeBuilders);
             //执行查询
             foreach (TModel model in this.dbHelper.GetResults(this.CreateModel, queryTree.Compile(), parameters: this.Parameters.ToArray()))
                 yield return model;

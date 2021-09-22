@@ -59,7 +59,7 @@ namespace CloudEntity.Core.Data.Entity
             //获取ColumnNodes
             IEnumerable<IColumnNode> columnNodes = tableMapper.GetColumnMappers().Select(m => m.ToColumnNode());
             //获取建表语句生成树
-            ICommandTree buildTableTree = commandTreeFactory.CreateBuildTableTree(tableHeader.SchemaName, tableHeader.TableName, columnNodes);
+            ICommandTree buildTableTree = commandTreeFactory.GetBuildTableTree(tableHeader.SchemaName, tableHeader.TableName, columnNodes);
             //创建建表语句并执行
             return dbHelper.ExecuteUpdate(buildTableTree.Compile());
         }

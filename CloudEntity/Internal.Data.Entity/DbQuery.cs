@@ -74,7 +74,7 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TEntity> GetEnumerator()
         {
             //创建CommandTree
-            ICommandTree queryTree = base.CommandTreeFactory.CreateQueryTree(this.GetNodeBuilders());
+            ICommandTree queryTree = base.CommandTreeFactory.GetQueryTree(this.GetNodeBuilders());
             //执行查询
             foreach (TEntity entity in base.DbHelper.GetResults(this.CreateEntity, queryTree.Compile(), parameters: base.Parameters.ToArray()))
                 yield return entity;

@@ -19,10 +19,22 @@ namespace CloudEntity.CommandTrees.Commom
         /// <returns>sql数据类型</returns>
         public abstract string GetSqlType(Type sourceType);
         /// <summary>
+        /// 获取最终的sql数据类型
+        /// </summary>
+        /// <param name="dataType">数据类型</param>
+        /// <returns>最终的sql数据类型</returns>
+        public abstract string GetSqlType(DataType dataType);
+        /// <summary>
         /// 获取类型默认值
         /// </summary>
         /// <param name="dataType">数据类型</param>
         /// <returns>默认值</returns>
         public abstract string GetDefaultValue(Type dataType);
+        /// <summary>
+        /// 获取类型默认值
+        /// </summary>
+        /// <param name="dataType">数据类型</param>
+        /// <returns>默认值</returns>
+        public abstract string GetDefaultValue(DataType dataType);
     }
 }

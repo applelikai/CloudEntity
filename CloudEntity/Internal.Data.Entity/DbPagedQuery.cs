@@ -39,7 +39,7 @@ namespace CloudEntity.Internal.Data.Entity
             get
             {
                 //获取Count查询命令生成树
-                ICommandTree queryTree = this.CommandTreeFactory.CreateQueryTree(this.GetCountNodeBuilders());
+                ICommandTree queryTree = this.CommandTreeFactory.GetQueryTree(this.GetCountNodeBuilders());
                 //执行Count查询获取元素总数量
                 return TypeHelper.ConvertTo<int>(base.DbHelper.GetScalar(queryTree.Compile(), parameters: base.Parameters.ToArray()));
             }
@@ -115,7 +115,7 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TEntity> GetEnumerator()
         {
             //获取查询命令生成树(当前可默认获取到分页查询命令生成树)
-            ICommandTree queryTree = base.CommandTreeFactory.CreatePagingQueryTree(base.NodeBuilders, this.SortBuilders);
+            ICommandTree queryTree = base.CommandTreeFactory.GetPagingQueryTree(base.NodeBuilders, this.SortBuilders);
             //获取sql参数集合
             IList<IDbDataParameter> parameters = base.Parameters.ToList();
             parameters.Add(base.DbHelper.Parameter("SkipCount", this.PageSize * (this.PageIndex - 1)));

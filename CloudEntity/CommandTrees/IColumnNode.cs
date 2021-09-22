@@ -12,13 +12,9 @@ namespace CloudEntity.CommandTrees
         /// </summary>
         string ColumnName { get; }
         /// <summary>
-        /// 源数据类型
-        /// </summary>
-        Type SourceType { get; }
-        /// <summary>
         /// 数据类型
         /// </summary>
-        string SqlDataType { get; }
+        DataType DataType { get; }
         /// <summary>
         /// 长度
         /// </summary>

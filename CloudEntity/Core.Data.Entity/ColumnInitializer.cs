@@ -39,7 +39,7 @@ namespace CloudEntity.Core.Data.Entity
             //获取TableHeader
             ITableHeader tableHeader = tableMapper.Header;
             //创建Alter Table Columns语句生成树
-            ICommandTree alterTableAddColumnsTree = commandTreeFactory.CreateAlterTableAddColumnsTree(tableHeader.SchemaName, tableHeader.TableName, columnNodes);
+            ICommandTree alterTableAddColumnsTree = commandTreeFactory.GetAlterTableAddColumnsTree(tableHeader.SchemaName, tableHeader.TableName, columnNodes);
             //生成并执行Alter Table Columns语句，为当前实体Mapping的Table添加为注册的列
             dbHelper.ExecuteUpdate(alterTableAddColumnsTree.Compile());
         }

@@ -39,6 +39,39 @@ namespace CloudEntity.CommandTrees.Commom.OracleClient
             }
         }
         /// <summary>
+        /// 获取最终的sql数据类型
+        /// </summary>
+        /// <param name="dataType">数据类型</param>
+        /// <returns>最终的sql数据类型</returns>
+        public override string GetSqlType(DataType dataType)
+        {
+            switch (dataType)
+            {
+                case DataType.SmallInt:
+                case DataType.BigInt:
+                    return "INTEGER";
+                case DataType.Double:
+                    return "BINARY_DOUBLE";
+                case DataType.Money:
+                    return "DECIMAL";
+                case DataType.Text:
+                    return "Long";
+                case DataType.Nvarchar:
+                    return "Nvarchar2";
+                case DataType.Time:
+                case DataType.DateTime:
+                    return "TIMESTAMP";
+                case DataType.Boolean:
+                    return "INTEGER";
+                case DataType.Xml:
+                    return "XMLTYPE";
+                case DataType.Json:
+                    return "Long";
+                default:
+                    return dataType.ToString().ToUpper();
+            }
+        }
+        /// <summary>
         /// 获取类型默认值
         /// </summary>
         /// <param name="dataType">数据类型</param>
@@ -56,6 +89,35 @@ namespace CloudEntity.CommandTrees.Commom.OracleClient
                 case "Int64":
                 case "Decimal":
                     return "0";
+                //其他
+                default:
+                    return string.Empty;
+            }
+        }
+        /// <summary>
+        /// 获取类型默认值
+        /// </summary>
+        /// <param name="dataType">数据类型</param>
+        /// <returns>默认值</returns>
+        public override string GetDefaultValue(DataType dataType)
+        {
+            switch (dataType)
+            {
+                //数字类型默认值
+                case DataType.SmallInt:
+                case DataType.Integer:
+                case DataType.BigInt:
+                case DataType.Float:
+                case DataType.Real:
+                case DataType.Double:
+                case DataType.Decimal:
+                case DataType.Money:
+                    return "0";
+                //日期时间类型默认值
+                case DataType.Date:
+                case DataType.Time:
+                case DataType.DateTime:
+                    return "SYSDATE";
                 //其他
                 default:
                     return string.Empty;

@@ -71,7 +71,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>查询命令生成树</returns>
         protected virtual ICommandTree CreateQueryTree()
         {
-            return base.CommandTreeFactory.CreateQueryTree(base.NodeBuilders);
+            return base.CommandTreeFactory.GetQueryTree(base.NodeBuilders);
         }
 
         /// <summary>

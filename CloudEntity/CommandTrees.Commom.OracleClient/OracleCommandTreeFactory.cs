@@ -35,12 +35,12 @@ namespace CloudEntity.CommandTrees.Commom.OracleClient
             : base(':')
         { }
         /// <summary>
-        /// 创建分页查询命令生成树
+        /// 获取分页查询命令生成树
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
         /// <param name="sortChildBuilders">排序的子节点集</param>
         /// <returns>分页查询命令生成树</returns>
-        public override ICommandTree CreatePagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, IEnumerable<ISqlBuilder> sortChildBuilders)
+        public override ICommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, IEnumerable<ISqlBuilder> sortChildBuilders)
         {
             //创建Oracle分页sql生成树
             OraclePagingQueryTree queryTree = new OraclePagingQueryTree(base.ParameterMarker);

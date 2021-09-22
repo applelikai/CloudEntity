@@ -12,13 +12,9 @@ namespace CloudEntity.CommandTrees.Commom
         /// </summary>
         public string ColumnName { get; set; }
         /// <summary>
-        /// 源数据类型
-        /// </summary>
-        public Type SourceType { get; set; }
-        /// <summary>
         /// 数据类型
         /// </summary>
-        public string SqlDataType { get; set; }
+        public DataType DataType { get; set; }
         /// <summary>
         /// 长度
         /// </summary>

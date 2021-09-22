@@ -3,7 +3,7 @@
 namespace CloudEntity.CommandTrees
 {
     /// <summary>
-    /// 用于创建Command Tree的Factory
+    /// 用于获取Command Tree的Factory
     /// </summary>
     public interface ICommandTreeFactory
     {
@@ -85,80 +85,80 @@ namespace CloudEntity.CommandTrees
         #endregion
         #region 获取sql命令生成树
         /// <summary>
-        /// 创建建表语句生成树
+        /// 获取建表语句生成树
         /// </summary>
         /// <param name="schemaName">数据库架构名</param>
         /// <param name="tableName">table名</param>
         /// <param name="columnNodes">列节点迭代器</param>
         /// <returns>建表语句生成树</returns>
-        ICommandTree CreateBuildTableTree(string schemaName, string tableName, IEnumerable<IColumnNode> columnNodes);
+        ICommandTree GetBuildTableTree(string schemaName, string tableName, IEnumerable<IColumnNode> columnNodes);
         /// <summary>
-        /// 创建为Table添加列的语句生成树
+        /// 获取为Table添加列的语句生成树
         /// </summary>
         /// <param name="schemaName">数据库架构名</param>
         /// <param name="tableName">表名</param>
         /// <param name="columnNodes">列节点迭代器</param>
         /// <returns>为Table添加列的语句生成树</returns>
-        ICommandTree CreateAlterTableAddColumnsTree(string schemaName, string tableName, IEnumerable<IColumnNode> columnNodes);
+        ICommandTree GetAlterTableAddColumnsTree(string schemaName, string tableName, IEnumerable<IColumnNode> columnNodes);
         /// <summary>
-        /// 创建Insert命令生成树
+        /// 获取Insert命令生成树
         /// </summary>
         /// <param name="schemaName">数据库架构名</param>
         /// <param name="tableName">表名</param>
         /// <param name="insertNodes">Insert命令生成树子节点</param>
         /// <returns>Insert命令生成树</returns>
-        ICommandTree CreateInsertTree(string schemaName, string tableName, IEnumerable<KeyValuePair<string, string>> insertNodes);
+        ICommandTree GetInsertTree(string schemaName, string tableName, IEnumerable<KeyValuePair<string, string>> insertNodes);
         /// <summary>
-        /// 创建Delete命令生成树
+        /// 获取Delete命令生成树
         /// </summary>
         /// <param name="schemaName">数据库架构名</param>
         /// <param name="tableName">表名</param>
         /// <param name="tableAlias">临时表名</param>
         /// <param name="whereChildBuilders">Where语句段子节点集合</param>
         /// <returns>Delete命令生成树</returns>
-        ICommandTree CreateDeleteTree(string schemaName, string tableName, string tableAlias, IEnumerable<ISqlBuilder> whereChildBuilders);
+        ICommandTree GetDeleteTree(string schemaName, string tableName, string tableAlias, IEnumerable<ISqlBuilder> whereChildBuilders);
         /// <summary>
-        /// 创建Update命令生成树
+        /// 获取Update命令生成树
         /// </summary>
         /// <param name="schemaName">数据库架构名</param>
         /// <param name="tableName">表名</param>
         /// <param name="tableAlias">临时表名</param>
         /// <param name="updateChildBuilders">Update命令生成树的子节点集合</param>
         /// <returns>Update命令生成树</returns>
-        ICommandTree CreateUpdateTree(string schemaName, string tableName, string tableAlias, IEnumerable<INodeBuilder> updateChildBuilders);
+        ICommandTree GetUpdateTree(string schemaName, string tableName, string tableAlias, IEnumerable<INodeBuilder> updateChildBuilders);
         /// <summary>
-        /// 创建查询sql生成器
+        /// 获取查询sql生成器
         /// </summary>
         /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
         /// <returns>sql查询命令生成树</returns>
-        ICommandTree CreateQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
+        ICommandTree GetQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
         /// <summary>
-        /// 创建TOP查询sql的生成树
+        /// 获取TOP查询sql的生成树
         /// </summary>
         /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
         /// <param name="topCount">查询的前几条的元素数量</param>
         /// <returns>TOP查询sql的生成树</returns>
-        ICommandTree CreateTopQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, int topCount);
+        ICommandTree GetTopQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, int topCount);
         /// <summary>
-        /// 创建生成Distinct查询sql的生成树
+        /// 获取生成Distinct查询sql的生成树
         /// </summary>
         /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
         /// <returns>Distinct查询sql的生成树</returns>
-        ICommandTree CreateDistinctQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
+        ICommandTree GetDistinctQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
         /// <summary>
-        /// 创建分页查询命令生成树
+        /// 获取分页查询命令生成树
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
         /// <param name="sortChildBuilders">排序的子节点集</param>
         /// <returns>分页查询命令生成树</returns>
-        ICommandTree CreatePagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, IEnumerable<ISqlBuilder> sortChildBuilders);
+        ICommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, IEnumerable<ISqlBuilder> sortChildBuilders);
         /// <summary>
-        /// 创建With As 查询命令生成树
+        /// 获取With As 查询命令生成树
         /// </summary>
         /// <param name="innerQuerySql">查询sql</param>
         /// <param name="queryChildBuilders">查询条件表达式节点集合</param>
         /// <returns>With As 查询命令生成树</returns>
-        ICommandTree CreateWithAsQueryTree(string innerQuerySql, IEnumerable<INodeBuilder> queryChildBuilders);
+        ICommandTree GetWithAsQueryTree(string innerQuerySql, IEnumerable<INodeBuilder> queryChildBuilders);
         #endregion
     }
 }

@@ -227,7 +227,7 @@ namespace CloudEntity.Internal.Data.Entity
             //获取TableHeader对象
             ITableHeader tableHeader = this.TableMapper.Header;
             //获取命令生成树
-            ICommandTree commandTree = this.CommandTreeFactory.CreateInsertTree(tableHeader.SchemaName, tableHeader.TableName, this.GetInsertChildNodes());
+            ICommandTree commandTree = this.CommandTreeFactory.GetInsertTree(tableHeader.SchemaName, tableHeader.TableName, this.GetInsertChildNodes());
             //获取Insert命令
             return commandTree.Compile();
         }
@@ -240,7 +240,7 @@ namespace CloudEntity.Internal.Data.Entity
             //获取TableHeader对象
             ITableHeader tableHeader = this.TableMapper.Header;
             //获取命令生成树
-            ICommandTree commandTree = this.CommandTreeFactory.CreateInsertTree(tableHeader.SchemaName, tableHeader.TableName, this.GetInsertAllChildNodes());
+            ICommandTree commandTree = this.CommandTreeFactory.GetInsertTree(tableHeader.SchemaName, tableHeader.TableName, this.GetInsertAllChildNodes());
             //获取Insert命令
             return commandTree.Compile();
         }
@@ -253,7 +253,7 @@ namespace CloudEntity.Internal.Data.Entity
             //获取TableHeader对象
             ITableHeader tableHeader = this.TableMapper.Header;
             //获取命令生成树
-            ICommandTree commandTree = this.CommandTreeFactory.CreateDeleteTree(tableHeader.SchemaName, tableHeader.TableName, tableHeader.TableAlias, this.GetDeleteChildNodes());
+            ICommandTree commandTree = this.CommandTreeFactory.GetDeleteTree(tableHeader.SchemaName, tableHeader.TableName, tableHeader.TableAlias, this.GetDeleteChildNodes());
             //获取Insert命令
             return commandTree.Compile();
         }
@@ -266,7 +266,7 @@ namespace CloudEntity.Internal.Data.Entity
             //获取TableHeader对象
             ITableHeader tableHeader = this.TableMapper.Header;
             //获取命令生成树
-            ICommandTree commandTree = this.CommandTreeFactory.CreateUpdateTree(tableHeader.SchemaName, tableHeader.TableName, tableHeader.TableAlias, this.GetUpdateChildNodes());
+            ICommandTree commandTree = this.CommandTreeFactory.GetUpdateTree(tableHeader.SchemaName, tableHeader.TableName, tableHeader.TableAlias, this.GetUpdateChildNodes());
             //获取Insert命令
             return commandTree.Compile();
         }
@@ -279,7 +279,7 @@ namespace CloudEntity.Internal.Data.Entity
             //获取TableHeader对象
             ITableHeader tableHeader = this.TableMapper.Header;
             //获取命令生成树
-            ICommandTree commandTree = this.CommandTreeFactory.CreateUpdateTree(tableHeader.SchemaName, tableHeader.TableName, tableHeader.TableAlias, this.GetUpdateAllChildNodes());
+            ICommandTree commandTree = this.CommandTreeFactory.GetUpdateTree(tableHeader.SchemaName, tableHeader.TableName, tableHeader.TableAlias, this.GetUpdateAllChildNodes());
             //获取Insert命令
             return commandTree.Compile();
         }
@@ -417,7 +417,7 @@ namespace CloudEntity.Internal.Data.Entity
             //非空检查
             Check.ArgumentNull(entities, nameof(entities));
             //创建Delete命令生成树
-            ICommandTree deleteTree = this.CommandTreeFactory.CreateDeleteTree(
+            ICommandTree deleteTree = this.CommandTreeFactory.GetDeleteTree(
                 this.TableMapper.Header.SchemaName,
                 this.TableMapper.Header.TableName,
                 this.TableMapper.Header.TableAlias,
@@ -491,7 +491,7 @@ namespace CloudEntity.Internal.Data.Entity
             nodeBuilders.AddRange(entities.NodeBuilders.Where(n => n.ParentNodeType == SqlType.Where));
             sqlParameters.AddRange(entities.Parameters);
             //创建Update命令生成树
-            ICommandTree updateTree = this.CommandTreeFactory.CreateUpdateTree(
+            ICommandTree updateTree = this.CommandTreeFactory.GetUpdateTree(
                 this.TableMapper.Header.SchemaName,
                 this.TableMapper.Header.TableName,
                 this.TableMapper.Header.TableAlias,

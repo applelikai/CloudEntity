@@ -19,8 +19,7 @@ namespace CloudEntity.Core.Data.Entity
             return new ColumnNode()
             {
                 ColumnName = columnMapper.ColumnName,
-                SourceType = columnMapper.Property.PropertyType,
-                SqlDataType = columnMapper.DataType,
+                DataType = columnMapper.DataType,
                 Length = columnMapper.Length,
                 Decimals = columnMapper.Decimals,
                 IsDefault = columnMapper.ColumnAction.ToString().Contains("Default"),

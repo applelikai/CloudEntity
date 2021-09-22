@@ -69,7 +69,7 @@ namespace CloudEntity.CommandTrees.Commom
             //拼接列名
             this.AppendColumnName(commandText, columnNode.ColumnName);
             //拼接数据类型
-            commandText.AppendFormat("\t{0}", columnNode.SqlDataType ?? _columnNodeHelper.GetSqlType(columnNode.SourceType));
+            commandText.AppendFormat("\t{0}", _columnNodeHelper.GetSqlType(columnNode.DataType));
             //拼接数据类型长度及小数点位数
             if (columnNode.Length != null && columnNode.Decimals != null)
                 commandText.AppendFormat("({0}, {1})", columnNode.Length, columnNode.Decimals);
@@ -78,7 +78,7 @@ namespace CloudEntity.CommandTrees.Commom
             //拼接默认值
             if (columnNode.IsDefault)
             {
-                string defaultValue = _columnNodeHelper.GetDefaultValue(columnNode.SourceType);
+                string defaultValue = _columnNodeHelper.GetDefaultValue(columnNode.DataType);
                 if (!string.IsNullOrEmpty(defaultValue))
                     commandText.AppendFormat("\tDEFAULT {0}", defaultValue);
             }

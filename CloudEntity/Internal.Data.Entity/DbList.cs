@@ -36,7 +36,7 @@ namespace CloudEntity.Internal.Data.Entity
                 //非空检查
                 Check.ArgumentNull(id, nameof(id));
                 //获取查询命令生成树
-                ICommandTree queryTree = base.CommandTreeFactory.CreateQueryTree(this.GetQueryByIdChildBuilders());
+                ICommandTree queryTree = base.CommandTreeFactory.GetQueryTree(this.GetQueryByIdChildBuilders());
                 //获取Sql参数数组
                 IDbDataParameter[] parameters = { base.DbHelper.Parameter(base.TableMapper.KeyMapper.Property.Name, id) };
                 //执行查询
@@ -153,7 +153,7 @@ namespace CloudEntity.Internal.Data.Entity
             //非空检查
             Check.ArgumentNull(id, nameof(id));
             //获取CommandTree
-            ICommandTree queryTree = this.CommandTreeFactory.CreateQueryTree(this.GetQueryCountByIdChildBuilders());
+            ICommandTree queryTree = this.CommandTreeFactory.GetQueryTree(this.GetQueryCountByIdChildBuilders());
             //获取Sql参数数组
             IDbDataParameter[] parameters = { base.DbHelper.Parameter(base.TableMapper.KeyMapper.Property.Name, id) };
             //执行查询获取第一行第一列的数据
@@ -210,7 +210,7 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TEntity> GetEnumerator()
         {
             //获取查询命令生成树
-            ICommandTree queryTree = base.CommandTreeFactory.CreateQueryTree(this.NodeBuilders);
+            ICommandTree queryTree = base.CommandTreeFactory.GetQueryTree(this.NodeBuilders);
             //执行查询获取结果
             foreach (TEntity entity in base.DbHelper.GetResults(this.CreateEntity, queryTree.Compile()))
                 yield return entity;

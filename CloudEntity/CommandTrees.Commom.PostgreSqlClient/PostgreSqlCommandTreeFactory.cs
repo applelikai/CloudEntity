@@ -119,7 +119,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         /// <returns>UPDATE SET节点的子sql表达式节点</returns>
         public override INodeBuilder GetUpdateSetChildBuilder(string tableAlias, string columnName, string parameterName)
         {
-            return new NodeBuilder(SqlType.UpdateSet, $"{tableAlias}.\"{columnName}\" = {this.ParameterMarker}{parameterName}");
+            return new NodeBuilder(SqlType.UpdateSet, $"\"{columnName}\" = {this.ParameterMarker}{parameterName}");
         }
         /// <summary>
         /// 获取Table表达式节点
@@ -170,12 +170,12 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
             return new NodeBuilder(SqlType.OrderBy, "{0}.\"{1}\"{2}", tableAlias, columnName, isDesc ? " DESC" : string.Empty);
         }
         /// <summary>
-        /// 创建TOP查询sql的生成树
+        /// 获取TOP查询sql的生成树
         /// </summary>
         /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
         /// <param name="topCount">查询的前几条的元素数量</param>
         /// <returns>TOP查询sql的生成树</returns>
-        public override ICommandTree CreateTopQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, int topCount)
+        public override ICommandTree GetTopQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, int topCount)
         {
             //创建top查询命令生成树
             QueryTree queryTree = new PostgreSqlTopQueryTree(this.ParameterMarker, topCount);
@@ -185,12 +185,12 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
             return queryTree;
         }
         /// <summary>
-        /// 创建分页查询命令生成树
+        /// 获取分页查询命令生成树
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
         /// <param name="sortChildBuilders">排序的子节点集</param>
         /// <returns>分页查询命令生成树</returns>
-        public override ICommandTree CreatePagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, IEnumerable<ISqlBuilder> sortChildBuilders)
+        public override ICommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, IEnumerable<ISqlBuilder> sortChildBuilders)
         {
             //创建MySql分页查询命令生成树
             PostgreSqlPagingQueryTree queryTree = new PostgreSqlPagingQueryTree(base.ParameterMarker);

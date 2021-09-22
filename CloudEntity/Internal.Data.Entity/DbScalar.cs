@@ -26,7 +26,7 @@ namespace CloudEntity.Internal.Data.Entity
         public object Execute()
         {
             //创建CommandTree
-            ICommandTree queryTree = base.CommandTreeFactory.CreateQueryTree(base.NodeBuilders);
+            ICommandTree queryTree = base.CommandTreeFactory.GetQueryTree(base.NodeBuilders);
             //执行查询获取第一行，第一列的值
             return base.DbHelper.GetScalar(queryTree.Compile(), parameters: base.Parameters.ToArray());
         }

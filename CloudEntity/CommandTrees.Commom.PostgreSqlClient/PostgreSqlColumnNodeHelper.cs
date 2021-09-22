@@ -41,6 +41,32 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
             };
         }
         /// <summary>
+        /// 获取最终的sql数据类型
+        /// </summary>
+        /// <param name="dataType">数据类型</param>
+        /// <returns>最终的sql数据类型</returns>
+        public override string GetSqlType(DataType dataType)
+        {
+            switch (dataType)
+            {
+                case DataType.Float:
+                    return "REAL";
+                case DataType.Double:
+                    return "DOUBLE PRECISION";
+                case DataType.Nchar:
+                    return "CHAR";
+                case DataType.Nvarchar:
+                    return "VARCHAR";
+                case DataType.DateTime:
+                    return "TIMESTAMP";
+                case DataType.Xml:
+                case DataType.Json:
+                    return "TEXT";
+                default:
+                    return dataType.ToString().ToUpper();
+            }
+        }
+        /// <summary>
         /// 获取类型默认值
         /// </summary>
         /// <param name="dataType">数据类型</param>
@@ -58,6 +84,37 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
                 case "Int64":
                 case "Decimal":
                     return "0";
+                //其他
+                default:
+                    return string.Empty;
+            }
+        }
+        /// <summary>
+        /// 获取类型默认值
+        /// </summary>
+        /// <param name="dataType">数据类型</param>
+        /// <returns>默认值</returns>
+        public override string GetDefaultValue(DataType dataType)
+        {
+            switch (dataType)
+            {
+                //数字类型默认值
+                case DataType.SmallInt:
+                case DataType.Integer:
+                case DataType.BigInt:
+                case DataType.Float:
+                case DataType.Real:
+                case DataType.Double:
+                case DataType.Decimal:
+                case DataType.Money:
+                    return "0";
+                //日期时间类型默认值
+                case DataType.Date:
+                    return "CURRENT_DATE";
+                case DataType.Time:
+                    return "CURRENT_TIME";
+                case DataType.DateTime:
+                    return "NOW()";
                 //其他
                 default:
                     return string.Empty;

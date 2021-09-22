@@ -1,4 +1,5 @@
 ﻿using CloudEntity.Mapping;
+using System;
 using System.Reflection;
 
 namespace CloudEntity.Internal.Mapping
@@ -34,9 +35,9 @@ namespace CloudEntity.Internal.Mapping
         /// </summary>
         public string ColumnAlias { get; set; }
         /// <summary>
-        /// 数据类型(可以为空)
+        /// 数据类型
         /// </summary>
-        public string DataType { get; set; }
+        public DataType DataType { get; set; }
         /// <summary>
         /// 长度(可以为空)
         /// </summary>
@@ -51,6 +52,35 @@ namespace CloudEntity.Internal.Mapping
         public bool AllowNull { get; set; }
 
         /// <summary>
+        /// 获取数据类型
+        /// </summary>
+        /// <returns>数据类型</returns>
+        private DataType GetDataType()
+        {
+            //获取属性类型名称
+            string propertyTypeName = this.Property.PropertyType.SourceTypeName();
+            //获取属性类型
+            switch (propertyTypeName)
+            {
+                case "Int16":
+                    return DataType.SmallInt;
+                case "Int32":
+                    return DataType.Integer;
+                case "Int64":
+                    return DataType.BigInt;
+                case "Single":
+                    return DataType.Float;
+                case "String":
+                    return DataType.Varchar;
+                default:
+                    //尝试获取相同类型名称的数据类型，获取失败则获取默认数据类型
+                    DataType dataType;
+                    Enum.TryParse(propertyTypeName, out dataType);
+                    return dataType;
+            };
+        }
+
+        /// <summary>
         /// 创建ColumnMapper
         /// </summary>
         /// <param name="property">属性</param>
@@ -60,6 +90,7 @@ namespace CloudEntity.Internal.Mapping
             Check.ArgumentNull(property, nameof(property));
             //赋值
             this.Property = property;
+            this.DataType = this.GetDataType();
             this.AllowNull = true;
         }
     }

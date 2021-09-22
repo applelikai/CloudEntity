@@ -31,7 +31,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>查询命令生成树</returns>
         protected override ICommandTree CreateQueryTree()
         {
-            return base.CommandTreeFactory.CreateTopQueryTree(base.NodeBuilders.Concat(this.SortBuilders), this.topCount);
+            return base.CommandTreeFactory.GetTopQueryTree(base.NodeBuilders.Concat(this.SortBuilders), this.topCount);
         }
 
         /// <summary>
