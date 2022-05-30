@@ -59,6 +59,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
                     return "VARCHAR";
                 case DataType.DateTime:
                     return "TIMESTAMP";
+                case DataType.Ntext:
                 case DataType.Xml:
                 case DataType.Json:
                     return "TEXT";

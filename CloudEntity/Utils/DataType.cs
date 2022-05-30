@@ -60,6 +60,10 @@
         /// 变长Unicode字符串(有长度限制)
         /// </summary>
         Nvarchar,
+        /// <summary>
+        /// 变长Unicode字符串(无长度限制)
+        /// </summary>
+        Ntext,
         #endregion
         #region 日期/时间类型
         /// <summary>

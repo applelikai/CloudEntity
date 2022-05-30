@@ -55,6 +55,8 @@ namespace CloudEntity.CommandTrees.Commom.OracleClient
                 case DataType.Money:
                     return "DECIMAL";
                 case DataType.Text:
+                case DataType.Ntext:
+                case DataType.Json:
                     return "Long";
                 case DataType.Nvarchar:
                     return "Nvarchar2";
@@ -65,8 +67,6 @@ namespace CloudEntity.CommandTrees.Commom.OracleClient
                     return "INTEGER";
                 case DataType.Xml:
                     return "XMLTYPE";
-                case DataType.Json:
-                    return "Long";
                 default:
                     return dataType.ToString().ToUpper();
             }

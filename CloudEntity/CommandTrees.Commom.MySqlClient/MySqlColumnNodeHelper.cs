@@ -57,10 +57,11 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
                     return "CHAR";
                 case DataType.Nvarchar:
                     return "VARCHAR";
-                case DataType.Boolean:
-                    return "TINYINT";
+                case DataType.Ntext:
                 case DataType.Xml:
                     return "TEXT";
+                case DataType.Boolean:
+                    return "TINYINT";
                 default:
                     return dataType.ToString().ToUpper();
             }
