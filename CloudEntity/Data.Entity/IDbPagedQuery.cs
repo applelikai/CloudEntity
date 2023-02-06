@@ -23,6 +23,19 @@ namespace CloudEntity.Data.Entity
         /// <summary>
         /// 总页数
         /// </summary>
-        int PageCount { get; } 
+        int PageCount { get; }
+
+        /// <summary>
+        /// 获取sql字符串
+        /// </summary>
+        /// <returns>sql字符串</returns>
+        string ToSqlString();
+        /// <summary>
+        /// 将此数据源的查询结果映射为TModel对象数据源
+        /// </summary>
+        /// <typeparam name="TModel">TModel对象（只要是有无参构造函数的类就可以）</typeparam>
+        /// <returns>TModel对象数据源</returns>
+        IEnumerable<TModel> Cast<TModel>()
+            where TModel : class, new();
     }
 }

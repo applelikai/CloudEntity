@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace CloudEntity.Data.Entity
 {
@@ -39,10 +38,19 @@ namespace CloudEntity.Data.Entity
         /// 创建新的查询数据源
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="predicates">查询条件表达式数组</param>
+        /// <param name="source">基础数据源</param>
+        /// <param name="predicate">查询条件表达式</param>
         /// <returns>新的查询数据源</returns>
-        IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source, params Expression<Func<TEntity, bool>>[] predicates)
+        IDbQuery<TEntity> CreateQuery<TEntity>(IDbSource<TEntity> source, Expression<Func<TEntity, bool>> predicate)
+            where TEntity : class;
+        /// <summary>
+        /// 创建新的查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">查询数据源</param>
+        /// <param name="predicate">查询条件表达式</param>
+        /// <returns>新的查询数据源</returns>
+        IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class;
         /// <summary>
         /// 创建新的查询对象
@@ -54,6 +62,17 @@ namespace CloudEntity.Data.Entity
         /// <param name="parameters">sql参数</param>
         /// <returns>新的查询对象</returns>
         IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source, MemberExpression memberExpression, string whereTemplate, params IDbDataParameter[] parameters)
+            where TEntity : class;
+        /// <summary>
+        /// 创建根据某属性排好序的查询对象
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TKey">实体某属性类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="keySelector">指定实体对象某属性的表达式</param>
+        /// <param name="isDesc">true:降序 false:升序</param>
+        /// <returns>排好序的查询对象</returns>
+        IDbQuery<TEntity> CreateSortedQuery<TEntity, TKey>(IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector, bool isDesc = false)
             where TEntity : class;
         #endregion
         #region 创建关联查询数据源
@@ -110,30 +129,6 @@ namespace CloudEntity.Data.Entity
             where TEntity : class
             where TOther : class;
         #endregion
-        #region 创建排序查询数据源
-        /// <summary>
-        /// 创建根据某属性排好序的查询对象
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TKey">实体某属性类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="keySelector">指定实体对象某属性的表达式</param>
-        /// <param name="isDesc">true:降序 false:升序</param>
-        /// <returns>排好序的查询对象</returns>
-        IDbSortedQuery<TEntity> CreateSortedQuery<TEntity, TKey>(IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector, bool isDesc = false)
-            where TEntity : class;
-        /// <summary>
-        /// 创建根据某属性排好序的查询对象
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TKey">实体某属性类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="keySelector">指定实体对象某属性的表达式</param>
-        /// <param name="isDesc">true:降序 false:升序</param>
-        /// <returns>排好序的查询对象</returns>
-        IDbSortedQuery<TEntity> CreateSortedQuery<TEntity, TKey>(IDbSortedQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector, bool isDesc = false)
-            where TEntity : class;
-        #endregion
         #region 创建分页查询数据源
         /// <summary>
         /// 创建分页查询数据源
@@ -143,7 +138,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="pageSize">每页元素数量</param>
         /// <param name="pageIndex">当前第几页</param>
         /// <returns>分页查询数据源</returns>
-        IDbPagedQuery<TEntity> CreatePagedQuery<TEntity>(IDbSortedQuery<TEntity> source, int pageSize, int pageIndex)
+        IDbPagedQuery<TEntity> CreatePagedQuery<TEntity>(IDbQuery<TEntity> source, int pageSize, int pageIndex)
             where TEntity : class;
         /// <summary>
         /// 创建分页查询数据源
@@ -196,7 +191,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">数据源</param>
         /// <param name="topCount">查询的前几条的元素数量</param>
         /// <returns>TOP选定项查询数据源</returns>
-        IDbSelectedQuery<TEntity> CreateTopSelectedQuery<TEntity>(IDbSortedQuery<TEntity> source, int topCount)
+        IDbSelectedQuery<TEntity> CreateTopSelectedQuery<TEntity>(IDbQuery<TEntity> source, int topCount)
             where TEntity : class;
         /// <summary>
         /// 创建TOP选定项查询数据源
@@ -207,7 +202,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="topCount">查询的前几条的元素数量</param>
         /// <param name="selector">转换实体对象到结果对象的表达式</param>
         /// <returns>TOP选定项查询数据源</returns>
-        IDbSelectedQuery<TElement> CreateTopSelectedQuery<TEntity, TElement>(IDbSortedQuery<TEntity> source, int topCount, Expression<Func<TEntity, TElement>> selector)
+        IDbSelectedQuery<TElement> CreateTopSelectedQuery<TEntity, TElement>(IDbQuery<TEntity> source, int topCount, Expression<Func<TEntity, TElement>> selector)
             where TEntity : class;
         #endregion
         #region 创建sql视图查询数据源

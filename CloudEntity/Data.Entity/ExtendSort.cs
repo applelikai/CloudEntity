@@ -7,7 +7,8 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 排序扩展类
-    /// 李凯 Apple_Li
+    /// 李凯 Apple_Li 15150598493
+    /// 最后修改时间：2023/02/05
     /// </summary>
     public static class ExtendSort
     {
@@ -19,7 +20,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">排好序的数据源</param>
         /// <param name="keySelector">指定某属性的表达式</param>
         /// <returns>排好序的数据源</returns>
-        public static IDbSortedQuery<TEntity> OrderBy<TEntity, TKey>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector)
+        public static IDbQuery<TEntity> OrderBy<TEntity, TKey>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector)
             where TEntity : class
         {
             //非空验证
@@ -36,7 +37,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">排好序的数据源</param>
         /// <param name="keySelector">指定某属性的表达式</param>
         /// <returns>排好序的数据源</returns>
-        public static IDbSortedQuery<TEntity> OrderByDescending<TEntity, TKey>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector)
+        public static IDbQuery<TEntity> OrderByDescending<TEntity, TKey>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector)
             where TEntity : class
         {
             //非空验证
@@ -53,7 +54,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">排好序的数据源</param>
         /// <param name="keySelector">指定某属性的表达式</param>
         /// <returns>再次排好序的数据源</returns>
-        public static IDbSortedQuery<TEntity> ThenBy<TEntity, TKey>(this IDbSortedQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector)
+        public static IDbQuery<TEntity> ThenBy<TEntity, TKey>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector)
             where TEntity : class
         {
             //非空验证
@@ -70,7 +71,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">排好序的数据源</param>
         /// <param name="keySelector">指定某属性的表达式</param>
         /// <returns>再次排好序的数据源</returns>
-        public static IDbSortedQuery<TEntity> ThenByDescending<TEntity, TKey>(this IDbSortedQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector)
+        public static IDbQuery<TEntity> ThenByDescending<TEntity, TKey>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector)
             where TEntity : class
         {
             //非空验证

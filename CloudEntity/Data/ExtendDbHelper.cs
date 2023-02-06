@@ -105,7 +105,7 @@ namespace CloudEntity.Data
         /// <param name="commandText">sql命令</param>
         /// <param name="parameters">sql参数数组</param>
         /// <returns>对象流</returns>
-        public static IEnumerable<TModel> Query<TModel>(this DbHelper dbHelper, string commandText, params IDbDataParameter[] parameters)
+        public static IEnumerable<TModel> GetModels<TModel>(this DbHelper dbHelper, string commandText, params IDbDataParameter[] parameters)
             where TModel : class, new()
         {
             //获取TModel类型的对象存取器
@@ -121,7 +121,7 @@ namespace CloudEntity.Data
         /// <param name="commandText">sql命令</param>
         /// <param name="parameterModel">参数对象</param>
         /// <returns>对象流</returns>
-        public static IEnumerable<TModel> Query<TModel>(this DbHelper dbHelper, string commandText, object parameterModel)
+        public static IEnumerable<TModel> GetModels<TModel>(this DbHelper dbHelper, string commandText, object parameterModel)
             where TModel : class, new()
         {
             //获取sql参数数组

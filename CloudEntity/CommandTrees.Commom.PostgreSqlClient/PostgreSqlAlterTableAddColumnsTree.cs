@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 
 namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
 {
     /// <summary>
     /// 用于PostgreSql的为Table添加列的语句生成树
+    /// Apple_Li 李凯 15150598493
     /// </summary>
     public class PostgreSqlAlterTableAddColumnsTree : AlterTableAddColumnsTree
     {

@@ -5,6 +5,8 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 数据容器接口
+    /// Apple_Li 李凯
+    /// 最后修改日期：2023/02/05
     /// </summary>
     public interface IDbContainer
     {
@@ -40,13 +42,15 @@ namespace CloudEntity.Data.Entity
         /// <typeparam name="TEntity">实体类型</typeparam>
         /// <param name="transaction">事物出来对象</param>
         /// <returns>实体操作器</returns>
-        IDbOperator<TEntity> CreateOperator<TEntity>(IDbTransaction transaction) where TEntity : class;
+        IDbOperator<TEntity> CreateOperator<TEntity>(IDbTransaction transaction)
+            where TEntity : class;
         /// <summary>
-        /// 获取数据列表
+        /// 创建新的查询数据源
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <returns>数据列表</returns>
-        IDbList<TEntity> List<TEntity>() where TEntity : class;
+        /// <returns>新的查询数据源</returns>
+        IDbQuery<TEntity> CreateQuery<TEntity>()
+            where TEntity : class;
         /// <summary>
         /// 创建视图查询数据源
         /// </summary>
@@ -54,6 +58,14 @@ namespace CloudEntity.Data.Entity
         /// <param name="querySql">查询sql</param>
         /// <param name="parameters">sql参数数组</param>
         /// <returns>视图查询数据源</returns>
-        IDbView<TModel> View<TModel>(string querySql, params IDbDataParameter[] parameters) where TModel : class, new();
+        IDbView<TModel> CreateView<TModel>(string querySql, params IDbDataParameter[] parameters)
+            where TModel : class, new();
+        /// <summary>
+        /// 获取数据列表
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <returns>数据列表</returns>
+        IDbList<TEntity> List<TEntity>()
+            where TEntity : class;
     }
 }

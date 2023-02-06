@@ -6,7 +6,7 @@ namespace CloudEntity
 {
     /// <summary>
     /// 属性值存取类
-    /// 李凯 Apple_Li
+    /// 李凯 Apple_Li 15150598493
     /// </summary>
     internal class PropertyAccessor
     {

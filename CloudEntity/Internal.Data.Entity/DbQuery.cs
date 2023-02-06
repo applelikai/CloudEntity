@@ -19,20 +19,30 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 对象访问器
         /// </summary>
-        private ObjectAccessor objectAccessor;
+        private ObjectAccessor _objectAccessor;
+        /// <summary>
+        /// 当前对象的关联对象属性链接列表
+        /// </summary>
+        private IList<PropertyLinker> _propertyLinkers;
 
         /// <summary>
-        /// 数据操作类的工厂
+        /// 创建数据操作对象的工厂
         /// </summary>
-        public IDbFactory Factory { get; internal set; }
+        public IDbFactory Factory { get; private set; }
         /// <summary>
-        /// 当前对象的关联对象属性链接数组
+        /// 当前对象的关联对象属性链接列表
         /// </summary>
-        public PropertyLinker[] PropertyLinkers { get; internal set; }
+        public IEnumerable<PropertyLinker> PropertyLinkers 
+        {
+            get { return _propertyLinkers; }
+        }
         /// <summary>
         /// Sql参数创建对象
         /// </summary>
-        public IParameterFactory ParameterFactory => base.DbHelper;
+        public IParameterFactory ParameterFactory
+        {
+            get { return base.DbHelper; }
+        }
         
         /// <summary>
         /// 创建实体对象
@@ -44,7 +54,7 @@ namespace CloudEntity.Internal.Data.Entity
         {
             ITableMapper tableMapper = base.MapperContainer.GetTableMapper(typeof(TEntity));
             AccessorLinker[] accessorLinkers = this.PropertyLinkers.Select(l => l.ToAccessorLinker(base.MapperContainer)).ToArray();
-            return this.objectAccessor.CreateEntity(tableMapper, reader, columnNames, accessorLinkers);
+            return _objectAccessor.CreateEntity(tableMapper, reader, columnNames, accessorLinkers);
         }
 
         /// <summary>
@@ -62,10 +72,52 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="mapperContainer">Mapper容器</param>
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
+        /// <param name="dbFactory">创建数据操作对象的工厂</param>
+        public DbQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper, IDbFactory dbFactory)
             : base(mapperContainer, commandTreeFactory, dbHelper)
         {
-            this.objectAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
+            _objectAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
+            _propertyLinkers = new List<PropertyLinker>();
+            this.Factory = dbFactory;
+        }
+        /// <summary>
+        /// 添加关联的对象属性链接
+        /// </summary>
+        /// <param name="propertyLinker">关联的对象属性链接</param>
+        public void AddPropertyLinker(PropertyLinker propertyLinker)
+        {
+            _propertyLinkers.Add(propertyLinker);
+        }
+        /// <summary>
+        /// 添加关联的对象属性链接列表
+        /// </summary>
+        /// <param name="propertyLinkers">关联的对象属性链接列表</param>
+        public void AddPropertyLinkers(IEnumerable<PropertyLinker> propertyLinkers)
+        {
+            foreach (PropertyLinker propertyLinker in propertyLinkers)
+                _propertyLinkers.Add(propertyLinker);
+        }
+        /// <summary>
+        /// 获取sql字符串
+        /// </summary>
+        /// <returns>sql字符串</returns>
+        public string ToSqlString()
+        {
+            //获取sql命令
+            return base.CommandTreeFactory.GetQueryTree(this.GetNodeBuilders()).Compile();
+        }
+        /// <summary>
+        /// 将此数据源的查询结果映射为TModel对象数据源
+        /// </summary>
+        /// <typeparam name="TModel">TModel对象（只要是有无参构造函数的类就可以）</typeparam>
+        /// <returns>TModel对象数据源</returns>
+        public IEnumerable<TModel> Cast<TModel>()
+            where TModel : class, new()
+        {
+            // 获取sql命令
+            string commandText = base.CommandTreeFactory.GetQueryTree(this.GetNodeBuilders()).Compile();
+            // 执行查询
+            return base.DbHelper.GetModels<TModel>(commandText, base.Parameters.ToArray());
         }
         /// <summary>
         /// 获取枚举器
@@ -73,10 +125,10 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>枚举器</returns>
         public IEnumerator<TEntity> GetEnumerator()
         {
-            //创建CommandTree
-            ICommandTree queryTree = base.CommandTreeFactory.GetQueryTree(this.GetNodeBuilders());
-            //执行查询
-            foreach (TEntity entity in base.DbHelper.GetResults(this.CreateEntity, queryTree.Compile(), parameters: base.Parameters.ToArray()))
+            // 获取sql命令
+            string commandText = base.CommandTreeFactory.GetQueryTree(this.GetNodeBuilders()).Compile();
+            // 执行查询
+            foreach (TEntity entity in base.DbHelper.GetResults(this.CreateEntity, commandText, parameters: base.Parameters.ToArray()))
                 yield return entity;
         }
         /// <summary>

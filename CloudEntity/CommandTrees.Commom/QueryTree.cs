@@ -4,15 +4,30 @@ namespace CloudEntity.CommandTrees.Commom
 {
     /// <summary>
     /// 查询命令生成树
-    /// 李凯 Apple_Li 2017/05/21
+    /// 李凯 Apple_Li 15150598493 2017/05/21
     /// </summary>
 	public class QueryTree : CommandTree
     {
-        private IBuilderCollection selectBuilder;   //查询命令生成树的Select节点
-        private IBuilderCollection fromBuilder;     //查询命令生成树的From节点
-        private IBuilderCollection whereBuilder;    //查询命令生成树的Where节点
-        private IBuilderCollection groupByBuilder;  //查询命令生成树的Group By节点
-        private IBuilderCollection orderByBuilder;  //查询命令生成树的Order By节点
+        /// <summary>
+        /// 查询命令生成树的Select节点
+        /// </summary>
+        private IBuilderCollection selectBuilder;
+        /// <summary>
+        /// 查询命令生成树的From节点
+        /// </summary>
+        private IBuilderCollection fromBuilder;
+        /// <summary>
+        /// 查询命令生成树的Where节点
+        /// </summary>
+        private IBuilderCollection whereBuilder;
+        /// <summary>
+        /// 查询命令生成树的Group By节点
+        /// </summary>
+        private IBuilderCollection groupByBuilder;
+        /// <summary>
+        /// 查询命令生成树的Order By节点
+        /// </summary>
+        private IBuilderCollection orderByBuilder;
 
         /// <summary>
         /// Select节点

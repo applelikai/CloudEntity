@@ -12,7 +12,19 @@ namespace CloudEntity.Data
         /// <summary>
         /// 连接字符串
         /// </summary>
-        private string connectionString;
+        private string _connectionString;
+        /// <summary>
+        /// 数据库默认架构名（或用户名 或模式 总之就是表名前缀）
+        /// </summary>
+        private string _defaultSchemaName;
+
+        /// <summary>
+        /// 数据库默认架构名（或用户名 或模式 总之就是表名前缀）
+        /// </summary>
+        public string DefaultSchemaName
+        {
+            get { return _defaultSchemaName; }
+        }
 
         /// <summary>
         /// 获取数据类型
@@ -51,12 +63,14 @@ namespace CloudEntity.Data
         /// 初始化DbHelper
         /// </summary>
         /// <param name="connectionString">连接字符串</param>
-        public DbHelper(string connectionString)
+        /// <param name="defaultSchemaName">数据库默认架构名（或用户名 或模式 总之就是表名前缀）</param>
+        public DbHelper(string connectionString, string defaultSchemaName = null)
         {
             //非空检查
             Check.ArgumentNull(connectionString, nameof(connectionString));
             //赋值
-            this.connectionString = connectionString;
+            _connectionString = connectionString;
+            _defaultSchemaName = defaultSchemaName;
         }
 
         /// <summary>
@@ -192,7 +206,7 @@ namespace CloudEntity.Data
         /// <returns>单个结果</returns>
         public object GetScalar(string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
         {
-            using (IDbConnection connection = this.Connect(this.connectionString))
+            using (IDbConnection connection = this.Connect(_connectionString))
             {
                 //打开连接
                 if (connection.State != ConnectionState.Open)
@@ -259,7 +273,7 @@ namespace CloudEntity.Data
         /// <returns>所有的结果</returns>
         public IEnumerable<TResult> GetResults<TResult>(Func<IDataReader, TResult> getResult, string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
         {
-            using (IDbConnection connection = this.Connect(this.connectionString))
+            using (IDbConnection connection = this.Connect(_connectionString))
             {
                 //打开连接
                 if (connection.State != ConnectionState.Open)
@@ -298,7 +312,7 @@ namespace CloudEntity.Data
         /// <returns>TResult类型的迭代器</returns>
         public IEnumerable<TResult> GetResults<TResult>(Func<IDataReader, string[], TResult> getResult, string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
         {
-            using (IDbConnection connection = this.Connect(this.connectionString))
+            using (IDbConnection connection = this.Connect(_connectionString))
             {
                 //打开连接
                 if (connection.State != ConnectionState.Open)
@@ -334,7 +348,7 @@ namespace CloudEntity.Data
         /// <param name="transaction">事故</param>
         public void BeginTransaction(out IDbConnection connection, out IDbTransaction transaction)
         {
-            connection = this.Connect(this.connectionString);   //创建数据库连接对象
+            connection = this.Connect(_connectionString);   //创建数据库连接对象
             if (connection.State != ConnectionState.Open)       //若连接没有打开
                 connection.Open();                                  //打开连接
             transaction = connection.BeginTransaction();        //获取事故
@@ -359,7 +373,7 @@ namespace CloudEntity.Data
         /// <returns>DB受影响行数</returns>
         public int ExecuteUpdate(string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
         {
-            using (IDbConnection connection = this.Connect(this.connectionString))
+            using (IDbConnection connection = this.Connect(_connectionString))
             {
                 //打开连接
                 if (connection.State != ConnectionState.Open)

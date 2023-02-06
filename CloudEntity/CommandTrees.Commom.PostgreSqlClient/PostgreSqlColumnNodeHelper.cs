@@ -4,6 +4,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
 {
     /// <summary>
     /// 获取用于PostgreSql的列节点信息的帮助类
+    /// 李凯 Apple_Li 15150598493
     /// </summary>
     public class PostgreSqlColumnNodeHelper : ColumnNodeHelper
     {

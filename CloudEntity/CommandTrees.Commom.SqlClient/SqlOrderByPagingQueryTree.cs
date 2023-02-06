@@ -12,23 +12,23 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
         /// 创建分页查询命令生成树
         /// </summary>
         /// <param name="parameterMarker">sql参数标识符号</param>
-        /// <param name="sortBuilders">排序节点数组</param>
-        public SqlOrderByPagingQueryTree(char parameterMarker, ISqlBuilder[] sortBuilders)
-            : base(parameterMarker)
-        {
-            //添加RowNumber查询列
-            ISqlBuilder rowNumberBuilder = new RowNumberBuilder(sortBuilders);
-            base.Select.Append(rowNumberBuilder);
-        }
+        public SqlOrderByPagingQueryTree(char parameterMarker)
+            : base(parameterMarker) { }
         /// <summary>
         /// 构建sql命令
         /// </summary>
         /// <param name="commandText">待构建的sql</param>
         public override void Build(StringBuilder commandText)
         {
+            // 拼接WITH AS
             commandText.AppendLine("WITH t AS");
             commandText.AppendLine("(");
-            base.Build(commandText);
+            // 拼接正常查询的sql
+            this.Select.Build(commandText);
+            this.From.Build(commandText);
+            this.Where.Build(commandText);
+            this.GroupBy.Build(commandText);
+            // 拼接分页条件
             commandText.AppendLine("\n)");
             commandText.AppendLine("SELECT *");
             commandText.AppendLine("  FROM t");

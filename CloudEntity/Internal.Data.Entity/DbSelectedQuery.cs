@@ -12,7 +12,7 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// 选定项查询数据源类
-    /// Apple_Li 李凯 2017/06/19
+    /// Apple_Li 李凯 15150598493 2017/06/19
     /// </summary>
     /// <typeparam name="TElement">元素类型</typeparam>
     /// <typeparam name="TEntity">实体类型</typeparam>
@@ -22,12 +22,12 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 实体访问器
         /// </summary>
-        private ObjectAccessor entityAccessor;
-
+        private ObjectAccessor _entityAccessor;
         /// <summary>
-        /// 当前对象的关联对象属性链接数组
+        /// 当前对象的关联对象属性链接列表
         /// </summary>
-        internal PropertyLinker[] PropertyLinkers { private get; set; }
+        private IList<PropertyLinker> _propertyLinkers;
+
         /// <summary>
         /// 转换实体对象为TElement类型的委托
         /// </summary>
@@ -60,8 +60,8 @@ namespace CloudEntity.Internal.Data.Entity
         private TElement CreateElement(IDataReader reader, string[] columnNames)
         {
             ITableMapper tableMapper = base.MapperContainer.GetTableMapper(typeof(TEntity));
-            AccessorLinker[] accessorLinkers = this.PropertyLinkers.Select(l => l.ToAccessorLinker(base.MapperContainer)).ToArray();
-            TEntity entity = this.entityAccessor.CreateEntity(tableMapper, reader, columnNames, accessorLinkers) as TEntity;
+            AccessorLinker[] accessorLinkers = _propertyLinkers.Select(l => l.ToAccessorLinker(base.MapperContainer)).ToArray();
+            TEntity entity = _entityAccessor.CreateEntity(tableMapper, reader, columnNames, accessorLinkers) as TEntity;
             return this.Convert(entity);
         }
 
@@ -83,7 +83,25 @@ namespace CloudEntity.Internal.Data.Entity
         public DbSelectedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
             : base(mapperContainer, commandTreeFactory, dbHelper)
         {
-            this.entityAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
+            _entityAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
+            _propertyLinkers = new List<PropertyLinker>();
+        }
+        /// <summary>
+        /// 添加关联的对象属性链接
+        /// </summary>
+        /// <param name="propertyLinker">关联的对象属性链接</param>
+        public void AddPropertyLinker(PropertyLinker propertyLinker)
+        {
+            _propertyLinkers.Add(propertyLinker);
+        }
+        /// <summary>
+        /// 添加关联的对象属性链接列表
+        /// </summary>
+        /// <param name="propertyLinkers">关联的对象属性链接列表</param>
+        public void AddPropertyLinkers(IEnumerable<PropertyLinker> propertyLinkers)
+        {
+            foreach (PropertyLinker propertyLinker in propertyLinkers)
+                _propertyLinkers.Add(propertyLinker);
         }
         /// <summary>
         /// 获取枚举器

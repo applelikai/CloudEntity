@@ -10,7 +10,7 @@ namespace CloudEntity.Internal.WhereVisitors
 {
     /// <summary>
     /// 查询条件Lambda表达式解析类
-    /// 李凯 Apple_Li
+    /// 李凯 Apple_Li 15150598493
     /// </summary>
     public abstract class WhereVisitor
     {

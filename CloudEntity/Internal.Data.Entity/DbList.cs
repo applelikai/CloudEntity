@@ -3,7 +3,6 @@ using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
 using CloudEntity.Mapping;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -22,7 +21,15 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 操作数据库某Table的线程锁(避免同时刻执行增删改)
         /// </summary>
-        private object modifyLocker;
+        private object _modifyLocker;
+        /// <summary>
+        /// sql表达式节点集合
+        /// </summary>
+        private IList<INodeBuilder> _nodebuilders;
+        /// <summary>
+        /// sql参数集合
+        /// </summary>
+        private IList<IDbDataParameter> _sqlParameters;
 
         /// <summary>
         /// 获取当前实体对象
@@ -48,35 +55,41 @@ namespace CloudEntity.Internal.Data.Entity
         /// </summary>
         public IEnumerable<INodeBuilder> NodeBuilders
         {
-            get
-            {
-                //获取Select节点的子节点集合
-                foreach (IColumnMapper columnMapper in base.TableMapper.GetColumnMappers())
-                {
-                    //依次获取列节点
-                    yield return base.CommandTreeFactory.GetColumnBuilder(base.TableMapper.Header.TableAlias, columnMapper.ColumnName, columnMapper.ColumnAlias);
-                }
-                //获取From节点的子Table表达式节点
-                ITableHeader tableHeader = base.TableMapper.Header;
-                yield return base.CommandTreeFactory.GetTableBuilder(tableHeader.TableName, tableHeader.TableAlias, tableHeader.SchemaName);
-            }
+            get { return _nodebuilders; }
         }
         /// <summary>
         /// sql参数集合
         /// </summary>
         public IEnumerable<IDbDataParameter> Parameters
         {
-            get { return new IDbDataParameter[0]; }
+            get { return _sqlParameters; }
         }
-        /// <summary>
-        /// 当前对象的关联对象属性链接数组
-        /// </summary>
-        public PropertyLinker[] PropertyLinkers { get; private set; }
         /// <summary>
         /// 创建sql参数的工厂
         /// </summary>
         public IParameterFactory ParameterFactory => base.DbHelper;
 
+        /// <summary>
+        /// 获取基本sql查询命令生成树的子节点列表
+        /// </summary>
+        /// <returns>基本sql查询命令生成树的子节点列表</returns>
+        private IEnumerable<INodeBuilder> GetQueryNodeBuilders()
+        {
+            // 获取表别名
+            string tableAlias = base.TableMapper.Header.TableAlias;
+            // 获取Select节点的子节点集合
+            foreach (IColumnMapper columnMapper in base.TableMapper.GetColumnMappers())
+            {
+                // 依次获取列节点
+                yield return base.CommandTreeFactory.GetColumnBuilder(tableAlias, columnMapper.ColumnName, columnMapper.ColumnAlias);
+            }
+            // 获取表名
+            string tableName = base.TableMapper.Header.TableName;
+            // 获取数据库架构名
+            string schemaName = base.TableMapper.Header.SchemaName ?? base.DbHelper.DefaultSchemaName;
+            // 获取From节点的子Table表达式节点
+            yield return base.CommandTreeFactory.GetTableBuilder(tableName, tableAlias, schemaName);
+        }
         /// <summary>
         /// 获取根据ID查询单条记录命令生成树的子节点
         /// </summary>
@@ -98,12 +111,18 @@ namespace CloudEntity.Internal.Data.Entity
         {
             //获取Select节点的子节点集合
             yield return new NodeBuilder(SqlType.Select, "COUNT(*)");
+            //获取表名
+            string tableName = base.TableMapper.Header.TableName;
+            //获取表别名
+            string tableAlias = base.TableMapper.Header.TableAlias;
+            //获取数据库架构名
+            string schemaName = base.TableMapper.Header.SchemaName ?? base.DbHelper.DefaultSchemaName;
             //获取From节点的子Table表达式节点
             ITableHeader tableHeader = base.TableMapper.Header;
-            yield return base.CommandTreeFactory.GetTableBuilder(tableHeader.TableName, tableHeader.TableAlias, tableHeader.SchemaName);
+            yield return base.CommandTreeFactory.GetTableBuilder(tableName, tableAlias, schemaName);
             //获取Where节点的子节点集合
             IColumnMapper keyColumnMapper = base.TableMapper.KeyMapper;
-            yield return base.CommandTreeFactory.GetEqualsBuilder(this.TableMapper.Header.TableAlias, keyColumnMapper.ColumnName, keyColumnMapper.Property.Name);
+            yield return base.CommandTreeFactory.GetEqualsBuilder(tableAlias, keyColumnMapper.ColumnName, keyColumnMapper.Property.Name);
         }
         /// <summary>
         /// 创建实体对象
@@ -124,7 +143,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>受影响的行数</returns>
         protected override int ExecuteUpdate(string commandText, IDbDataParameter[] parameters)
         {
-            lock (this.modifyLocker)
+            lock (_modifyLocker)
             {
                 return base.DbHelper.ExecuteUpdate(commandText, parameters: parameters);
             }
@@ -140,8 +159,9 @@ namespace CloudEntity.Internal.Data.Entity
         public DbList(IDbFactory factory, DbHelper dbHelper, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
             : base(factory, dbHelper, commandTreeFactory, mapperContainer)
         {
-            this.modifyLocker = new object();
-            this.PropertyLinkers = new PropertyLinker[0];
+            _modifyLocker = new object();
+            _nodebuilders = this.GetQueryNodeBuilders().ToList();
+            _sqlParameters = new List<IDbDataParameter>();
         }
         /// <summary>
         /// 判断当前ID的实体是否存在

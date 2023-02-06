@@ -7,24 +7,36 @@ namespace CloudEntity
 {
     /// <summary>
     /// 用于创建对象，并给对象属性赋值的实体访问类
-    /// 李凯 Apple_Li
+    /// 李凯 Apple_Li 15150598493
+    /// 最后修改时间：2023/02/06
     /// </summary>
     public sealed class ObjectAccessor
     {
-        private Delegate creator;                                           //创建对象的委托
-        private object creatorLocker;                                       //creators线程锁
-        private IDictionary<ConstructorInfo, Delegate> creators;            //创建对象的匿名函数字典
-        private IDictionary<string, PropertyAccessor> propertyAccessors;    //属性访问器字典
-        private static object accessorsLocker;                              //访问器字典线程锁
-        private static IDictionary<string, ObjectAccessor> accessors;       //对象访问器字典
-
+        /// <summary>
+        /// 创建对象的委托
+        /// </summary>
+        private Delegate _creator;
+        /// <summary>
+        /// creators线程锁
+        /// </summary>
+        private object _creatorLocker;
+        /// <summary>
+        /// 创建对象的匿名函数字典
+        /// </summary>
+        private IDictionary<ConstructorInfo, Delegate> _creators;
         /// <summary>
         /// 属性访问器字典
         /// </summary>
-        private IDictionary<string, PropertyAccessor> PropertyAccessors
-        {
-            get { return this.propertyAccessors ?? (this.propertyAccessors = this.GetPropertyAccessors()); }
-        }
+        private IDictionary<string, PropertyAccessor> _propertyAccessors;
+        /// <summary>
+        /// 访问器字典线程锁
+        /// </summary>
+        private static object accessorsLocker;
+        /// <summary>
+        /// 对象访问器字典
+        /// </summary>
+        private static IDictionary<string, ObjectAccessor> accessors;
+
         /// <summary>
         /// Object's type
         /// 对象类型
@@ -45,14 +57,16 @@ namespace CloudEntity
         /// <param name="objectType">对象类型</param>
         private ObjectAccessor(Type objectType)
         {
-            //赋值
+            // 赋值
             this.ObjectType = objectType.GetTypeInfo();
-            //初始化不带参数的创建对象的匿名函数
+            // 初始化不带参数的创建对象的匿名函数
             NewExpression newExpression = Expression.New(objectType);
-            this.creator = Expression.Lambda(newExpression).Compile();
-            //初始化创建对象的匿名函数字典
-            this.creators = new Dictionary<ConstructorInfo, Delegate>();
-            this.creatorLocker = new object();
+            _creator = Expression.Lambda(newExpression).Compile();
+            // 初始化创建对象的匿名函数字典
+            _creators = new Dictionary<ConstructorInfo, Delegate>();
+            _creatorLocker = new object();
+            // 初始化属性访问器字典
+            _propertyAccessors = this.GetPropertyAccessors();
         }
         /// <summary>
         /// 获取当前对象所有可读可写的属性
@@ -95,28 +109,29 @@ namespace CloudEntity
         private Delegate GetCreator(ConstructorInfo constructor)
         {
             Start:
-            //若creators中包含当前构造函数的委托，直接返回
-            if (this.creators.ContainsKey(constructor))
-                return this.creators[constructor];
-            //进入单线程模式
-            lock (this.creatorLocker)
+            // 若creators中包含当前构造函数的委托，直接返回
+            if (_creators.ContainsKey(constructor))
+                return _creators[constructor];
+            // 进入单线程模式
+            lock (_creatorLocker)
             {
-                //委托不存在则创建委托
-                if (!this.creators.ContainsKey(constructor))
+                // 委托不存在则创建委托
+                if (!_creators.ContainsKey(constructor))
                 {
-                    //获取ParameterExpressions
+                    // 获取ParameterExpressions
                     ParameterInfo[] parameterInfos = constructor.GetParameters();
                     ParameterExpression[] parameterExpressions = new ParameterExpression[parameterInfos.Length];
                     for (int i = 0; i < parameterInfos.Length; i++)
                         parameterExpressions[i] = Expression.Parameter(parameterInfos[i].ParameterType, parameterInfos[i].Name);
-                    //创建委托
+                    // 创建委托
                     NewExpression newExpression = Expression.New(constructor, parameterExpressions);
                     Delegate creator = Expression.Lambda(newExpression, parameterExpressions).Compile();
-                    //添加委托
-                    this.creators.Add(constructor, creator);
+                    // 添加委托
+                    _creators.Add(constructor, creator);
                 }
-                goto Start;
             }
+            // 回到开始
+            goto Start;
         }
 
         /// <summary>
@@ -128,7 +143,7 @@ namespace CloudEntity
         public void SetValue(string propertyName, object instance, object value)
         {
             //为entity当前属性赋值
-            this.PropertyAccessors[propertyName].SetValue(instance, value);
+            _propertyAccessors[propertyName].SetValue(instance, value);
         }
         /// <summary>
         /// 给对象某属性赋值
@@ -138,14 +153,14 @@ namespace CloudEntity
         /// <param name="value">值</param>
         public void TrySetValue(string propertyName, object instance, object value)
         {
-            //若不包含当前属性,退出
-            if (!this.PropertyAccessors.ContainsKey(propertyName))
+            // 若不包含当前属性,退出
+            if (!_propertyAccessors.ContainsKey(propertyName))
                 return;
-            //若entity为空,退出
+            // 若对象实例为空,退出
             if (instance == null)
                 return;
-            //为entity当前属性赋值
-            this.PropertyAccessors[propertyName].SetValue(instance, value);
+            // 为对象实例当前属性赋值
+            _propertyAccessors[propertyName].SetValue(instance, value);
         }
         /// <summary>
         /// 获取对象某属性的值
@@ -155,8 +170,8 @@ namespace CloudEntity
         /// <returns>对象某属性的值</returns>
         public object GetValue(string propertyName, object instance)
         {
-            //获取entity当前属性值
-            return this.PropertyAccessors[propertyName].GetValue(instance);
+            //获取对象实例当前属性值
+            return _propertyAccessors[propertyName].GetValue(instance);
         }
         /// <summary>
         /// 获取对象某属性的值
@@ -167,13 +182,13 @@ namespace CloudEntity
         public object TryGetValue(string propertyName, object instance)
         {
             //若不包含当前属性，返回null
-            if (!this.PropertyAccessors.ContainsKey(propertyName))
+            if (!_propertyAccessors.ContainsKey(propertyName))
                 return null;
-            //若entity为空,返回null
+            //若对象实例为空,返回null
             if (instance == null)
                 return null;
-            //获取entity当前属性值
-            return this.PropertyAccessors[propertyName].GetValue(instance);
+            //获取对象实例当前属性值
+            return _propertyAccessors[propertyName].GetValue(instance);
         }
         /// <summary>
         /// 创建对象
@@ -181,7 +196,7 @@ namespace CloudEntity
         /// <returns>实体对象</returns>
         public object CreateInstance()
         {
-            return this.creator.DynamicInvoke();
+            return _creator.DynamicInvoke();
         }
         /// <summary>
         /// 创建对象
@@ -210,7 +225,7 @@ namespace CloudEntity
         /// <returns>所有可读可写的属性名</returns>
         public IEnumerable<string> GetPropertyNames()
         {
-            return this.PropertyAccessors.Keys;
+            return _propertyAccessors.Keys;
         }
         /// <summary>
         /// 获取对象访问器

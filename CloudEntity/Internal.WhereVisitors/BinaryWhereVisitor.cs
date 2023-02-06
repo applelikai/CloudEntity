@@ -11,7 +11,7 @@ namespace CloudEntity.Internal.WhereVisitors
 {
     /// <summary>
     /// 二叉树表达式解析类
-    /// 李凯 Apple_Li
+    /// 李凯 Apple_Li 15150598493
     /// </summary>
     internal class BinaryWhereVisitor : WhereVisitor
     {

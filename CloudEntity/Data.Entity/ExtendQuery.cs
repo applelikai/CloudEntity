@@ -2,14 +2,14 @@
 using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Text;
 
 namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 查询扩展类
-    /// 李凯 Apple_Li
+    /// 李凯 Apple_Li 15150598493
+    /// 最后修改时间：2023/02/05
     /// </summary>
     public static class ExtendQuery
     {
@@ -166,7 +166,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">数据源过滤器</param>
         /// <param name="selector">指定对象属性表达式</param>
         /// <param name="isNull">IS NULL 或 IS NOT NULL</param>
-        public static IDbQuery<TEntity> Null<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, bool isNull = true)
+        public static IDbQuery<TEntity> IsNull<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, bool isNull = true)
             where TEntity : class
         {
             //非空验证
@@ -181,10 +181,10 @@ namespace CloudEntity.Data.Entity
         /// Extendable method: 筛选数据源符合条件的对象
         /// </summary>
         /// <typeparam name="TEntity">The entity's type.</typeparam>
-        /// <param name="source">数据源</param>
+        /// <param name="source">基础数据源</param>
         /// <param name="predicate">筛选表达式</param>
         /// <returns>被筛选后的数据源</returns>
-        public static IDbQuery<TEntity> Where<TEntity>(this IDbQuery<TEntity> source, Expression<Func<TEntity, bool>> predicate)
+        public static IDbQuery<TEntity> Where<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
         {
             //非空验证
@@ -197,17 +197,17 @@ namespace CloudEntity.Data.Entity
         /// Extendable method: 筛选数据源符合条件的对象
         /// </summary>
         /// <typeparam name="TEntity">The entity's type.</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="predicates">筛选表达式数组</param>
+        /// <param name="source">查询数据源</param>
+        /// <param name="predicate">筛选表达式</param>
         /// <returns>被筛选后的数据源</returns>
-        public static IDbQuery<TEntity> Filter<TEntity>(this IDbQuery<TEntity> source, Expression<Func<TEntity, bool>>[] predicates)
+        public static IDbQuery<TEntity> Where<TEntity>(this IDbQuery<TEntity> source, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
         {
             //非空验证
             Check.ArgumentNull(source, nameof(source));
-            Check.ArgumentNull(predicates, "predicates");
+            Check.ArgumentNull(predicate, nameof(predicate));
             //创建新的查询对象
-            return source.Factory.CreateQuery(source, predicates);
+            return source.Factory.CreateQuery(source, predicate);
         }
         /// <summary>
         /// Extendable method: 选定属性查询
@@ -468,22 +468,6 @@ namespace CloudEntity.Data.Entity
             //创建新的视图查询数据源
             return source.Factory.CreateView(source, predicate);
         }
-        /// <summary>
-        /// Extendable method: 筛选并获取筛选后的视图查询数据源
-        /// </summary>
-        /// <typeparam name="TModel">视图对象类型</typeparam>
-        /// <param name="source">视图查询数据源</param>
-        /// <param name="predicates">筛选表达式数组</param>
-        /// <returns>被筛选后的数据源</returns>
-        public static IDbView<TModel> Filter<TModel>(this IDbView<TModel> source, Expression<Func<TModel, bool>>[] predicates)
-            where TModel : class, new()
-        {
-            //非空验证
-            Check.ArgumentNull(source, nameof(source));
-            Check.ArgumentNull(predicates, nameof(predicates));
-            //创建新的视图查询数据源
-            return source.Factory.CreateView(source, predicates);
-        }
 
         /// <summary>
         /// Extendable method: 获取分页查询数据源
@@ -493,7 +477,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="pageSize">每页的元素数量</param>
         /// <param name="pageIndex">当前第几页</param>
         /// <returns>分页查询数据源</returns>
-        public static IDbPagedQuery<TEntity> Paging<TEntity>(this IDbSortedQuery<TEntity> source, int pageSize, int pageIndex = 1)
+        public static IDbPagedQuery<TEntity> Paging<TEntity>(this IDbQuery<TEntity> source, int pageSize, int pageIndex = 1)
             where TEntity : class
         {
             //非空检查
@@ -543,7 +527,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">数据源</param>
         /// <param name="topCount">查询的前几条的元素数量</param>
         /// <returns>TOP查询数据源</returns>
-        public static IDbSelectedQuery<TEntity> Top<TEntity>(this IDbSortedQuery<TEntity> source, int topCount)
+        public static IDbSelectedQuery<TEntity> Top<TEntity>(this IDbQuery<TEntity> source, int topCount)
             where TEntity : class
         {
             //非空检查
@@ -561,7 +545,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="topCount">查询的前几条的元素数量</param>
         /// <param name="selector">指定选定项的表达式</param>
         /// <returns>TOP选定项查询数据源</returns>
-        public static IDbSelectedQuery<TResult> Top<TEntity, TResult>(this IDbSortedQuery<TEntity> source, int topCount, Expression<Func<TEntity, TResult>> selector)
+        public static IDbSelectedQuery<TResult> Top<TEntity, TResult>(this IDbQuery<TEntity> source, int topCount, Expression<Func<TEntity, TResult>> selector)
             where TEntity : class
         {
             //非空检查
@@ -615,11 +599,41 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">数据源</param>
         /// <param name="predicate">筛选表达式</param>
         /// <returns>数据源中唯一满足条件的对象</returns>
+        public static TEntity Single<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, bool>> predicate)
+            where TEntity : class
+        {
+            //获取数据源中唯一符合条件的对象
+            return source.Where(predicate).Single();
+        }
+        /// <summary>
+        /// Extendable method: 获取数据源中唯一满足条件的对象
+        /// 1.没有满足条件的对象会有异常
+        /// 2.有多个满足条件的对象也会有异常
+        /// </summary>
+        /// <typeparam name="TEntity">The entity's type.</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="predicate">筛选表达式</param>
+        /// <returns>数据源中唯一满足条件的对象</returns>
         public static TEntity Single<TEntity>(this IDbQuery<TEntity> source, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
         {
             //获取数据源中唯一符合条件的对象
             return source.Where(predicate).Single();
+        }
+        /// <summary>
+        /// Extendable method: 获取数据源中唯一满足条件的对象
+        /// 1.没有满足条件的对象会有异常
+        /// 2.有多个满足条件的对象也会有异常
+        /// </summary>
+        /// <typeparam name="TEntity">The entity's type.</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="predicate">筛选表达式</param>
+        /// <returns>数据源中唯一满足条件的对象</returns>
+        public static TEntity SingleOrDefault<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, bool>> predicate)
+            where TEntity : class
+        {
+            //获取数据源中唯一符合条件的对象
+            return source.Where(predicate).SingleOrDefault();
         }
         /// <summary>
         /// Extendable method: 获取数据源中唯一满足条件的对象

@@ -37,15 +37,31 @@ namespace CloudEntity.Data.Entity
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
         /// <param name="dbOperator">实体数据操作对象</param>
-        /// <param name="predicates">删除条件表达式数组</param>
         /// <returns>删除的实体对象的数量</returns>
-        public static int RemoveAll<TEntity>(this IDbOperator<TEntity> dbOperator, params Expression<Func<TEntity, bool>>[] predicates)
+        public static int RemoveAll<TEntity>(this IDbOperator<TEntity> dbOperator)
             where TEntity : class
         {
             //非空检查
             Check.ArgumentNull(dbOperator, nameof(dbOperator));
             //获取待删除的实体对象的数据源
-            IDbQuery<TEntity> entities = dbOperator.Factory.CreateQuery<TEntity>().Filter(predicates);
+            IDbQuery<TEntity> entities = dbOperator.Factory.CreateQuery<TEntity>();
+            //执行删除数据源中所有的实体
+            return dbOperator.RemoveAll(entities);
+        }
+        /// <summary>
+        /// ExtendMethod: 删除数据源中所有符合条件的实体
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="dbOperator">实体数据操作对象</param>
+        /// <param name="predicate">删除条件表达式</param>
+        /// <returns>删除的实体对象的数量</returns>
+        public static int RemoveAll<TEntity>(this IDbOperator<TEntity> dbOperator, Expression<Func<TEntity, bool>> predicate)
+            where TEntity : class
+        {
+            //非空检查
+            Check.ArgumentNull(dbOperator, nameof(dbOperator));
+            //获取待删除的实体对象的数据源
+            IDbQuery<TEntity> entities = dbOperator.Factory.CreateQuery<TEntity>().Where(predicate);
             //执行删除数据源中所有的实体
             return dbOperator.RemoveAll(entities);
         }
@@ -101,6 +117,24 @@ namespace CloudEntity.Data.Entity
         /// <typeparam name="TEntity">实体类型</typeparam>
         /// <param name="dbOperator">实体数据操作对象</param>
         /// <param name="model">存储所有待修改的实体统一修改的属性值</param>
+        /// <returns>被修改值的实体元素数量</returns>
+        public static int SetAll<TEntity>(this IDbOperator<TEntity> dbOperator, object model)
+            where TEntity : class
+        {
+            //非空检查
+            Check.ArgumentNull(dbOperator, nameof(dbOperator));
+            Check.ArgumentNull(model, nameof(model));
+            //获取待修改的实体数据源
+            IDbQuery<TEntity> entities = dbOperator.Factory.CreateQuery<TEntity>();
+            //执行批量修改
+            return dbOperator.SaveAll(ExtendDbOperator.GetSetParameters(model), entities);
+        }
+        /// <summary>
+        /// ExtendMethod: 批量修改符合条件的实体对象的某些属性值
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="dbOperator">实体数据操作对象</param>
+        /// <param name="model">存储所有待修改的实体统一修改的属性值</param>
         /// <param name="entities">实体数据源</param>
         /// <returns>被修改值的实体元素数量</returns>
         public static int SetAll<TEntity>(this IDbOperator<TEntity> dbOperator, object model, IDbQuery<TEntity> entities)
@@ -119,18 +153,44 @@ namespace CloudEntity.Data.Entity
         /// <typeparam name="TEntity">实体类型</typeparam>
         /// <param name="dbOperator">实体数据操作对象</param>
         /// <param name="model">存储所有待修改的实体统一修改的属性值</param>
-        /// <param name="predicates">修改条件表达式数组</param>
+        /// <param name="predicate">修改条件表达式</param>
         /// <returns>被修改值的实体元素数量</returns>
-        public static int SetAll<TEntity>(this IDbOperator<TEntity> dbOperator, object model, params Expression<Func<TEntity, bool>>[] predicates)
+        public static int SetAll<TEntity>(this IDbOperator<TEntity> dbOperator, object model, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
         {
             //非空检查
             Check.ArgumentNull(dbOperator, nameof(dbOperator));
             Check.ArgumentNull(model, nameof(model));
             //获取待修改的实体数据源
-            IDbQuery<TEntity> entities = dbOperator.Factory.CreateQuery<TEntity>().Filter(predicates);
+            IDbQuery<TEntity> entities = dbOperator.Factory.CreateQuery<TEntity>().Where(predicate);
             //执行批量修改
             return dbOperator.SaveAll(ExtendDbOperator.GetSetParameters(model), entities);
+        }
+        /// <summary>
+        /// ExtendMethod: 批量修改当前数据源中符合条件的实体某属性的值
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TProperty">对象属性类型</typeparam>
+        /// <param name="dbOperator">实体数据操作对象</param>
+        /// <param name="selector">指定对象某属性的表达式</param>
+        /// <param name="value">属性值</param>
+        /// <returns>被修改值的实体元素数量</returns>
+        public static int SetAll<TEntity, TProperty>(this IDbOperator<TEntity> dbOperator, Expression<Func<TEntity, TProperty>> selector, TProperty value)
+            where TEntity : class
+        {
+            //非空检查
+            Check.ArgumentNull(dbOperator, nameof(dbOperator));
+            Check.ArgumentNull(selector, nameof(selector));
+            Check.ArgumentNull(value, nameof(value));
+            //获取属性参数字典
+            IDictionary<string, object> setParameters = new Dictionary<string, object>()
+            {
+                {selector.Body.GetMemberName(), value}
+            };
+            //获取待修改的实体数据源
+            IDbQuery<TEntity> entities = dbOperator.Factory.CreateQuery<TEntity>();
+            //执行批量修改
+            return dbOperator.SaveAll(setParameters, entities);
         }
         /// <summary>
         /// ExtendMethod: 批量修改当前数据源中符合条件的实体某属性的值
@@ -166,9 +226,9 @@ namespace CloudEntity.Data.Entity
         /// <param name="dbOperator">实体数据操作对象</param>
         /// <param name="selector">指定对象某属性的表达式</param>
         /// <param name="value">属性值</param>
-        /// <param name="predicates">修改条件表达式数组</param>
+        /// <param name="predicate">修改条件表达式</param>
         /// <returns>被修改值的实体元素数量</returns>
-        public static int SetAll<TEntity, TProperty>(this IDbOperator<TEntity> dbOperator, Expression<Func<TEntity, TProperty>> selector, TProperty value, params Expression<Func<TEntity, bool>>[] predicates)
+        public static int SetAll<TEntity, TProperty>(this IDbOperator<TEntity> dbOperator, Expression<Func<TEntity, TProperty>> selector, TProperty value, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
         {
             //非空检查
@@ -181,7 +241,7 @@ namespace CloudEntity.Data.Entity
                 {selector.Body.GetMemberName(), value}
             };
             //获取待修改的实体数据源
-            IDbQuery<TEntity> entities = dbOperator.Factory.CreateQuery<TEntity>().Filter(predicates);
+            IDbQuery<TEntity> entities = dbOperator.Factory.CreateQuery<TEntity>().Where(predicate);
             //执行批量修改
             return dbOperator.SaveAll(setParameters, entities);
         }

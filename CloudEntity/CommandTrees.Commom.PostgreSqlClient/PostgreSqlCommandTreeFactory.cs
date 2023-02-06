@@ -4,7 +4,8 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
 {
     /// <summary>
     /// 创建用于PostgreSql的CommandTree的工厂
-    /// 李凯 Apple_Li 2021/09/19
+    /// 李凯 Apple_Li 15150598493 2021/09/19
+    /// 最后修改时间：2023/02/05
     /// </summary>
     public class PostgreSqlCommandTreeFactory : CommandTreeFactory
     {
@@ -82,7 +83,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         /// <returns>基础Column节点</returns>
         public override ISqlBuilder GetColumnBuilder(string tableAlias, string columnName)
         {
-            return new SqlBuilder("{0}.\"{1}\"", tableAlias, columnName);
+            return new SqlBuilder("\"{0}\".\"{1}\"", tableAlias, columnName);
         }
         /// <summary>
         /// 获取sql column节点生成类
@@ -95,9 +96,9 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         {
             //若列的别名为空，则不使用别名
             if (string.IsNullOrEmpty(columnAlias))
-                return new ColumnBuilder(columnName, $"{tableAlias}.\"{columnName}\"");
+                return new ColumnBuilder(columnName, $"\"{tableAlias}\".\"{columnName}\"");
             //若列的别名不为空, 则使用别名
-            return new ColumnBuilder(columnAlias, $"{tableAlias}.\"{columnName}\" \"{columnAlias}\"");
+            return new ColumnBuilder(columnAlias, $"\"{tableAlias}\".\"{columnName}\" \"{columnAlias}\"");
         }
         /// <summary>
         /// 获取Sql函数表达式节点
@@ -108,7 +109,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         /// <returns>Sql函数表达式节点</returns>
         public override INodeBuilder GetFunctionNodeBuilder(string tableAlias, string columnName, string functionName)
         {
-            return new NodeBuilder(SqlType.Select, "{0}({1}.\"{2}\")", functionName, tableAlias, columnName);
+            return new NodeBuilder(SqlType.Select, "{0}(\"{1}\".\"{2}\")", functionName, tableAlias, columnName);
         }
         /// <summary>
         /// 获取UPDATE SET节点的子sql表达式节点
@@ -132,9 +133,9 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         {
             //若架构名为空，则获取空架构名的Table节点
             if (string.IsNullOrEmpty(schemaName))
-                return new TableBuilder(tableAlias, $"\"{tableName}\" {tableAlias}");
+                return new TableBuilder(tableAlias, $"\"{tableName}\" \"{tableAlias}\"");
             //若架构名不为空，则获取有架构名的Table节点
-            return new TableBuilder(tableAlias, $"{schemaName}.\"{tableName}\" {tableAlias}");
+            return new TableBuilder(tableAlias, $"{schemaName}.\"{tableName}\" \"{tableAlias}\"");
         }
         /// <summary>
         /// 获取Where节点的子表达式节点
@@ -145,7 +146,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         /// <returns>Where节点的子表达式节点</returns>
         public override INodeBuilder GetWhereChildBuilder(string tableAlias, string columnName, string rightSqlExpression)
         {
-            return new NodeBuilder(SqlType.Where, $"{tableAlias}.\"{columnName}\" {rightSqlExpression}");
+            return new NodeBuilder(SqlType.Where, $"\"{tableAlias}\".\"{columnName}\" {rightSqlExpression}");
         }
         /// <summary>
         /// 获取等于条件表达式节点
@@ -156,7 +157,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         /// <returns>等于条件表达式节点</returns>
         public override INodeBuilder GetEqualsBuilder(string tableAlias, string columnName, string parameterName)
         {
-            return new NodeBuilder(SqlType.Where, $"{tableAlias}.\"{columnName}\" = {this.ParameterMarker}{parameterName}");
+            return new NodeBuilder(SqlType.Where, $"\"{tableAlias}\".\"{columnName}\" = {this.ParameterMarker}{parameterName}");
         }
         /// <summary>
         /// 获取OrderBy节点的子节点表达式
@@ -167,7 +168,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         /// <returns>OrderBy节点的子节点表达式</returns>
         public override INodeBuilder GetOrderByChildBuilder(string tableAlias, string columnName, bool isDesc)
         {
-            return new NodeBuilder(SqlType.OrderBy, "{0}.\"{1}\"{2}", tableAlias, columnName, isDesc ? " DESC" : string.Empty);
+            return new NodeBuilder(SqlType.OrderBy, "\"{0}\".\"{1}\"{2}", tableAlias, columnName, isDesc ? " DESC" : string.Empty);
         }
         /// <summary>
         /// 获取TOP查询sql的生成树
@@ -188,18 +189,14 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         /// 获取分页查询命令生成树
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
-        /// <param name="sortChildBuilders">排序的子节点集</param>
         /// <returns>分页查询命令生成树</returns>
-        public override ICommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, IEnumerable<ISqlBuilder> sortChildBuilders)
+        public override ICommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders)
         {
-            //创建MySql分页查询命令生成树
+            // 创建PostgreSql分页查询命令生成树
             PostgreSqlPagingQueryTree queryTree = new PostgreSqlPagingQueryTree(base.ParameterMarker);
-            //填充MySql分页查询命令生成树的各个节点
+            // 填充PostgreSql分页查询命令生成树的各个节点
             base.LoadQueryTree(queryTree, queryChildBuilders);
-            //填充OrderBy节点
-            foreach (ISqlBuilder nodeBuilder in sortChildBuilders)
-                queryTree.OrderBy.Append(nodeBuilder);
-            //返回MySql分页查询命令生成树
+            // 返回PostgreSql分页查询命令生成树
             return queryTree;
         }
     }

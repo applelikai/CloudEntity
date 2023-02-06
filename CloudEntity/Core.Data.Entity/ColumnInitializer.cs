@@ -36,10 +36,12 @@ namespace CloudEntity.Core.Data.Entity
             //若实体元数据解析器中所有属性Mapping的列都在当前Table中,直接退出
             if (columnNodes.Length == 0)
                 return;
-            //获取TableHeader
-            ITableHeader tableHeader = tableMapper.Header;
+            //获取数据库架构名
+            string schemaName = tableMapper.Header.SchemaName ?? dbHelper.DefaultSchemaName;
+            //获取表名
+            string tableName = tableMapper.Header.TableName;
             //创建Alter Table Columns语句生成树
-            ICommandTree alterTableAddColumnsTree = commandTreeFactory.GetAlterTableAddColumnsTree(tableHeader.SchemaName, tableHeader.TableName, columnNodes);
+            ICommandTree alterTableAddColumnsTree = commandTreeFactory.GetAlterTableAddColumnsTree(schemaName, tableName, columnNodes);
             //生成并执行Alter Table Columns语句，为当前实体Mapping的Table添加为注册的列
             dbHelper.ExecuteUpdate(alterTableAddColumnsTree.Compile());
         }

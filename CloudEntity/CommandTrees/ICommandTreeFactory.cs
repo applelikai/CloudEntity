@@ -4,6 +4,8 @@ namespace CloudEntity.CommandTrees
 {
     /// <summary>
     /// 用于获取Command Tree的Factory
+    /// Apple_Li 李凯 15150598493
+    /// 最后修改日期：2023/02/05
     /// </summary>
     public interface ICommandTreeFactory
     {
@@ -149,9 +151,8 @@ namespace CloudEntity.CommandTrees
         /// 获取分页查询命令生成树
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
-        /// <param name="sortChildBuilders">排序的子节点集</param>
         /// <returns>分页查询命令生成树</returns>
-        ICommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, IEnumerable<ISqlBuilder> sortChildBuilders);
+        ICommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
         /// <summary>
         /// 获取With As 查询命令生成树
         /// </summary>

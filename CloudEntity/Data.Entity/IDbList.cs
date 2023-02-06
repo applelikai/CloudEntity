@@ -6,7 +6,7 @@ namespace CloudEntity.Data.Entity
     /// 可读可写的操作DB的对象数据源
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
-    public interface IDbList<TEntity> : IDbOperator<TEntity>, IDbQuery<TEntity>
+    public interface IDbList<TEntity> : IDbOperator<TEntity>, IDbSource<TEntity>
         where TEntity : class
     {
         /// <summary>
