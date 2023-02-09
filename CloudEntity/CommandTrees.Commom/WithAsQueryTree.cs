@@ -4,14 +4,10 @@ namespace CloudEntity.CommandTrees.Commom
 {
     /// <summary>
     /// With As 查询命令生成树
-    /// 李凯 Apple_Li
+    /// 李凯 Apple_Li 15150598493
     /// </summary>
     internal class WithAsQueryTree : CommandTree
     {
-        /// <summary>
-        /// 查询sql
-        /// </summary>
-        private string innerQuerySql;
         /// <summary>
         /// 查询命令生成树的Where节点
         /// </summary>
@@ -20,6 +16,15 @@ namespace CloudEntity.CommandTrees.Commom
         /// 查询命令生成树的Order By节点
         /// </summary>
         private IBuilderCollection orderByBuilder;
+
+        /// <summary>
+        /// 查询sql
+        /// </summary>
+        protected string InnerQuerySql { get; private set; }
+        /// <summary>
+        /// 临时表名
+        /// </summary>
+        protected string TableAlias { get; private set; }
 
         /// <summary>
         /// Where节点
@@ -69,14 +74,16 @@ namespace CloudEntity.CommandTrees.Commom
         }
 
         /// <summary>
-        /// 创建With As 查询命令生成树
+        /// 初始化
         /// </summary>
         /// <param name="parameterMarker">Sql参数标识符号</param>
         /// <param name="innerQuerySql">查询sql</param>
-        public WithAsQueryTree(char parameterMarker, string innerQuerySql)
+        /// <param name="tableAlias">临时表名</param>
+        public WithAsQueryTree(char parameterMarker, string innerQuerySql, string tableAlias)
             : base(parameterMarker)
         {
-            this.innerQuerySql = innerQuerySql;
+            this.InnerQuerySql = innerQuerySql;
+            this.TableAlias = tableAlias;
         }
         /// <summary>
         /// 构建sql命令
@@ -84,12 +91,12 @@ namespace CloudEntity.CommandTrees.Commom
         /// <param name="commandText">待构建的sql</param>
         public override void Build(StringBuilder commandText)
         {
-            commandText.AppendLine("WITH t AS");
+            commandText.AppendFormat("WITH {0} AS\n", this.TableAlias);
             commandText.AppendLine("(");
-            commandText.AppendLine(innerQuerySql);
+            commandText.AppendLine(this.InnerQuerySql);
             commandText.AppendLine(")");
             commandText.AppendLine("  SELECT *");
-            commandText.AppendLine("    FROM t");
+            commandText.AppendFormat("    FROM {0}\n", this.TableAlias);
             this.Where.Build(commandText);
             this.OrderBy.Build(commandText);
         }

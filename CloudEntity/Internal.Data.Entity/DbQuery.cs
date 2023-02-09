@@ -36,13 +36,6 @@ namespace CloudEntity.Internal.Data.Entity
         {
             get { return _propertyLinkers; }
         }
-        /// <summary>
-        /// Sql参数创建对象
-        /// </summary>
-        public IParameterFactory ParameterFactory
-        {
-            get { return base.DbHelper; }
-        }
         
         /// <summary>
         /// 创建实体对象

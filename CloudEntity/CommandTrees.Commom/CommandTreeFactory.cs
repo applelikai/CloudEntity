@@ -382,12 +382,13 @@ namespace CloudEntity.CommandTrees.Commom
         /// 获取With As 查询命令生成树
         /// </summary>
         /// <param name="innerQuerySql">查询sql</param>
+        /// <param name="tableAlias">临时表名</param>
         /// <param name="queryChildBuilders">查询条件表达式节点集合</param>
         /// <returns>With As 查询命令生成树</returns>
-        public ICommandTree GetWithAsQueryTree(string innerQuerySql, IEnumerable<INodeBuilder> queryChildBuilders)
+        public virtual ICommandTree GetWithAsQueryTree(string innerQuerySql, string tableAlias, IEnumerable<INodeBuilder> queryChildBuilders)
         {
             //创建with as查询命令生成树
-            WithAsQueryTree withAsQueryTree = new WithAsQueryTree(this.ParameterMarker, innerQuerySql);
+            WithAsQueryTree withAsQueryTree = new WithAsQueryTree(this.ParameterMarker, innerQuerySql, tableAlias);
             //加载查询条件节点
             foreach (INodeBuilder nodeBuilder in queryChildBuilders)
             {

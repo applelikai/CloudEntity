@@ -199,5 +199,32 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
             // 返回PostgreSql分页查询命令生成树
             return queryTree;
         }
+        /// <summary>
+        /// 获取With As 查询命令生成树
+        /// </summary>
+        /// <param name="innerQuerySql">查询sql</param>
+        /// <param name="tableAlias">临时表名</param>
+        /// <param name="queryChildBuilders">查询条件表达式节点集合</param>
+        /// <returns>With As 查询命令生成树</returns>
+        public override ICommandTree GetWithAsQueryTree(string innerQuerySql, string tableAlias, IEnumerable<INodeBuilder> queryChildBuilders)
+        {
+            //创建with as查询命令生成树
+            PostgreSqlWithAsQueryTree withAsQueryTree = new PostgreSqlWithAsQueryTree(this.ParameterMarker, innerQuerySql, tableAlias);
+            //加载查询条件节点
+            foreach (INodeBuilder nodeBuilder in queryChildBuilders)
+            {
+                switch (nodeBuilder.ParentNodeType)
+                {
+                    case SqlType.Where:
+                        withAsQueryTree.Where.Append(nodeBuilder);
+                        break;
+                    case SqlType.OrderBy:
+                        withAsQueryTree.OrderBy.Append(nodeBuilder);
+                        break;
+                }
+            }
+            //返回with as查询命令生成树
+            return withAsQueryTree;
+        }
     }
 }

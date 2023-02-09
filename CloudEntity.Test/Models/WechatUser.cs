@@ -1,3 +1,5 @@
+using System;
+
 namespace CloudEntity.Test.Models;
 
 /// <summary>
@@ -17,4 +19,8 @@ public class WechatUser
     /// 密码
     /// </summary>
     public string Password { get; set; }
+    /// <summary>
+    /// 录入时间
+    /// </summary>
+    public DateTime? CreatedTime { get; set; }
 }

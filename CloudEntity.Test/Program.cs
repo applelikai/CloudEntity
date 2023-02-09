@@ -8,6 +8,9 @@ using CloudEntity.Test.Utils;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
 
 public class Program
 {
@@ -75,7 +78,7 @@ public class Program
         // 遍历用户并打印
         foreach (User user in users)
         {
-            Console.WriteLine("{0} {1}", user.Role.RoleName, user.UserName);
+            Console.WriteLine("{0} {1}", user.Role?.RoleName, user.UserName);
         }
     }
     /// <summary>
@@ -95,24 +98,80 @@ public class Program
     /// </summary>
     private static void QueryTest()
     {
+        //获取时间
+        DateTime start = DateTime.Parse("2023/02/06 00:00:00");
         // 获取角色数据源
         IDbQuery<Role> roles = _container.CreateQuery<Role>()
             .IncludeBy(r => r.RoleName);
         // 获取用户数据源
         IDbQuery<User> users = _container.CreateQuery<User>()
             .IncludeBy(u => new { u.UserName, u.Password})
-            .Join(roles, u => u.Role, (u, r) => u.RoleId == r.RoleId)
-            .Like(u => u.UserName, "a%");
+            .Like(u => u.UserName, "a%")
+            .Join(roles, u => u.Role, (u, r) => u.RoleId == r.RoleId);
         // 第一次打印用户列表
         Program.PrintUsers(users);
         // 第二次映射为微信用户列表并打印
         Program.PrintUsers(users.Cast<WechatUser>());
         // 获取用户分页查询数据源
-        IDbPagedQuery<User> pagedUsers = users.Like(u => u.UserName, "ad%").PagingByDescending(u => u.CreatedTime, 10, 1);
+        IDbPagedQuery<User> pagedUsers = users.IsNull(u => u.UserName).PagingByDescending(u => u.UserName, 10, 1);
         // 第三次打印用户列表
         Program.PrintUsers(pagedUsers);
         // 第四次映射为微信用户列表并打印
         Program.PrintUsers(pagedUsers.Cast<WechatUser>());
+    }
+    /// <summary>
+    /// IN查询测试
+    /// </summary>
+    /// <param name="users">用户数据源</param>
+    private static void TestIn(IDbView<WechatUser> users)
+    {
+        // 获取用户姓名数组
+        string[] names = new string[] { "apple", "admin", "orange" };
+        // 添加查询条件
+        users = users.In(u => u.UserName, names);
+        // 打印
+        Program.PrintUsers(users);
+        // 获取角色名称数据源
+        IDbSelectedQuery<string> roleNames = _container.CreateQuery<Role>()
+            .Select(r => r.RoleName);
+        // 添加查询条件
+        users = users.In(u => u.RoleName, roleNames);
+        // 打印
+        Program.PrintUsers(users);
+    }
+    /// <summary>
+    /// BETWEEN查询测试
+    /// </summary>
+    /// <param name="users">用户数据源</param>
+    private static void TestBetween(IDbView<WechatUser> users)
+    {
+        // 获取开始时间
+        DateTime start = DateTime.Parse("2023/02/07 00:00:00");
+        // 添加查询条件
+        users = users.Between(u => u.CreatedTime, start, DateTime.Now);
+        // 打印
+        Program.PrintUsers(users);
+    }
+    /// <summary>
+    /// 视图查询测试
+    /// </summary>
+    private static void ViewQueryTest()
+    {
+        // 获取角色数据源
+        IDbQuery<Role> roles = _container.CreateQuery<Role>()
+            .IncludeBy(r => r.RoleName);
+        // 获取用户数据源
+        IDbQuery<User> users = _container.CreateQuery<User>()
+            .IncludeBy(u => new { u.UserName, u.Password, u.CreatedTime})
+            .Join(roles, u => u.Role, (u, r) => u.RoleId == r.RoleId);
+        // 获取sql和参数
+        string querySql = users.ToSqlString();
+        IDbDataParameter[] sqlParameters = users.Parameters.ToArray();
+        // 获取查询视图
+        IDbView<WechatUser> wechatUsers = _container.CreateView<WechatUser>(querySql, sqlParameters)
+            .IsNull(u => u.UserName, false);
+        // 打印
+        Program.PrintUsers(wechatUsers);
     }
     /// <summary>
     /// 开始执行
@@ -120,8 +179,7 @@ public class Program
     /// <param name="args">控制台参数</param>
     private static void Main(string[] args)
     {
-        string name0 = "UserName";
-        string name1 = "UserName";
-        Console.WriteLine(name0.StartsWith(name1));
+        // 视图查询测试
+        Program.ViewQueryTest();
     }
 }

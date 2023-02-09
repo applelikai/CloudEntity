@@ -17,29 +17,34 @@ namespace CloudEntity.Internal.Data.Entity
         where TModel : class, new()
     {
         /// <summary>
+        /// 视图查询时使用的临时表名
+        /// </summary>
+        private string _tableAlias;
+        /// <summary>
         /// 对象访问器
         /// </summary>
-        private ObjectAccessor modelAccessor;
+        private ObjectAccessor _modelAccessor;
         /// <summary>
         /// 命令生成树工厂
         /// </summary>
-        private ICommandTreeFactory commandTreeFactory;
+        private ICommandTreeFactory _commandTreeFactory;
         /// <summary>
         /// 数据库操作对象
         /// </summary>
-        private DbHelper dbHelper;
+        private DbHelper _dbHelper;
+        /// <summary>
+        /// sql表达式节点集合
+        /// </summary>
+        private IList<INodeBuilder> _nodebuilders;
+        /// <summary>
+        /// sql参数集合
+        /// </summary>
+        private IList<IDbDataParameter> _sqlParameters;
 
         /// <summary>
         /// 查询数据源创建工厂
         /// </summary>
         public IDbFactory Factory { get; private set; }
-        /// <summary>
-        /// 参数创建器
-        /// </summary>
-        public IParameterFactory ParameterFactory
-        {
-            get { return this.dbHelper; }
-        }
         /// <summary>
         /// 查询sql
         /// </summary>
@@ -47,11 +52,17 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 查询命令生成树的表达式节点集合
         /// </summary>
-        public IEnumerable<INodeBuilder> NodeBuilders { get; internal set; }
+        public IEnumerable<INodeBuilder> NodeBuilders
+        {
+            get { return _nodebuilders; }
+        }
         /// <summary>
         /// Sql参数集合
         /// </summary>
-        public IEnumerable<IDbDataParameter> Parameters { get; internal set; }
+        public IEnumerable<IDbDataParameter> Parameters
+        {
+            get { return _sqlParameters; }
+        }
 
         /// <summary>
         /// 创建对象
@@ -71,7 +82,7 @@ namespace CloudEntity.Internal.Data.Entity
                 if (value is DBNull)
                     value = null;
                 //为模型对象当前属性赋值
-                this.modelAccessor.SetValue(propertyName, model, reader[propertyName]);
+                _modelAccessor.TrySetValue(propertyName, model, reader[propertyName]);
             }
             //返回模型对象
             return model;
@@ -91,12 +102,62 @@ namespace CloudEntity.Internal.Data.Entity
             Check.ArgumentNull(dbHelper, nameof(dbHelper));
             Check.ArgumentNull(commandTreeFactory, nameof(commandTreeFactory));
             Check.ArgumentNull(innerQuerySql, nameof(innerQuerySql));
+            // 初始化
+            _nodebuilders = new List<INodeBuilder>();
+            _sqlParameters = new List<IDbDataParameter>();
+            _modelAccessor = ObjectAccessor.GetAccessor(typeof(TModel));
+            _tableAlias = typeof(TModel).Name.ToLower();
             //赋值
-            this.modelAccessor = ObjectAccessor.GetAccessor(typeof(TModel));
+            _dbHelper = dbHelper;
+            _commandTreeFactory = commandTreeFactory;
             this.Factory = dbFactory;
-            this.dbHelper = dbHelper;
-            this.commandTreeFactory = commandTreeFactory;
             this.InnerQuerySql = innerQuerySql;
+        }
+        /// <summary>
+        /// 添加sql表达式节点
+        /// </summary>
+        /// <param name="nodeBuilder">sql表达式节点</param>
+        public void AddNodeBuilder(INodeBuilder nodeBuilder)
+        {
+            _nodebuilders.Add(nodeBuilder);
+        }
+        /// <summary>
+        /// 添加sql表达式节点列表
+        /// </summary>
+        /// <param name="nodeBuilders">sql表达式节点列表</param>
+        public void AddNodeBuilders(IEnumerable<INodeBuilder> nodeBuilders)
+        {
+            foreach (INodeBuilder nodeBuilder in nodeBuilders)
+                _nodebuilders.Add(nodeBuilder);
+        }
+        /// <summary>
+        /// 添加sql参数
+        /// </summary>
+        /// <param name="name">参数名</param>
+        /// <param name="value">参数值</param>
+        public void AddSqlParameter(string name, object value)
+        {
+            // 创建sql参数
+            IDbDataParameter sqlParameter = _dbHelper.Parameter(name, value);
+            // 添加sql参数
+            _sqlParameters.Add(sqlParameter);
+        }
+        /// <summary>
+        /// 添加sql参数
+        /// </summary>
+        /// <param name="sqlParameter">sql参数</param>
+        public void AddSqlParameter(IDbDataParameter sqlParameter)
+        {
+            _sqlParameters.Add(sqlParameter);
+        }
+        /// <summary>
+        /// 添加sql参数列表
+        /// </summary>
+        /// <param name="sqlParameters">sql参数列表</param>
+        public void AddSqlParameters(IEnumerable<IDbDataParameter> sqlParameters)
+        {
+            foreach (IDbDataParameter sqlParameter in sqlParameters)
+                _sqlParameters.Add(sqlParameter);
         }
         /// <summary>
         /// 获取枚举器
@@ -104,10 +165,10 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>枚举器</returns>
         public IEnumerator<TModel> GetEnumerator()
         {
-            //创建CommandTree
-            ICommandTree queryTree = this.commandTreeFactory.GetWithAsQueryTree(this.InnerQuerySql, this.NodeBuilders);
-            //执行查询
-            foreach (TModel model in this.dbHelper.GetResults(this.CreateModel, queryTree.Compile(), parameters: this.Parameters.ToArray()))
+            // 创建CommandTree
+            ICommandTree queryTree = _commandTreeFactory.GetWithAsQueryTree(this.InnerQuerySql, _tableAlias, this.NodeBuilders);
+            // 执行查询
+            foreach (TModel model in _dbHelper.GetResults(this.CreateModel, queryTree.Compile(), parameters: this.Parameters.ToArray()))
                 yield return model;
         }
         /// <summary>

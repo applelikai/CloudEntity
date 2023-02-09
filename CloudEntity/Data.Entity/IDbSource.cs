@@ -14,9 +14,5 @@ namespace CloudEntity.Data.Entity
         /// 数据操作类的工厂
         /// </summary>
         IDbFactory Factory { get; }
-        /// <summary>
-        /// Sql参数创建对象
-        /// </summary>
-        IParameterFactory ParameterFactory { get; }
     }
 }

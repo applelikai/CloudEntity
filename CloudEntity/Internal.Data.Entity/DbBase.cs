@@ -85,6 +85,18 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 添加sql参数
         /// </summary>
+        /// <param name="name">参数名</param>
+        /// <param name="value">参数值</param>
+        public void AddSqlParameter(string name, object value)
+        {
+            // 创建sql参数
+            IDbDataParameter sqlParameter = this.DbHelper.Parameter(name, value);
+            // 添加sql参数
+            _sqlParameters.Add(sqlParameter);
+        }
+        /// <summary>
+        /// 添加sql参数
+        /// </summary>
         /// <param name="sqlParameter">sql参数</param>
         public void AddSqlParameter(IDbDataParameter sqlParameter)
         {

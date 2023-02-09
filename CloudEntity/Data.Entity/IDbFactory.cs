@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Linq.Expressions;
+using System.Text;
 
 namespace CloudEntity.Data.Entity
 {
@@ -53,15 +54,39 @@ namespace CloudEntity.Data.Entity
         IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class;
         /// <summary>
-        /// 创建新的查询对象
+        /// 创建新的查询数据源
         /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
         /// <param name="source">数据源</param>
-        /// <param name="memberExpression">指定对象成员表达式</param>
-        /// <param name="whereTemplate">sql条件表达式</param>
-        /// <param name="parameters">sql参数</param>
-        /// <returns>新的查询对象</returns>
-        IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source, MemberExpression memberExpression, string whereTemplate, params IDbDataParameter[] parameters)
+        /// <param name="selector">指定对象成员表达式</param>
+        /// <param name="sqlPredicate">sql条件</param>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TProperty">实体属性类型</typeparam>
+        /// <returns>新的查询数据源</returns>
+        IDbQuery<TEntity> CreateQuery<TEntity, TProperty>(IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, string sqlPredicate)
+            where TEntity : class;
+        /// <summary>
+        /// 创建新的查询数据源
+        /// </summary>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定对象成员表达式</param>
+        /// <param name="sqlPredicate">sql条件</param>
+        /// <param name="parameters">sql参数数组</param>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TProperty">实体属性类型</typeparam>
+        /// <returns>新的查询数据源</returns>
+        IDbQuery<TEntity> CreateQuery<TEntity, TProperty>(IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] parameters)
+            where TEntity : class;
+        /// <summary>
+        /// 创建新的查询数据源
+        /// </summary>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定对象成员表达式</param>
+        /// <param name="sqlFormat">sql条件格式化字符串</param>
+        /// <param name="values">sql参数值数组</param>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TProperty">实体属性类型</typeparam>
+        /// <returns>新的查询数据源</returns>
+        IDbQuery<TEntity> CreateQuery<TEntity, TProperty>(IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, string sqlFormat, params TProperty[] values)
             where TEntity : class;
         /// <summary>
         /// 创建根据某属性排好序的查询对象
@@ -211,20 +236,44 @@ namespace CloudEntity.Data.Entity
         /// </summary>
         /// <typeparam name="TModel">视图对象</typeparam>
         /// <param name="source">视图查询数据源</param>
-        /// <param name="predicates">查询条件表达式数组</param>
+        /// <param name="predicate">查询条件表达式</param>
         /// <returns>新的视图查询数据源</returns>
-        IDbView<TModel> CreateView<TModel>(IDbView<TModel> source, params Expression<Func<TModel, bool>>[] predicates)
+        IDbView<TModel> CreateView<TModel>(IDbView<TModel> source, Expression<Func<TModel, bool>> predicate)
+            where TModel : class, new();
+        /// <summary>
+        /// 创建新的视图查询数据源
+        /// </summary>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="selector">指定对象成员表达式</param>
+        /// <param name="sqlPredicate">sql条件</param>
+        /// <typeparam name="TModel">视图模型对象</typeparam>
+        /// <typeparam name="TProperty">模型属性类型</typeparam>
+        /// <returns>新的视图查询数据源</returns>
+        IDbView<TModel> CreateView<TModel, TProperty>(IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, string sqlPredicate)
             where TModel : class, new();
         /// <summary>
         /// 创建视图查询数据源
         /// </summary>
-        /// <typeparam name="TModel">视图模型对象</typeparam>
         /// <param name="source">视图查询数据源</param>
-        /// <param name="memberExpression">指定对象成员表达式</param>
-        /// <param name="whereTemplate">sql条件表达式模板</param>
+        /// <param name="selector">指定对象成员表达式</param>
+        /// <param name="sqlPredicate">sql条件</param>
         /// <param name="parameters">sql参数数组</param>
+        /// <typeparam name="TModel">视图模型对象</typeparam>
+        /// <typeparam name="TProperty">模型属性类型</typeparam>
         /// <returns>新的视图查询数据源</returns>
-        IDbView<TModel> CreateView<TModel>(IDbView<TModel> source, MemberExpression memberExpression, string whereTemplate, params IDbDataParameter[] parameters)
+        IDbView<TModel> CreateView<TModel, TProperty>(IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] parameters)
+            where TModel : class, new();
+        /// <summary>
+        /// 创建视图查询数据源
+        /// </summary>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="selector">指定对象成员表达式</param>
+        /// <param name="sqlFormat">sql条件格式化字符串</param>
+        /// <param name="values">sql参数值数组</param>
+        /// <typeparam name="TModel">视图模型对象</typeparam>
+        /// <typeparam name="TProperty">模型属性类型</typeparam>
+        /// <returns>新的视图查询数据源</returns>
+        IDbView<TModel> CreateView<TModel, TProperty>(IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, string sqlFormat, params TProperty[] values)
             where TModel : class, new();
         /// <summary>
         /// 创建根据某属性排好序的视图查询数据源

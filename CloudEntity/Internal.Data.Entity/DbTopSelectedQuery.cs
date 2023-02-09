@@ -21,11 +21,6 @@ namespace CloudEntity.Internal.Data.Entity
         private int topCount;
 
         /// <summary>
-        /// 排序sql表达式节点集合
-        /// </summary>
-        public IEnumerable<INodeBuilder> SortBuilders { get; set; }
-
-        /// <summary>
         /// 创建查询命令生成树
         /// </summary>
         /// <returns>查询命令生成树</returns>

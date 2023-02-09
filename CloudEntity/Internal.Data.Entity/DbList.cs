@@ -64,10 +64,6 @@ namespace CloudEntity.Internal.Data.Entity
         {
             get { return _sqlParameters; }
         }
-        /// <summary>
-        /// 创建sql参数的工厂
-        /// </summary>
-        public IParameterFactory ParameterFactory => base.DbHelper;
 
         /// <summary>
         /// 获取基本sql查询命令生成树的子节点列表

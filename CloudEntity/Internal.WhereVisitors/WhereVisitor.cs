@@ -1,5 +1,4 @@
 ﻿using CloudEntity.CommandTrees;
-using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
 using CloudEntity.Mapping;
 using System.Collections.Generic;
@@ -45,11 +44,15 @@ namespace CloudEntity.Internal.WhereVisitors
         /// <returns>基本类型的sql表达式节点</returns>
         protected ISqlBuilder GetColumnBuilder(MemberExpression memberExpression)
         {
-            //若Mapper容器为空
+            //若Mapper容器为空，则当前查询为视图查询
             if (_mapperContainer == null)
             {
-                //则直接获取针对 WITH AS 临时表的sql表达式
-                return new SqlBuilder("t.{0}", memberExpression.Member.Name);
+                // 获取目标类型名称作为临时表名
+                string tableAlias = memberExpression.Member.DeclaringType.Name.ToLower();
+                // 获取成员名称为列名
+                string columnName = memberExpression.Member.Name;
+                // 获取sql列节点生成器
+                return _commandTreeFactory.GetColumnBuilder(tableAlias, columnName);
             }
             //若不为空,则获取针对表的sql表达式
             // 获取当前实体类型的Table元数据解析器
@@ -96,11 +99,15 @@ namespace CloudEntity.Internal.WhereVisitors
         /// <returns>Where节点的子sql表达式节点</returns>
         protected INodeBuilder GetWhereChildBuilder(MemberExpression memberExpression, string rightSqlExpression)
         {
-            //若Mapper容器为空
+            // 若Mapper容器为空，则当前查询为视图查询
             if (_mapperContainer == null)
             {
-                //则直接获取针对 WITH AS 临时表的sql表达式
-                return new NodeBuilder(SqlType.Where, "t.{0} {1}", memberExpression.Member.Name, rightSqlExpression);
+                // 获取目标类型名称作为临时表名
+                string tableAlias = memberExpression.Member.DeclaringType.Name.ToLower();
+                // 获取成员名称为列名
+                string columnName = memberExpression.Member.Name;
+                // 获取Where节点的子sql表达式节点
+                return _commandTreeFactory.GetWhereChildBuilder(tableAlias, columnName, rightSqlExpression);
             }
             //若不为空,则获取针对实体类对应的表的sql表达式
             // 获取当前实体类型的Table元数据解析器
