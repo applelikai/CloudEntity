@@ -5,18 +5,14 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq.Expressions;
 
-namespace CloudEntity.Internal.WhereVisitors
+namespace CloudEntity.Internal.CommandTrees
 {
     /// <summary>
     /// 查询条件Lambda表达式解析类
     /// 李凯 Apple_Li 15150598493
     /// </summary>
-    public abstract class WhereVisitor
+    public abstract class PredicateParser
     {
-        /// <summary>
-        /// sql参数创建对象
-        /// </summary>
-        private IParameterFactory _parameterFactory;
         /// <summary>
         /// 创建Sql命令生成树的工厂
         /// </summary>
@@ -38,7 +34,7 @@ namespace CloudEntity.Internal.WhereVisitors
             return _commandTreeFactory.GetParameterBuilder(parameterName);
         }
         /// <summary>
-        /// 获取基本类型的sql表达式节点
+        /// 获取基本类型的sql列节点
         /// </summary>
         /// <param name="memberExpression">成员表达式</param>
         /// <returns>基本类型的sql表达式节点</returns>
@@ -69,7 +65,7 @@ namespace CloudEntity.Internal.WhereVisitors
         /// <param name="expression">Lambda表达式的主体(或主体的一部分)</param>
         /// <param name="parameterName">参数名</param>
         /// <param name="parameterValue">参数值</param>
-        /// <returns></returns>
+        /// <returns>sql表达式节点</returns>
         protected ISqlBuilder GetSqlBuilder(ParameterExpression parameterExpression, Expression expression, ref string parameterName, ref object parameterValue)
         {
             //若当前表达式节点包含参数表达式
@@ -78,7 +74,8 @@ namespace CloudEntity.Internal.WhereVisitors
                 //获取成员表达式
                 MemberExpression memberExpression = expression.GetMemberExpression();
                 //获取参数名
-                parameterName = string.Format("{0}_{1}", memberExpression.Expression.Type.Name, memberExpression.Member.Name);
+                //parameterName = string.Format("{0}_{1}", memberExpression.Expression.Type.Name, memberExpression.Member.Name);
+                parameterName = memberExpression.Member.Name;
                 //获取sql表达式节点(指定列名)
                 return this.GetColumnBuilder(memberExpression);
             }
@@ -118,54 +115,27 @@ namespace CloudEntity.Internal.WhereVisitors
             return _commandTreeFactory.GetWhereChildBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, rightSqlExpression);
         }
         #endregion
-        #region sql参数生成
-        /// <summary>
-        /// 创建sql参数
-        /// </summary>
-        /// <param name="name">参数名</param>
-        /// <param name="value">参数值</param>
-        /// <returns>sql参数</returns>
-        protected IDbDataParameter CreateParameter(string name, object value)
-        {
-            return _parameterFactory.Parameter(name, value);
-        }
-        /// <summary>
-        /// 获取sql参数列表
-        /// </summary>
-        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
-        /// <param name="name">参数名</param>
-        /// <param name="value">参数值</param>
-        /// <returns>sql参数列表</returns>
-        protected IEnumerable<IDbDataParameter> GetParameters(HashSet<string> parameterNames, string name, object value)
-        {
-            if (parameterNames.Add(name))
-                yield return _parameterFactory.Parameter(name, value);
-        }
-        #endregion
 
         /// <summary>
         /// 创建Lambda表达式解析对象
         /// </summary>
-        /// <param name="parameterFactory">sql参数创建对象</param>
         /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
         /// <param name="mapperContainer">Mapper对象容器</param>
-        public WhereVisitor(IParameterFactory parameterFactory, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
+        public PredicateParser(ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
         {
             //非空检查
-            Check.ArgumentNull(parameterFactory, nameof(parameterFactory));
             Check.ArgumentNull(commandTreeFactory, nameof(commandTreeFactory));
             //赋值
-            _parameterFactory = parameterFactory;
             _commandTreeFactory = commandTreeFactory;
             _mapperContainer = mapperContainer;
         }
         /// <summary>
-        /// 解析查询条件表达式,生成sql条件表达式节点及其附属的sql参数
+        /// 解析查询条件表达式，生成并获取sql条件表达式节点，附带设置sql参数
         /// </summary>
         /// <param name="parameterExpression">Lambda表达式的参数</param>
         /// <param name="bodyExpression">Lambda表达式的主体(或主体的一部分)</param>
-        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
-        /// <returns>sql条件表达式节点及其附属的sql参数</returns>
-        public abstract KeyValuePair<INodeBuilder, IDbDataParameter[]> Visit(ParameterExpression parameterExpression, Expression bodyExpression, HashSet<string> parameterNames);
+        /// <param name="parameterSetter">sql参数设置对象</param>
+        /// <returns>sql条件表达式节点</returns>
+        public abstract INodeBuilder Parse(ParameterExpression parameterExpression, Expression bodyExpression, IParameterSetter parameterSetter);
     }
 }

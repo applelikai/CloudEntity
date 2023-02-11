@@ -7,13 +7,14 @@ using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace CloudEntity.Internal.WhereVisitors
+namespace CloudEntity.Internal.CommandTrees
 {
     /// <summary>
     /// 比较类型的Lambda表达式解析类
-    /// 李凯 Apple_Li
+    /// 李凯 Apple_Li 15150598493
+    /// 最后修改时间：2023/02/10 23:17
     /// </summary>
-    internal class CompareWhereVisitor : WhereVisitor
+    internal class CompareExpressionParser : PredicateParser
     {
         /// <summary>
         /// 判断当前表达式内容是否为null
@@ -81,31 +82,30 @@ namespace CloudEntity.Internal.WhereVisitors
         /// <summary>
         /// 创建比较类型表达式解析对象
         /// </summary>
-        /// <param name="parameterFactory">sql参数创建对象</param>
         /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
         /// <param name="mapperContainer">Mapper对象容器</param>
-        public CompareWhereVisitor(IParameterFactory parameterFactory, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
-            : base(parameterFactory, commandTreeFactory, mapperContainer) { }
+        public CompareExpressionParser(ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
+            : base(commandTreeFactory, mapperContainer) { }
         /// <summary>
-        /// 解析查询条件表达式,生成sql条件表达式节点及其附属的sql参数
+        /// 解析查询条件表达式, 生成sql条件表达式节点以及设置sql参数
         /// </summary>
         /// <param name="parameterExpression">Lambda表达式的参数</param>
         /// <param name="bodyExpression">Lambda表达式的主体(或主体的一部分)</param>
-        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
-        /// <returns>sql条件表达式节点及其附属的sql参数</returns>
-        public override KeyValuePair<INodeBuilder, IDbDataParameter[]> Visit(ParameterExpression parameterExpression, Expression bodyExpression, HashSet<string> parameterNames)
+        /// <param name="parameterSetter">sql参数设置对象</param>
+        /// <returns>sql条件表达式节点</returns>
+        public override INodeBuilder Parse(ParameterExpression parameterExpression, Expression bodyExpression, IParameterSetter parameterSetter)
         {
-            //获取二叉树表达式主体
+            // 获取二叉树表达式主体
             BinaryExpression binaryExpression = bodyExpression as BinaryExpression;
-            //若该表达式中包含( == null) 或 ( != null),直接返回sql NULL表达式节点及其空的附属参数
+            // 若该表达式中包含( == null) 或 ( != null)
             if (this.IsContainsNullExpression(binaryExpression))
             {
-                INodeBuilder nodeBuilder = this.GetNullBuilder(parameterExpression, binaryExpression);
-                return new KeyValuePair<INodeBuilder, IDbDataParameter[]>(nodeBuilder, new IDbDataParameter[0]);
+                // 直接返回sql NULL表达式节点及其空的附属参数
+                return this.GetNullBuilder(parameterExpression, binaryExpression);
             }
-            //初始化的参数名及参数值
-            string parameterName = string.Empty;    //初始化参数名
-            object parameterValue = null;           //初始化参数值
+            // 初始化的参数名及参数值
+            string parameterName = string.Empty;
+            object parameterValue = null;
             //获取sql表达式节点
             BinaryBuilder binaryBuilder = new BinaryBuilder()
             {
@@ -113,15 +113,16 @@ namespace CloudEntity.Internal.WhereVisitors
                 NodeType = binaryExpression.NodeType,
                 RightBuilder = base.GetSqlBuilder(parameterExpression, binaryExpression.Right, ref parameterName, ref parameterValue)
             };
-            //确定二叉树sql表达式节点的sql参数节点
+            // 确定sql参数节点前，先确定正式的sql参数名称，并设置参数
+            parameterName = parameterSetter.GetParameterName(parameterName);
+            parameterSetter.AddSqlParameter(parameterName, parameterValue);
+            // 确定二叉树sql表达式节点的sql参数节点
             if (binaryBuilder.LeftBuilder == null)
                 binaryBuilder.LeftBuilder = base.GetParameterBuilder(parameterName);
             if (binaryBuilder.RightBuilder == null)
                 binaryBuilder.RightBuilder = base.GetParameterBuilder(parameterName);
-            //获取其附属参数数组
-            IDbDataParameter[] sqlParameters = base.GetParameters(parameterNames, parameterName, parameterValue).ToArray();
-            //返回最终的sql参数表达式及其附属参数
-            return new KeyValuePair<INodeBuilder, IDbDataParameter[]>(binaryBuilder, sqlParameters);
+            // 获取最终的二叉树sql表达式节点
+            return binaryBuilder;
         }
     }
 }

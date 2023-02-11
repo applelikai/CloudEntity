@@ -13,7 +13,7 @@ namespace CloudEntity.Internal.Data.Entity
     /// 查询数据源
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
-    internal class DbQuery<TEntity> : DbBase, IDbQuery<TEntity>
+    internal class DbQuery<TEntity> : DbQueryBase<TEntity>, IDbQuery<TEntity>
         where TEntity : class
     {
         /// <summary>

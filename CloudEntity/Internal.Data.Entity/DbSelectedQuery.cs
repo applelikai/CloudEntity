@@ -17,7 +17,7 @@ namespace CloudEntity.Internal.Data.Entity
     /// </summary>
     /// <typeparam name="TElement">元素类型</typeparam>
     /// <typeparam name="TEntity">实体类型</typeparam>
-    internal class DbSelectedQuery<TElement, TEntity> : DbBase, IDbSelectedQuery<TElement>
+    internal class DbSelectedQuery<TElement, TEntity> : DbQueryBase<TEntity>, IDbSelectedQuery<TElement>
         where TEntity : class
     {
         /// <summary>

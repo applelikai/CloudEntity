@@ -9,7 +9,7 @@ namespace CloudEntity.Internal.Data.Entity
     /// <summary>
     /// 查询第一行第一列的值的类
     /// </summary>
-    internal class DbScalar : DbBase, IDbScalar
+    internal class DbScalar : DbQueryBase, IDbScalar
     {
         /// <summary>
         /// 创建统计查询类
@@ -18,7 +18,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
         public DbScalar(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
-            : base(mapperContainer, commandTreeFactory, dbHelper){ }
+            : base(commandTreeFactory, dbHelper){ }
         /// <summary>
         /// 执行查询获取第一行第一列的值
         /// </summary>

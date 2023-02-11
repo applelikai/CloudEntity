@@ -2,8 +2,8 @@
 using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
+using CloudEntity.Internal.CommandTrees;
 using CloudEntity.Internal.Data.Entity;
-using CloudEntity.Internal.WhereVisitors;
 using CloudEntity.Mapping;
 using System;
 using System.Collections.Generic;
@@ -47,11 +47,11 @@ namespace CloudEntity.Core.Data.Entity
         /// <summary>
         /// 创建表达式解析器的工厂
         /// </summary>
-        private IWhereVisitorFactory _whereVisitorFactory;
+        private IPredicateParserFactory _predicateParserFactory;
         /// <summary>
         /// 创建查询条件解析器的工厂
         /// </summary>
-        private IWhereVisitorFactory _mapperWhereVisitorFactory;
+        private IPredicateParserFactory _mapperPredicateParserFactory;
         /// <summary>
         /// 数据列表字典
         /// </summary>
@@ -361,36 +361,6 @@ namespace CloudEntity.Core.Data.Entity
                     yield return nodeBuilder;
             }
         }
-        /// <summary>
-        /// 解析表达式，获取sql表达式集合以及其附属参数集合
-        /// </summary>
-        /// <param name="whereVisitorFactory">查询条件解析器工厂</param>
-        /// <param name="parameterExpression">lambda表达式参数节点</param>
-        /// <param name="expression">表达式</param>
-        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
-        /// <returns>sql表达式集合以及其附属参数集合</returns>
-        private IEnumerable<KeyValuePair<INodeBuilder, IDbDataParameter[]>> GetNodeBuilderPairs(IWhereVisitorFactory whereVisitorFactory, ParameterExpression parameterExpression, Expression expression, HashSet<string> parameterNames)
-        {
-            switch (expression.NodeType)
-            {
-                //解析 && &表达式节点
-                case ExpressionType.And:
-                case ExpressionType.AndAlso:
-                    BinaryExpression binaryExpression = expression as BinaryExpression;
-                    //解析返回左表达式节点集合
-                    foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(whereVisitorFactory, parameterExpression, binaryExpression.Left, parameterNames))
-                        yield return nodeBuilderPair;
-                    //解析返回有表达式节点集合
-                    foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(whereVisitorFactory, parameterExpression, binaryExpression.Right, parameterNames))
-                        yield return nodeBuilderPair;
-                    break;
-                //解析其他类型的表达式
-                default:
-                    WhereVisitor whereVisitor = whereVisitorFactory.GetVisitor(expression.NodeType);
-                    yield return whereVisitor.Visit(parameterExpression, expression, parameterNames);
-                    break;
-            }
-        }
         #region 获取OrderBy的子节点集合
         /// <summary>
         /// 获取orderby节点的子节点
@@ -506,7 +476,7 @@ namespace CloudEntity.Core.Data.Entity
             where TModel : class, new()
         {
             // 创建新的视图数据源
-            DbView<TModel> cloned = new DbView<TModel>(this, this.DbHelper, _commandTreeFactory, source.InnerQuerySql);
+            DbView<TModel> cloned = new DbView<TModel>(this, _commandTreeFactory, this.DbHelper, source.InnerQuerySql);
             // 复制sql表达式节点列表
             cloned.AddNodeBuilders(source.NodeBuilders);
             // 复制sql参数列表
@@ -621,8 +591,8 @@ namespace CloudEntity.Core.Data.Entity
             _tableInitializer = initializer.CreateTableInitializer();  //获取Table初始化器
             _columnInitializer = initializer.CreateColumnInitializer();//获取列初始化器
             _dbLists = new Dictionary<Type, object>();                 //初始化DbList字典
-            _whereVisitorFactory = new WhereVisitorFactory(_dbHelper, _commandTreeFactory);
-            _mapperWhereVisitorFactory = new WhereVisitorFactory(_dbHelper, _commandTreeFactory, _mapperContainer);
+            _predicateParserFactory = new PredicateParserFactory(_commandTreeFactory);
+            _mapperPredicateParserFactory = new PredicateParserFactory(_commandTreeFactory, _mapperContainer);
         }
 
         /// <summary>
@@ -790,13 +760,11 @@ namespace CloudEntity.Core.Data.Entity
         {
             // 复制新的查询数据源
             DbQuery<TEntity> cloned = this.CloneToQuery(source);
-            // 加载Sql表达式节点集合 和 Sql参数节点集合
-            foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(_mapperWhereVisitorFactory, predicate.Parameters[0], predicate.Body, new HashSet<string>()))
+            // 解析Lambda表达式，获取并添加Sql表达式节点，并添加附带的sql参数
+            foreach (INodeBuilder sqlBuilder in _mapperPredicateParserFactory.GetWhereChildBuilders(cloned, predicate.Parameters[0], predicate.Body))
             {
-                // 添加sql表达式节点
-                cloned.AddNodeBuilder(nodeBuilderPair.Key);
-                // 添加sql参数
-                cloned.AddSqlParameters(nodeBuilderPair.Value);
+                // （解析时，已自动为数据源cloned添加解析得到的sql参数，只需要）添加sql表达式节点
+                cloned.AddNodeBuilder(sqlBuilder);
             }
             // 获取新的查询数据源
             return cloned;
@@ -813,13 +781,11 @@ namespace CloudEntity.Core.Data.Entity
         {
             // 复制新的查询数据源
             DbQuery<TEntity> cloned = this.CloneToQuery(source);
-            // 加载Sql表达式节点集合 和 Sql参数节点集合
-            foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(_mapperWhereVisitorFactory, predicate.Parameters[0], predicate.Body, new HashSet<string>()))
+            // 解析Lambda表达式，获取并添加Sql表达式节点，并添加附带的sql参数
+            foreach (INodeBuilder sqlBuilder in _mapperPredicateParserFactory.GetWhereChildBuilders(cloned, predicate.Parameters[0], predicate.Body))
             {
-                // 添加sql表达式节点
-                cloned.AddNodeBuilder(nodeBuilderPair.Key);
-                // 添加sql参数
-                cloned.AddSqlParameters(nodeBuilderPair.Value);
+                // （解析时，已自动为数据源cloned添加解析得到的sql参数，只需要）添加sql表达式节点
+                cloned.AddNodeBuilder(sqlBuilder);
             }
             // 获取新的查询数据源
             return cloned;
@@ -892,13 +858,13 @@ namespace CloudEntity.Core.Data.Entity
             MemberExpression memberExpression = selector.Body.GetMemberExpression();
             // 获取属性名称
             string memberName = memberExpression.Member.Name;
-            // 获取此属性名称开头的参数名的个数
-            int count = source.Parameters.Count(p => p.ParameterName.StartsWith(memberName));
+            // 获取此属性名称开头的使用次数
+            int times = source.Parameters.Count(p => p.ParameterName.StartsWith(memberName));
             // 初始化参数名称数组
             string[] parameterNames = new string[values.Length];
             // 遍历参数值列表，加载sql参数名称数组
             for (int i = 0; i < values.Length; i++)
-                parameterNames[i] = $"{memberName}{(i + count).ToString()}";
+                parameterNames[i] = $"{memberName}{(i + times).ToString()}";
             // 获取右边的sql表达式
             string rightSqlExpression = string.Format(sqlFormat, parameterNames);
             // 获取查询条件表达式节点
@@ -1247,7 +1213,7 @@ namespace CloudEntity.Core.Data.Entity
             where TModel : class, new()
         {
             // 创建数据源
-            DbView<TModel> source = new DbView<TModel>(this, this.DbHelper, this._commandTreeFactory, querySql);
+            DbView<TModel> source = new DbView<TModel>(this, _commandTreeFactory, this.DbHelper, querySql);
             // 添加sql参数
             source.AddSqlParameters(parameters);
             // 获取数据源
@@ -1265,13 +1231,11 @@ namespace CloudEntity.Core.Data.Entity
         {
             // 复制数据源
             DbView<TModel> cloned = this.CloneView(source);
-            // 加载Sql表达式节点集合 和 Sql参数节点集合
-            foreach (KeyValuePair<INodeBuilder, IDbDataParameter[]> nodeBuilderPair in this.GetNodeBuilderPairs(_whereVisitorFactory, predicate.Parameters[0], predicate.Body, new HashSet<string>()))
+            // 解析Lambda表达式，获取并添加Where节点下的子Sql表达式节点，并添加附带的sql参数
+            foreach (INodeBuilder sqlBuilder in _predicateParserFactory.GetWhereChildBuilders(cloned, predicate.Parameters[0], predicate.Body))
             {
-                // 添加sql表达式节点
-                cloned.AddNodeBuilder(nodeBuilderPair.Key);
-                // 添加sql参数
-                cloned.AddSqlParameters(nodeBuilderPair.Value);
+                // （解析时，已自动为数据源cloned添加解析得到的sql参数，只需要）添加sql表达式节点
+                cloned.AddNodeBuilder(sqlBuilder);
             }
             // 获取复制的数据源
             return cloned;

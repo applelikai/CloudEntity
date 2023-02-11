@@ -3,42 +3,42 @@ using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
 using CloudEntity.Mapping;
 using System;
-using System.Collections.Generic;
-using System.Data;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace CloudEntity.Internal.WhereVisitors
+namespace CloudEntity.Internal.CommandTrees
 {
     /// <summary>
     /// 非表达式解析类
-    /// 李凯 Apple_Li
+    /// 李凯 Apple_Li 15150598493
+    /// 最后修改时间：2023/01/10 23:20
     /// </summary>
-    internal class UnaryNotWhereVisitor : WhereVisitor
+    internal class UnaryNotExpressionParser : PredicateParser
     {
-        //创建表达式解析器的工厂
-        private IWhereVisitorFactory _factory;
+        /// <summary>
+        /// 创建表达式解析器的工厂
+        /// </summary>
+        private IPredicateParserFactory _factory;
 
         /// <summary>
         /// 创建非表达式解析对象
         /// </summary>
-        /// <param name="parameterFactory">sql参数创建对象</param>
         /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
         /// <param name="mapperContainer">Mapper对象容器</param>
         /// <param name="factory">创建表达式解析器的工厂</param>
-        public UnaryNotWhereVisitor(IParameterFactory parameterFactory, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer, IWhereVisitorFactory factory)
-            : base(parameterFactory, commandTreeFactory, mapperContainer)
+        public UnaryNotExpressionParser(ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer, IPredicateParserFactory factory)
+            : base(commandTreeFactory, mapperContainer)
         {
             _factory = factory;
         }
         /// <summary>
-        /// 解析非表达式,生成sql条件表达式节点及其附属的sql参数
+        /// 解析查询条件表达式，生成并获取sql条件表达式节点，附带设置sql参数
         /// </summary>
         /// <param name="parameterExpression">Lambda表达式的参数</param>
         /// <param name="bodyExpression">Lambda表达式的主体(或主体的一部分)</param>
-        /// <param name="parameterNames">记录不允许重复的sql参数名称</param>
-        /// <returns>sql条件表达式节点及其附属的sql参数</returns>
-        public override KeyValuePair<INodeBuilder, IDbDataParameter[]> Visit(ParameterExpression parameterExpression, Expression bodyExpression, HashSet<string> parameterNames)
+        /// <param name="parameterSetter">sql参数设置对象</param>
+        /// <returns>sql条件表达式节点</returns>
+        public override INodeBuilder Parse(ParameterExpression parameterExpression, Expression bodyExpression, IParameterSetter parameterSetter)
         {
             //获取一元表达式并检查该表达式是否满足解析条件
             UnaryExpression unaryExpression = bodyExpression as UnaryExpression;
@@ -54,10 +54,10 @@ namespace CloudEntity.Internal.WhereVisitors
                     throw new Exception(string.Format("Unknow Expression:{0}", unaryExpression.ToString()));
             }
             //获取sql语句模板
-            WhereVisitor whereVisitor = this._factory.GetVisitor(unaryExpression.Operand.NodeType);
-            KeyValuePair<INodeBuilder, IDbDataParameter[]> sqlBuilderPair = whereVisitor.Visit(parameterExpression, unaryExpression.Operand, parameterNames);
+            PredicateParser predicateParser = _factory.GetPredicateParser(unaryExpression.Operand.NodeType);
+            INodeBuilder sqlBuilder = predicateParser.Parse(parameterExpression, unaryExpression.Operand, parameterSetter);
             StringBuilder sqlTemplate = new StringBuilder();
-            sqlBuilderPair.Key.Build(sqlTemplate);
+            sqlBuilder.Build(sqlTemplate);
             //替换sql语句模板中的操作符为相反类型的操作符(如LIKE 替换为NOT LIKE)
             string baseSqlTemplate = sqlTemplate.ToString();
             if (baseSqlTemplate.Contains("LIKE"))
@@ -73,9 +73,7 @@ namespace CloudEntity.Internal.WhereVisitors
             if (baseSqlTemplate.Contains("IN"))
                 sqlTemplate.Replace("IN", "NOT IN");
             //获取sql表达式
-            INodeBuilder nodeBuilder = new NodeBuilder(SqlType.Where, sqlTemplate.ToString());
-            //返回sql表达式及其附属的sql参数集合
-            return new KeyValuePair<INodeBuilder, IDbDataParameter[]>(nodeBuilder, sqlBuilderPair.Value);
+            return new NodeBuilder(SqlType.Where, sqlTemplate.ToString());
         }
     }
 }
