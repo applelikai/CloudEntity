@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Data;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 创建数据操作对象的工厂
+    /// Apple_Li 李凯 15150598493
+    /// 最后修改时间：2023/02/15 23:11
     /// </summary>
     public interface IDbFactory
     {
@@ -50,18 +50,6 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">查询数据源</param>
         /// <returns>新的查询数据源</returns>
         IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source)
-            where TEntity : class;
-        /// <summary>
-        /// 创建新的查询数据源
-        /// </summary>
-        /// <param name="source">数据源</param>
-        /// <param name="selector">指定对象成员表达式</param>
-        /// <param name="sqlPredicate">sql条件</param>
-        /// <param name="parameters">sql参数数组</param>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TProperty">实体属性类型</typeparam>
-        /// <returns>新的查询数据源</returns>
-        IDbQuery<TEntity> CreateQuery<TEntity, TProperty>(IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] parameters)
             where TEntity : class;
         /// <summary>
         /// 创建新的查询数据源
@@ -225,18 +213,6 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">视图查询数据源</param>
         /// <returns>新的视图查询数据源</returns>
         IDbView<TModel> CreateView<TModel>(IDbView<TModel> source)
-            where TModel : class, new();
-        /// <summary>
-        /// 创建视图查询数据源
-        /// </summary>
-        /// <param name="source">视图查询数据源</param>
-        /// <param name="selector">指定对象成员表达式</param>
-        /// <param name="sqlPredicate">sql条件</param>
-        /// <param name="parameters">sql参数数组</param>
-        /// <typeparam name="TModel">视图模型对象</typeparam>
-        /// <typeparam name="TProperty">模型属性类型</typeparam>
-        /// <returns>新的视图查询数据源</returns>
-        IDbView<TModel> CreateView<TModel, TProperty>(IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] parameters)
             where TModel : class, new();
         /// <summary>
         /// 创建视图查询数据源

@@ -14,6 +14,8 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// 查询数据源
+    /// Apple_Li 李凯 15150598493
+    /// 最后修改时间：2023/02/15 22:27
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     internal class DbQuery<TEntity> : DbQueryBase<TEntity>, IDbQuery<TEntity>
@@ -156,6 +158,27 @@ namespace CloudEntity.Internal.Data.Entity
             INodeBuilder nodeBuilder = this.GetWhereChildBuilder(memberExpression, sqlPredicate);
             // 添加sql表达式节点
             base.AddNodeBuilder(nodeBuilder);
+            // 再次获取下当前查询数据源方面链式操作
+            return this;
+        }
+        /// <summary>
+        /// 设置数据源数据检索条件
+        /// </summary>
+        /// <param name="selector">指定对象成员表达式</param>
+        /// <param name="sqlPredicate">sql条件</param>
+        /// <param name="sqlParameters">sql参数数组</param>
+        /// <typeparam name="TProperty">实体属性类型</typeparam>
+        /// <returns>数据源（还是原来的数据源并未复制）</returns>
+        public IDbQuery<TEntity> SetWhere<TProperty>(Expression<Func<TEntity, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] sqlParameters)
+        {
+            // 获取成员表达式
+            MemberExpression memberExpression = selector.Body.GetMemberExpression();
+            // 获取查询条件表达式节点
+            INodeBuilder nodeBuilder = this.GetWhereChildBuilder(memberExpression, sqlPredicate);
+            // 添加sql表达式节点
+            base.AddNodeBuilder(nodeBuilder);
+            // 添加sql参数数组
+            base.AddSqlParameters(sqlParameters);
             // 再次获取下当前查询数据源方面链式操作
             return this;
         }

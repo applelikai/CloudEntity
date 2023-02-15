@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq.Expressions;
 
 namespace CloudEntity.Data.Entity
@@ -36,6 +37,15 @@ namespace CloudEntity.Data.Entity
         /// <typeparam name="TProperty">实体属性类型</typeparam>
         /// <returns>数据源（还是原来的数据源并未复制）</returns>
         IDbQuery<TEntity> SetWhere<TProperty>(Expression<Func<TEntity, TProperty>> selector, string sqlPredicate);
+        /// <summary>
+        /// 设置数据源数据检索条件
+        /// </summary>
+        /// <param name="selector">指定对象成员表达式</param>
+        /// <param name="sqlPredicate">sql条件</param>
+        /// <param name="sqlParameters">sql参数数组</param>
+        /// <typeparam name="TProperty">实体属性类型</typeparam>
+        /// <returns>数据源（还是原来的数据源并未复制）</returns>
+        IDbQuery<TEntity> SetWhere<TProperty>(Expression<Func<TEntity, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] sqlParameters);
         /// <summary>
         /// 将此数据源的查询结果映射为TModel对象数据源
         /// </summary>

@@ -111,25 +111,22 @@ public class Program
         // 第二次映射为微信用户列表并打印
         Program.PrintUsers(users.Cast<WechatUser>());
         // 获取用户分页查询数据源
-        string[] names = new string[] {"apple", "admin"};
-        IDbPagedQuery<User> pagedUsers = users.Where(u => names.Contains(u.UserName)).PagingByDescending(u => u.UserName, 10, 1);
+        IDbPagedQuery<User> pagedUsers = users.PagingByDescending(u => u.UserName, 10, 1);
         // 第三次打印用户列表
         Program.PrintUsers(pagedUsers);
         // 第四次映射为微信用户列表并打印
         Program.PrintUsers(pagedUsers.Cast<WechatUser>());
     }
     /// <summary>
-    /// IN查询测试
+    /// 测试IN语句查询
     /// </summary>
-    /// <param name="users">用户数据源</param>
-    private static void TestIn(IDbView<WechatUser> users)
+    private static void QueryTestIn()
     {
-        // 获取用户姓名数组
-        //string[] names = new string[] { "apple", "admin", "orange" };
-        IDbSelectedQuery<string> names = _container.CreateQuery<User>().Select(u => u.UserName);
-        // 添加查询条件
-        users.SetWhere(u => names.Contains(u.UserName));
-        // 打印
+        // 获取角色id数据源
+        IDbSelectedQuery<string> roleIds = _container.CreateQuery<Role>().Select(r => r.RoleId);
+        // 获取用户数据源
+        IDbQuery<User> users = _container.CreateQuery<User>().SetIn(u => u.RoleId, roleIds);
+        // 打印用户列表
         Program.PrintUsers(users);
     }
     /// <summary>
@@ -162,8 +159,10 @@ public class Program
         IDbDataParameter[] sqlParameters = users.Parameters.ToArray();
         // 获取查询视图
         IDbView<WechatUser> wechatUsers = _container.CreateView<WechatUser>(querySql, sqlParameters);
+        // 获取角色名称数据源
+        IDbSelectedQuery<string> roleNames = _container.CreateQuery<Role>().Select(r => r.RoleName);
         // 添加数据检索条件
-        wechatUsers = wechatUsers.IsNull(u => u.RoleName, false);
+        wechatUsers.SetIn(u => u.RoleName, roleNames, false);
         // 打印用户列表
         Program.PrintUsers(wechatUsers);
         // 测试IN查询

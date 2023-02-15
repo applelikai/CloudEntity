@@ -14,6 +14,35 @@ namespace CloudEntity.Data.Entity
     public static class ExtendQuery
     {
         /// <summary>
+        /// Extendable method: 为数据源添加 实体某属性值包含（或不包含）在子查询数据源中 的检索条件
+        /// </summary>
+        /// <typeparam name="TEntity">对象类型</typeparam>
+        /// <typeparam name="TProperty">对象属性类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定对象某属性的表达式</param>
+        /// <param name="selectorSource">子查询数据源</param>
+        /// <param name="isIn">IN 或 NOT IN</param>
+        /// <returns>当前数据源（并未复制）</returns>
+        public static IDbQuery<TEntity> SetIn<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, IDbSelectedQuery<TProperty> selectorSource, bool isIn = true)
+            where TEntity : class
+        {
+            //非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            Check.ArgumentNull(selectorSource, nameof(selectorSource));
+            // 获取sql条件格式化字符串
+            StringBuilder sqlPredicateBuilder = new StringBuilder();
+            sqlPredicateBuilder.AppendLine(isIn ? "IN " : "NOT IN ");
+            sqlPredicateBuilder.Append("\t  (");
+            sqlPredicateBuilder.Append(selectorSource.ToSqlString().Trim());
+            sqlPredicateBuilder.Append(")");
+            sqlPredicateBuilder.Replace("\n ", "\n\t");
+            // 为数据源添加数据检索条件
+            source.SetWhere(selector, sqlPredicateBuilder.ToString(), selectorSource.Parameters.ToArray());
+            // 最后获取当前数据源方面链式操作
+            return source;
+        }
+        /// <summary>
         /// Extendable method: 为数据源添加某属性是否为空（或不为空）的数据检索条件
         /// </summary>
         /// <typeparam name="TEntity">对象类型</typeparam>
@@ -32,7 +61,7 @@ namespace CloudEntity.Data.Entity
             string sqlPredicate = isNull ? "IS NULL" : "IS NOT NULL";
             // 为数据源添加数据检索条件
             source.SetWhere(selector, sqlPredicate);
-            // 获取当前数据源方面链式操作
+            // 最后获取当前数据源方面链式操作
             return source;
         }
 
@@ -71,7 +100,7 @@ namespace CloudEntity.Data.Entity
             return source.Factory.CreateQuery(source, selector, formatBuilder.ToString(), values);
         }
         /// <summary>
-        /// Extendable method: 过滤数据源中属性包含(或不包含)某些值的实体(生成Sql IN表达式)
+        /// Extendable method: 检索来源数据源 实体某属性值包含（或不包含）在子查询数据源中的数据 到新建查询数据源
         /// </summary>
         /// <typeparam name="TEntity">对象类型</typeparam>
         /// <typeparam name="TProperty">对象属性类型</typeparam>
@@ -79,7 +108,38 @@ namespace CloudEntity.Data.Entity
         /// <param name="selector">指定对象某属性的表达式</param>
         /// <param name="selectorSource">子查询数据源</param>
         /// <param name="isIn">IN 或 NOT IN</param>
-        /// <returns>新的数据源</returns>
+        /// <returns>新建查询数据源</returns>
+        public static IDbQuery<TEntity> In<TEntity, TProperty>(this IDbSource<TEntity> source, Expression<Func<TEntity, TProperty>> selector, IDbSelectedQuery<TProperty> selectorSource, bool isIn = true)
+            where TEntity : class
+        {
+            //非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            Check.ArgumentNull(selectorSource, nameof(selectorSource));
+            // 获取sql条件格式化字符串
+            StringBuilder sqlPredicateBuilder = new StringBuilder();
+            sqlPredicateBuilder.AppendLine(isIn ? "IN " : "NOT IN ");
+            sqlPredicateBuilder.Append("\t  (");
+            sqlPredicateBuilder.Append(selectorSource.ToSqlString().Trim());
+            sqlPredicateBuilder.Append(")");
+            sqlPredicateBuilder.Replace("\n ", "\n\t");
+            // 复制来源数据源获取新的查询数据源
+            IDbQuery<TEntity> cloned = source.Factory.CreateQuery(source);
+            // 为复制的数据源添加数据检索条件
+            cloned.SetWhere(selector, sqlPredicateBuilder.ToString(), selectorSource.Parameters.ToArray());
+            // 最后获取复制的查询数据源
+            return cloned;
+        }
+        /// <summary>
+        /// Extendable method: 检索来源数据源 实体某属性值包含（或不包含）在子查询数据源中的数据 到新建查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">对象类型</typeparam>
+        /// <typeparam name="TProperty">对象属性类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定对象某属性的表达式</param>
+        /// <param name="selectorSource">子查询数据源</param>
+        /// <param name="isIn">IN 或 NOT IN</param>
+        /// <returns>新建查询数据源</returns>
         public static IDbQuery<TEntity> In<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, IDbSelectedQuery<TProperty> selectorSource, bool isIn = true)
             where TEntity : class
         {
@@ -90,12 +150,16 @@ namespace CloudEntity.Data.Entity
             // 获取sql条件格式化字符串
             StringBuilder sqlPredicateBuilder = new StringBuilder();
             sqlPredicateBuilder.AppendLine(isIn ? "IN " : "NOT IN ");
-            sqlPredicateBuilder.Append("\t(");
+            sqlPredicateBuilder.Append("\t  (");
             sqlPredicateBuilder.Append(selectorSource.ToSqlString().Trim());
             sqlPredicateBuilder.Append(")");
             sqlPredicateBuilder.Replace("\n ", "\n\t");
-            // 获取新建查询数据源
-            return source.Factory.CreateQuery(source, selector, sqlPredicateBuilder.ToString(), selectorSource.Parameters.ToArray());
+            // 复制来源数据源获取新的查询数据源
+            IDbQuery<TEntity> cloned = source.Factory.CreateQuery(source);
+            // 为复制的数据源添加数据检索条件
+            cloned.SetWhere(selector, sqlPredicateBuilder.ToString(), selectorSource.Parameters.ToArray());
+            // 最后获取复制的查询数据源
+            return cloned;
         }
         /// <summary>
         /// Extendable method: 过滤数据源中属性在一定范围内的实体
@@ -358,6 +422,35 @@ namespace CloudEntity.Data.Entity
         }
 
         /// <summary>
+        /// Extendable method: 为数据源添加 数据对象某属性值包含（或不包含）在子查询数据源中 的检索条件
+        /// </summary>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
+        /// <typeparam name="TProperty">对象属性类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="selector">指定对象某属性的表达式</param>
+        /// <param name="selectorSource">子查询数据源</param>
+        /// <param name="isIn">IN 或 NOT IN</param>
+        /// <returns>当前数据源（并未复制）</returns>
+        public static IDbView<TModel> SetIn<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, IDbSelectedQuery<TProperty> selectorSource, bool isIn = true)
+            where TModel : class, new()
+        {
+            // 非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            Check.ArgumentNull(selectorSource, nameof(selectorSource));
+            // 获取sql条件格式化字符串
+            StringBuilder sqlPredicateBuilder = new StringBuilder();
+            sqlPredicateBuilder.AppendLine(isIn ? "IN " : "NOT IN ");
+            sqlPredicateBuilder.Append("\t  (");
+            sqlPredicateBuilder.Append(selectorSource.ToSqlString().Trim());
+            sqlPredicateBuilder.Append(")");
+            sqlPredicateBuilder.Replace("\n ", "\n\t");
+            // 为数据源添加数据检索条件
+            source.SetWhere(selector, sqlPredicateBuilder.ToString(), selectorSource.Parameters.ToArray());
+            // 获取当前数据源方面链式操作
+            return source;
+        }
+        /// <summary>
         /// Extendable method: 为数据源添加某属性是否为空（或不为空）的数据检索条件
         /// </summary>
         /// <typeparam name="TModel">视图对象类型</typeparam>
@@ -365,7 +458,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">视图查询数据源</param>
         /// <param name="selector">指定对象某属性的表达式</param>
         /// <param name="isNull">IS NULL 或 IS NOT NULL</param>
-        /// <returns>新的视图查询数据源</returns>
+        /// <returns>当前数据源（并未复制）</returns>
         public static IDbView<TModel> SetIsNull<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, bool isNull = true)
             where TModel : class, new()
         {
@@ -381,13 +474,13 @@ namespace CloudEntity.Data.Entity
         }
 
         /// <summary>
-        /// Extendable method: 过滤数据源中属性包含(或不包含)某些值的实体(生成Sql IN表达式)
+        /// Extendable method: 复制来源数据源 并添加 数据对象某属性值包含（或不包含）在属性值数组中 的检索条件
         /// </summary>
         /// <typeparam name="TModel">视图对象类型</typeparam>
         /// <typeparam name="TProperty">对象属性类型</typeparam>
         /// <param name="source">视图查询数据源</param>
         /// <param name="selector">指定对象某属性的表达式</param>
-        /// <param name="values">对象属性所包含的值</param>
+        /// <param name="values">属性值数组</param>
         /// <param name="isIn">IN 或 NOT IN</param>
         /// <returns>新的视图查询数据源</returns>
         public static IDbView<TModel> In<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, TProperty[] values, bool isIn = true)
@@ -415,7 +508,7 @@ namespace CloudEntity.Data.Entity
             return source.Factory.CreateView(source, selector, formatBuilder.ToString(), values);
         }
         /// <summary>
-        /// Extendable method: 过滤数据源中属性包含(或不包含)某些值的实体(生成Sql IN表达式)
+        /// Extendable method: 复制来源数据源 并添加 数据对象某属性值包含（或不包含）在子查询数据源中 的检索条件
         /// </summary>
         /// <typeparam name="TModel">视图对象类型</typeparam>
         /// <typeparam name="TProperty">对象属性类型</typeparam>
@@ -434,12 +527,16 @@ namespace CloudEntity.Data.Entity
             // 获取sql条件格式化字符串
             StringBuilder sqlPredicateBuilder = new StringBuilder();
             sqlPredicateBuilder.AppendLine(isIn ? "IN " : "NOT IN ");
-            sqlPredicateBuilder.Append("\t(");
+            sqlPredicateBuilder.Append("\t  (");
             sqlPredicateBuilder.Append(selectorSource.ToSqlString().Trim());
             sqlPredicateBuilder.Append(")");
             sqlPredicateBuilder.Replace("\n ", "\n\t");
-            // 获取新的视图查询数据源
-            return source.Factory.CreateView(source, selector, sqlPredicateBuilder.ToString(), selectorSource.Parameters.ToArray());
+            // 复制来源数据源获取新的查询数据源
+            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            // 为复制的数据源添加数据检索条件
+            cloned.SetWhere(selector, sqlPredicateBuilder.ToString(), selectorSource.Parameters.ToArray());
+            // 最后获取复制的查询数据源
+            return cloned;
         }
         /// <summary>
         /// Extendable method: 执行区间查询获取视图查询数据源

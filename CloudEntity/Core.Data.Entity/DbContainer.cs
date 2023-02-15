@@ -16,7 +16,7 @@ namespace CloudEntity.Core.Data.Entity
     /// <summary>
     /// 数据容器类
     /// 李凯 Apple_Li 15150598493
-    /// 最后修改时间：2023/02/08 23:55
+    /// 最后修改时间：2023/02/15 23:12
     /// </summary>
     public sealed class DbContainer : IDbContainer, IDbFactory
     {
@@ -781,33 +781,6 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         /// <param name="source">数据源</param>
         /// <param name="selector">指定对象成员表达式</param>
-        /// <param name="sqlPredicate">sql条件</param>
-        /// <param name="parameters">sql参数数组</param>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TProperty">实体属性类型</typeparam>
-        /// <returns>新的查询数据源</returns>
-        public IDbQuery<TEntity> CreateQuery<TEntity, TProperty>(IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] parameters)
-            where TEntity : class
-        {
-            // 获取成员表达式
-            MemberExpression memberExpression = selector.Body.GetMemberExpression();
-            // 获取查询条件表达式节点
-            INodeBuilder nodeBuilder = this.GetWhereChildBuilder(memberExpression, sqlPredicate);
-
-            // 复制查询数据源
-            DbQuery<TEntity> cloned = this.CloneToQuery(source);
-            // 添加sql表达式节点
-            cloned.AddNodeBuilder(nodeBuilder);
-            // 添加sql参数数组
-            cloned.AddSqlParameters(parameters);
-            // 最终获取复制的数据源
-            return cloned;
-        }
-        /// <summary>
-        /// 创建新的查询数据源
-        /// </summary>
-        /// <param name="source">数据源</param>
-        /// <param name="selector">指定对象成员表达式</param>
         /// <param name="sqlFormat">sql条件格式化字符串</param>
         /// <param name="values">sql参数值数组</param>
         /// <typeparam name="TEntity">实体类型</typeparam>
@@ -1193,35 +1166,6 @@ namespace CloudEntity.Core.Data.Entity
             // 复制数据源
             DbView<TModel> cloned = this.CloneView(source);
             // 获取复制的数据源
-            return cloned;
-        }
-        /// <summary>
-        /// 创建视图查询数据源
-        /// </summary>
-        /// <param name="source">视图查询数据源</param>
-        /// <param name="selector">指定对象成员表达式</param>
-        /// <param name="sqlPredicate">sql条件</param>
-        /// <param name="parameters">sql参数数组</param>
-        /// <typeparam name="TModel">视图模型对象</typeparam>
-        /// <typeparam name="TProperty">模型属性类型</typeparam>
-        /// <returns>新的视图查询数据源</returns>
-        public IDbView<TModel> CreateView<TModel, TProperty>(IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] parameters)
-            where TModel : class, new()
-        {
-            // 获取视图查询临时表名
-            string tableAlias = typeof(TModel).Name.ToLower();
-            // 获取指定的对象成员名称为视图查询映射列名
-            string columnName = selector.Body.GetMemberExpression().Member.Name;
-            // 获取查询条件表达式节点
-            INodeBuilder nodeBuilder = _commandTreeFactory.GetWhereChildBuilder(tableAlias, columnName, sqlPredicate);
-
-            // 复制数据源
-            DbView<TModel> cloned = this.CloneView(source);
-            // 添加获取查询条件表达式节点
-            cloned.AddNodeBuilder(nodeBuilder);
-            // 添加sql参数数组
-            cloned.AddSqlParameters(parameters);
-            // 创建并返回视图查询数据源
             return cloned;
         }
         /// <summary>

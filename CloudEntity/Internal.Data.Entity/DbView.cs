@@ -13,6 +13,8 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// 视图查询数据源
+    /// Apple_Li 李凯 15150598493
+    /// 最后修改时间：2023/02/15 23:11
     /// </summary>
     /// <typeparam name="TModel">对象类型</typeparam>
     internal class DbView<TModel> : DbQueryBase, IDbView<TModel>
@@ -119,6 +121,29 @@ namespace CloudEntity.Internal.Data.Entity
             INodeBuilder nodeBuilder = base.CommandTreeFactory.GetWhereChildBuilder(tableAlias, columnName, sqlPredicate);
             // 添加sql查询条件表达式节点
             base.AddNodeBuilder(nodeBuilder);
+            // 获取当前视图查询数据源
+            return this;
+        }
+        /// <summary>
+        /// 设置数据源数据检索条件
+        /// </summary>
+        /// <param name="selector">指定对象成员表达式</param>
+        /// <param name="sqlPredicate">sql条件</param>
+        /// <param name="sqlParameters">sql参数数组</param>
+        /// <typeparam name="TProperty">模型属性类型</typeparam>
+        /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
+        public IDbView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] sqlParameters)
+        {
+            // 获取视图查询临时表名
+            string tableAlias = typeof(TModel).Name.ToLower();
+            // 获取指定的对象成员名称为视图查询映射列名
+            string columnName = selector.Body.GetMemberExpression().Member.Name;
+            // 获取sql查询条件表达式节点
+            INodeBuilder nodeBuilder = base.CommandTreeFactory.GetWhereChildBuilder(tableAlias, columnName, sqlPredicate);
+            // 添加sql查询条件表达式节点
+            base.AddNodeBuilder(nodeBuilder);
+            // 添加sql参数数组
+            base.AddSqlParameters(sqlParameters);
             // 获取当前视图查询数据源
             return this;
         }
