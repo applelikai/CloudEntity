@@ -2,13 +2,11 @@
 # 此 .gitignore 文件已由 Microsoft(R) Visual Studio 自动创建。
 ################################################################################
 
+bin/
+obj/
+Release/
 /.idea
 /.vs
 /.vscode
-/CloudEntity/bin
-/CloudEntity/obj
-/CloudEntity.Test/bin
-/CloudEntity.Test/obj
 /sh.exe.stackdump
 *.stackdump
-/CloudEntity/bin/Release

@@ -14,6 +14,29 @@ namespace CloudEntity.Data.Entity
     public static class ExtendQuery
     {
         /// <summary>
+        /// Extendable method: 为数据源添加某属性是否为空（或不为空）的数据检索条件
+        /// </summary>
+        /// <typeparam name="TEntity">对象类型</typeparam>
+        /// <typeparam name="TProperty">属性类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定对象属性表达式</param>
+        /// <param name="isNull">IS NULL 或 IS NOT NULL</param>
+        /// <returns>当前数据源（并未复制）</returns>
+        public static IDbQuery<TEntity> SetIsNull<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, bool isNull = true)
+            where TEntity : class
+        {
+            // 非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            // 获取sql条件
+            string sqlPredicate = isNull ? "IS NULL" : "IS NOT NULL";
+            // 为数据源添加数据检索条件
+            source.SetWhere(selector, sqlPredicate);
+            // 获取当前数据源方面链式操作
+            return source;
+        }
+
+        /// <summary>
         /// Extendable method: 过滤数据源中属性包含(或不包含)某些值的实体(生成Sql IN表达式)
         /// </summary>
         /// <typeparam name="TEntity">对象类型</typeparam>
@@ -141,13 +164,38 @@ namespace CloudEntity.Data.Entity
             return source.Factory.CreateQuery(source, selector, sqlFormat, value);
         }
         /// <summary>
-        /// Extendable method: 过滤获取包含数据源中某属性值为空(或非空)的元素的新数据源
+        /// Extendable method: 检索来源数据源某属性是否为空（或不为空）的数据到新的查询数据源
         /// </summary>
         /// <typeparam name="TEntity">对象类型</typeparam>
         /// <typeparam name="TProperty">属性类型</typeparam>
         /// <param name="source">数据源过滤器</param>
         /// <param name="selector">指定对象属性表达式</param>
         /// <param name="isNull">IS NULL 或 IS NOT NULL</param>
+        /// <returns>新的数据源</returns>
+        public static IDbQuery<TEntity> IsNull<TEntity, TProperty>(this IDbSource<TEntity> source, Expression<Func<TEntity, TProperty>> selector, bool isNull = true)
+            where TEntity : class
+        {
+            // 非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            // 获取sql条件
+            string sqlPredicate = isNull ? "IS NULL" : "IS NOT NULL";
+            // 复制来源数据源获取新的查询数据源
+            IDbQuery<TEntity> cloned = source.Factory.CreateQuery(source);
+            // 为复制的数据源添加数据检索条件
+            cloned.SetWhere(selector, sqlPredicate);
+            // 最后获取复制的查询数据源
+            return cloned;
+        }
+        /// <summary>
+        /// Extendable method: 检索来源数据源某属性是否为空（或不为空）的数据到新的查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">对象类型</typeparam>
+        /// <typeparam name="TProperty">属性类型</typeparam>
+        /// <param name="source">数据源过滤器</param>
+        /// <param name="selector">指定对象属性表达式</param>
+        /// <param name="isNull">IS NULL 或 IS NOT NULL</param>
+        /// <returns>新的数据源</returns>
         public static IDbQuery<TEntity> IsNull<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, bool isNull = true)
             where TEntity : class
         {
@@ -156,40 +204,52 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(selector, nameof(selector));
             // 获取sql条件
             string sqlPredicate = isNull ? "IS NULL" : "IS NOT NULL";
-            // 获取新建查询数据源
-            return source.Factory.CreateQuery(source, selector, sqlPredicate);
+            // 复制来源数据源获取新的查询数据源
+            IDbQuery<TEntity> cloned = source.Factory.CreateQuery(source);
+            // 为复制的数据源添加数据检索条件
+            cloned.SetWhere(selector, sqlPredicate);
+            // 最后获取复制的查询数据源
+            return cloned;
         }
         /// <summary>
-        /// Extendable method: 筛选数据源符合条件的对象
+        /// Extendable method: 检索来源数据源数据到新的查询数据源
         /// </summary>
         /// <typeparam name="TEntity">The entity's type.</typeparam>
-        /// <param name="source">基础数据源</param>
+        /// <param name="source">来源数据源</param>
         /// <param name="predicate">筛选表达式</param>
         /// <returns>被筛选后的数据源</returns>
         public static IDbQuery<TEntity> Where<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
         {
-            //非空验证
+            // 非空验证
             Check.ArgumentNull(source, nameof(source));
             Check.ArgumentNull(predicate, nameof(predicate));
-            //创建新的查询对象
-            return source.Factory.CreateQuery(source, predicate);
+            // 复制来源数据源获取新的查询数据源
+            IDbQuery<TEntity> cloned = source.Factory.CreateQuery(source);
+            // 为复制的数据源添加数据检索条件
+            cloned.SetWhere(predicate);
+            // 获取复制的查询数据源
+            return cloned;
         }
         /// <summary>
-        /// Extendable method: 筛选数据源符合条件的对象
+        /// Extendable method: 检索来源数据源数据到新的查询数据源
         /// </summary>
         /// <typeparam name="TEntity">The entity's type.</typeparam>
-        /// <param name="source">查询数据源</param>
+        /// <param name="source">来源数据源</param>
         /// <param name="predicate">筛选表达式</param>
         /// <returns>被筛选后的数据源</returns>
         public static IDbQuery<TEntity> Where<TEntity>(this IDbQuery<TEntity> source, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
         {
-            //非空验证
+            // 非空验证
             Check.ArgumentNull(source, nameof(source));
             Check.ArgumentNull(predicate, nameof(predicate));
-            //创建新的查询对象
-            return source.Factory.CreateQuery(source, predicate);
+            // 复制来源数据源到新的查询数据源
+            IDbQuery<TEntity> cloned = source.Factory.CreateQuery(source);
+            // 为复制的数据源添加数据检索条件
+            cloned.SetWhere(predicate);
+            // 获取复制的查询数据源
+            return cloned;
         }
         /// <summary>
         /// Extendable method: 选定属性查询
@@ -295,6 +355,29 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(predicate, nameof(predicate));
             //创建关联查询
             return source.Factory.CreateLeftJoinedQuery(source, otherSource, selector, predicate);
+        }
+
+        /// <summary>
+        /// Extendable method: 为数据源添加某属性是否为空（或不为空）的数据检索条件
+        /// </summary>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
+        /// <typeparam name="TProperty">属性类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="selector">指定对象某属性的表达式</param>
+        /// <param name="isNull">IS NULL 或 IS NOT NULL</param>
+        /// <returns>新的视图查询数据源</returns>
+        public static IDbView<TModel> SetIsNull<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, bool isNull = true)
+            where TModel : class, new()
+        {
+            // 非空验证
+            Check.ArgumentNull(source, nameof(source));
+            Check.ArgumentNull(selector, nameof(selector));
+            // 拼接sql
+            string sqlPredicate = isNull ? "IS NULL" : "IS NOT NULL";
+            // 为数据源添加数据检索条件
+            source.SetWhere(selector, sqlPredicate);
+            // 获取当前数据源方面链式操作
+            return source;
         }
 
         /// <summary>
@@ -428,14 +511,14 @@ namespace CloudEntity.Data.Entity
             return source.Factory.CreateView(source, selector, sqlFormat, value);
         }
         /// <summary>
-        /// Extendable method: 执行非空或可空查询获取视图查询数据源
+        /// Extendable method: 检索来源数据源某属性是否为空（或不为空）的数据到新的视图查询数据源
         /// </summary>
         /// <typeparam name="TModel">视图对象类型</typeparam>
         /// <typeparam name="TProperty">属性类型</typeparam>
         /// <param name="source">视图查询数据源</param>
         /// <param name="selector">指定对象某属性的表达式</param>
         /// <param name="isNull">IS NULL 或 IS NOT NULL</param>
-        /// <returns>视图查询数据源</returns>
+        /// <returns>新的视图查询数据源</returns>
         public static IDbView<TModel> IsNull<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, bool isNull = true)
             where TModel : class, new()
         {
@@ -444,8 +527,12 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(selector, nameof(selector));
             // 拼接sql
             string sqlPredicate = isNull ? "IS NULL" : "IS NOT NULL";
-            // 获取新的视图查询数据源
-            return source.Factory.CreateView(source, selector, sqlPredicate);
+            // 复制来源数据源获取新的查询数据源
+            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            // 为复制的数据源添加数据检索条件
+            cloned.SetWhere(selector, sqlPredicate);
+            // 最后获取复制的查询数据源
+            return cloned;
         }
         /// <summary>
         /// Extendable method: 筛选并获取筛选后的视图查询数据源
@@ -457,11 +544,15 @@ namespace CloudEntity.Data.Entity
         public static IDbView<TModel> Where<TModel>(this IDbView<TModel> source, Expression<Func<TModel, bool>> predicate)
             where TModel : class, new()
         {
-            //非空验证
+            // 非空验证
             Check.ArgumentNull(source, nameof(source));
             Check.ArgumentNull(predicate, nameof(predicate));
-            //创建新的视图查询数据源
-            return source.Factory.CreateView(source, predicate);
+            // 复制来源数据源到新的查询数据源
+            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            // 为复制的数据源添加数据检索条件
+            cloned.SetWhere(predicate);
+            // 获取复制的查询数据源
+            return cloned;
         }
 
         /// <summary>

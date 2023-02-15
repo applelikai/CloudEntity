@@ -36,33 +36,33 @@ namespace CloudEntity.Data
         /// <summary>
         /// 获取sql参数流
         /// </summary>
-        /// <param name="factory">创建参数的工厂</param>
+        /// <param name="dbHelper">操作数据库的DbHelper</param>
         /// <param name="parameterModel">参数模型对象</param>
         /// <returns>sql参数流</returns>
-        private static IEnumerable<IDbDataParameter> GetParameters(this IParameterFactory factory, object parameterModel)
+        private static IEnumerable<IDbDataParameter> GetParameters(this DbHelper dbHelper, object parameterModel)
         {
             //遍历所有的属性并创建返回sql参数
             foreach (PropertyInfo property in parameterModel.GetType().GetRuntimeProperties())
             {
-                yield return factory.Parameter(property.Name, property.GetValue(parameterModel));
+                yield return dbHelper.Parameter(property.Name, property.GetValue(parameterModel));
             }
         }
         /// <summary>
         /// 获取sql参数流
         /// </summary>
-        /// <param name="factory">创建参数的工厂</param>
+        /// <param name="dbHelper">操作数据库的DbHelper</param>
         /// <param name="parameterModel">参数模型对象</param>
         /// <param name="commandText">sql命令</param>
         /// <param name="marker">sql参数标识符号</param>
         /// <returns>sql参数流</returns>
-        private static IEnumerable<IDbDataParameter> GetParameters(this IParameterFactory factory, object parameterModel, string commandText, char marker)
+        private static IEnumerable<IDbDataParameter> GetParameters(this DbHelper dbHelper, object parameterModel, string commandText, char marker)
         {
             //遍历所有的属性并创建返回sql参数
             foreach (PropertyInfo property in parameterModel.GetType().GetRuntimeProperties())
             {
                 //若sql命令中包含此sql参数名，则创建参数并返回
                 if (commandText.Contains(string.Concat(marker, property.Name)))
-                    yield return factory.Parameter(property.Name, property.GetValue(parameterModel));
+                    yield return dbHelper.Parameter(property.Name, property.GetValue(parameterModel));
             }
         }
 

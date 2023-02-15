@@ -438,7 +438,7 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             // 创建查询数据源
-            DbQuery<TEntity> cloned = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this);
+            DbQuery<TEntity> cloned = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
             // 复制sql表达式节点列表
             cloned.AddNodeBuilders(source.NodeBuilders);
             // 复制sql参数列表
@@ -456,7 +456,7 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             // 创建查询数据源
-            DbQuery<TEntity> cloned = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this);
+            DbQuery<TEntity> cloned = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
             // 复制sql表达式节点列表
             cloned.AddNodeBuilders(source.NodeBuilders);
             // 复制sql参数列表
@@ -476,7 +476,7 @@ namespace CloudEntity.Core.Data.Entity
             where TModel : class, new()
         {
             // 创建新的视图数据源
-            DbView<TModel> cloned = new DbView<TModel>(this, _commandTreeFactory, this.DbHelper, source.InnerQuerySql);
+            DbView<TModel> cloned = new DbView<TModel>(this, _commandTreeFactory, this.DbHelper, _predicateParserFactory, source.InnerQuerySql);
             // 复制sql表达式节点列表
             cloned.AddNodeBuilders(source.NodeBuilders);
             // 复制sql参数列表
@@ -749,23 +749,16 @@ namespace CloudEntity.Core.Data.Entity
             return this.CloneToQuery(source);
         }
         /// <summary>
-        /// 创建新的查询数据源
+        /// 复制新的查询数据源
         /// </summary>
+        /// <param name="source">来源数据源</param>
         /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <param name="source">基础数据源</param>
-        /// <param name="predicate">查询条件表达式</param>
         /// <returns>新的查询数据源</returns>
-        public IDbQuery<TEntity> CreateQuery<TEntity>(IDbSource<TEntity> source, Expression<Func<TEntity, bool>> predicate)
+        public IDbQuery<TEntity> CreateQuery<TEntity>(IDbSource<TEntity> source)
             where TEntity : class
         {
             // 复制新的查询数据源
             DbQuery<TEntity> cloned = this.CloneToQuery(source);
-            // 解析Lambda表达式，获取并添加Sql表达式节点，并添加附带的sql参数
-            foreach (INodeBuilder sqlBuilder in _mapperPredicateParserFactory.GetWhereChildBuilders(cloned, predicate.Parameters[0], predicate.Body))
-            {
-                // （解析时，已自动为数据源cloned添加解析得到的sql参数，只需要）添加sql表达式节点
-                cloned.AddNodeBuilder(sqlBuilder);
-            }
             // 获取新的查询数据源
             return cloned;
         }
@@ -774,44 +767,13 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
         /// <param name="source">查询数据源</param>
-        /// <param name="predicate">查询条件表达式</param>
         /// <returns>新的查询数据源</returns>
-        public IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source, Expression<Func<TEntity, bool>> predicate)
+        public IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source)
             where TEntity : class
         {
             // 复制新的查询数据源
             DbQuery<TEntity> cloned = this.CloneToQuery(source);
-            // 解析Lambda表达式，获取并添加Sql表达式节点，并添加附带的sql参数
-            foreach (INodeBuilder sqlBuilder in _mapperPredicateParserFactory.GetWhereChildBuilders(cloned, predicate.Parameters[0], predicate.Body))
-            {
-                // （解析时，已自动为数据源cloned添加解析得到的sql参数，只需要）添加sql表达式节点
-                cloned.AddNodeBuilder(sqlBuilder);
-            }
             // 获取新的查询数据源
-            return cloned;
-        }
-        /// <summary>
-        /// 创建新的查询数据源
-        /// </summary>
-        /// <param name="source">数据源</param>
-        /// <param name="selector">指定对象成员表达式</param>
-        /// <param name="sqlPredicate">sql条件</param>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TProperty">实体属性类型</typeparam>
-        /// <returns>新的查询数据源</returns>
-        public IDbQuery<TEntity> CreateQuery<TEntity, TProperty>(IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, string sqlPredicate)
-            where TEntity : class
-        {
-            // 获取成员表达式
-            MemberExpression memberExpression = selector.Body.GetMemberExpression();
-            // 获取查询条件表达式节点
-            INodeBuilder nodeBuilder = this.GetWhereChildBuilder(memberExpression, sqlPredicate);
-
-            // 复制查询数据源
-            DbQuery<TEntity> cloned = this.CloneToQuery(source);
-            // 添加sql表达式节点
-            cloned.AddNodeBuilder(nodeBuilder);
-            // 最终获取复制的数据源
             return cloned;
         }
         /// <summary>
@@ -916,7 +878,7 @@ namespace CloudEntity.Core.Data.Entity
             where TOther : class
         {
             // 创建新的查询数据源
-            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this);
+            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
             // 加载sql表达式节点列表
             foreach (INodeBuilder nodeBuilder in this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetInnerJoinBuilder))
                 query.AddNodeBuilder(nodeBuilder);
@@ -943,7 +905,7 @@ namespace CloudEntity.Core.Data.Entity
             where TOther : class
         {
             // 创建新的查询数据源
-            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this);
+            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
             // 加载sql表达式节点列表
             foreach (INodeBuilder nodeBuilder in this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetInnerJoinBuilder))
                 query.AddNodeBuilder(nodeBuilder);
@@ -970,7 +932,7 @@ namespace CloudEntity.Core.Data.Entity
             where TOther : class
         {
             // 创建新的查询数据源
-            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this);
+            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
             // 加载sql表达式节点列表
             foreach (INodeBuilder nodeBuilder in this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetLeftJoinBuilder))
                 query.AddNodeBuilder(nodeBuilder);
@@ -997,7 +959,7 @@ namespace CloudEntity.Core.Data.Entity
             where TOther : class
         {
             // 创建新的查询数据源
-            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this);
+            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
             // 加载sql表达式节点列表
             foreach (INodeBuilder nodeBuilder in this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetLeftJoinBuilder))
                 query.AddNodeBuilder(nodeBuilder);
@@ -1082,7 +1044,7 @@ namespace CloudEntity.Core.Data.Entity
             // 获取Table元数据解析器
             ITableMapper tableMapper = _mapperContainer.GetTableMapper(typeof(TEntity));
             // 创建新的查询数据源
-            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper, this);
+            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper, this, _mapperPredicateParserFactory);
             // 加载sql表达式节点列表
             query.AddNodeBuilders(this.GetSelectedQueryNodeBuilders(source.NodeBuilders, selector, tableMapper));
             // 加载sql参数列表
@@ -1213,7 +1175,7 @@ namespace CloudEntity.Core.Data.Entity
             where TModel : class, new()
         {
             // 创建数据源
-            DbView<TModel> source = new DbView<TModel>(this, _commandTreeFactory, this.DbHelper, querySql);
+            DbView<TModel> source = new DbView<TModel>(this, _commandTreeFactory, this.DbHelper, _predicateParserFactory, querySql);
             // 添加sql参数
             source.AddSqlParameters(parameters);
             // 获取数据源
@@ -1224,46 +1186,13 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         /// <typeparam name="TModel">视图对象</typeparam>
         /// <param name="source">视图查询数据源</param>
-        /// <param name="predicate">查询条件表达式</param>
         /// <returns>新的视图查询数据源</returns>
-        public IDbView<TModel> CreateView<TModel>(IDbView<TModel> source, Expression<Func<TModel, bool>> predicate)
+        public IDbView<TModel> CreateView<TModel>(IDbView<TModel> source)
             where TModel : class, new()
         {
             // 复制数据源
             DbView<TModel> cloned = this.CloneView(source);
-            // 解析Lambda表达式，获取并添加Where节点下的子Sql表达式节点，并添加附带的sql参数
-            foreach (INodeBuilder sqlBuilder in _predicateParserFactory.GetWhereChildBuilders(cloned, predicate.Parameters[0], predicate.Body))
-            {
-                // （解析时，已自动为数据源cloned添加解析得到的sql参数，只需要）添加sql表达式节点
-                cloned.AddNodeBuilder(sqlBuilder);
-            }
             // 获取复制的数据源
-            return cloned;
-        }
-        /// <summary>
-        /// 创建视图查询数据源
-        /// </summary>
-        /// <param name="source">视图查询数据源</param>
-        /// <param name="selector">指定对象成员表达式</param>
-        /// <param name="sqlPredicate">sql条件</param>
-        /// <typeparam name="TModel">视图模型对象</typeparam>
-        /// <typeparam name="TProperty">模型属性类型</typeparam>
-        /// <returns>新的视图查询数据源</returns>
-        public IDbView<TModel> CreateView<TModel, TProperty>(IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, string sqlPredicate)
-            where TModel : class, new()
-        {
-            // 获取视图查询临时表名
-            string tableAlias = typeof(TModel).Name.ToLower();
-            // 获取指定的对象成员名称为视图查询映射列名
-            string columnName = selector.Body.GetMemberExpression().Member.Name;
-            // 获取查询条件表达式节点
-            INodeBuilder nodeBuilder = _commandTreeFactory.GetWhereChildBuilder(tableAlias, columnName, sqlPredicate);
-
-            // 复制数据源
-            DbView<TModel> cloned = this.CloneView(source);
-            // 添加获取查询条件表达式节点
-            cloned.AddNodeBuilder(nodeBuilder);
-            // 创建并返回视图查询数据源
             return cloned;
         }
         /// <summary>

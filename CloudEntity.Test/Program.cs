@@ -1,5 +1,4 @@
 ﻿using CloudEntity.Core.Data.Entity;
-using CloudEntity.Data;
 using CloudEntity.Data.Entity;
 using CloudEntity.Test.Entities.SysManagement;
 using CloudEntity.Test.Models;
@@ -10,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
 
 public class Program
 {
@@ -107,7 +105,7 @@ public class Program
         IDbQuery<User> users = _container.CreateQuery<User>()
             .IncludeBy(u => new { u.UserName, u.Password})
             .Join(roles, u => u.Role, (u, r) => u.RoleId == r.RoleId)
-            .Where(u => u.UserName.StartsWith("a"));
+            .IsNull(u => u.UserName, false);
         // 第一次打印用户列表
         Program.PrintUsers(users);
         // 第二次映射为微信用户列表并打印
@@ -127,16 +125,10 @@ public class Program
     private static void TestIn(IDbView<WechatUser> users)
     {
         // 获取用户姓名数组
-        string[] names = new string[] { "apple", "admin", "orange" };
+        //string[] names = new string[] { "apple", "admin", "orange" };
+        IDbSelectedQuery<string> names = _container.CreateQuery<User>().Select(u => u.UserName);
         // 添加查询条件
-        users = users.In(u => u.UserName, names);
-        // 打印
-        Program.PrintUsers(users);
-        // 获取角色名称数据源
-        IDbSelectedQuery<string> roleNames = _container.CreateQuery<Role>()
-            .Select(r => r.RoleName);
-        // 添加查询条件
-        users = users.In(u => u.RoleName, roleNames);
+        users.SetWhere(u => names.Contains(u.UserName));
         // 打印
         Program.PrintUsers(users);
     }
@@ -170,8 +162,12 @@ public class Program
         IDbDataParameter[] sqlParameters = users.Parameters.ToArray();
         // 获取查询视图
         IDbView<WechatUser> wechatUsers = _container.CreateView<WechatUser>(querySql, sqlParameters);
+        // 添加数据检索条件
+        wechatUsers = wechatUsers.IsNull(u => u.RoleName, false);
+        // 打印用户列表
+        Program.PrintUsers(wechatUsers);
         // 测试IN查询
-        Program.TestIn(wechatUsers);
+        // Program.TestIn(wechatUsers);
     }
     /// <summary>
     /// 开始执行

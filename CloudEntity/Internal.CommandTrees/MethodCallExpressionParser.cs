@@ -13,7 +13,7 @@ namespace CloudEntity.Internal.CommandTrees
     /// <summary>
     /// 方法表达式解析类
     /// 李凯 Apple_Li 15150598493
-    /// 最后修改时间：2023/02/10
+    /// 最后修改时间：2023/02/14
     /// </summary>
     internal class MethodCallExpressionParser : PredicateParser
     {
@@ -41,6 +41,32 @@ namespace CloudEntity.Internal.CommandTrees
                 default:
                     return null;
             }
+        }
+        /// <summary>
+        /// 转换获取IList类型的参数值列表
+        /// </summary>
+        /// <param name="value">值</param>
+        /// <returns>IList类型参数值列表</returns>
+        private IList GetList(object value)
+        {
+            // 若值为IList，则直接as 成IList并获取
+            if (value is IList)
+                return value as IList;
+            // 若值也不是可迭代类型，则抛出异常
+            if (!(value is IEnumerable))
+            {
+                // 抛出异常
+                throw new Exception(string.Format("解析sql参数值列表出错: {0}", value.ToString()));
+            }
+            // 转为可迭代类型
+            IEnumerable values = value as IEnumerable;
+            // 初始化列表
+            IList list = new ArrayList();
+            // 遍历可迭代类型并加载列表
+            foreach (object item in values)
+                list.Add(item);
+            // 获取列表
+            return list;
         }
         /// <summary>
         /// 解析普通类型方法调用的表达式获取sql表达式
@@ -109,7 +135,7 @@ namespace CloudEntity.Internal.CommandTrees
             //获取参数名的开头使用次数
             int times = parameterSetter.GetStartWithTimes(parameterName);
             //获取参数值列表并遍历
-            IList sqlParameterValues = parameterValues as IList;
+            IList sqlParameterValues = this.GetList(parameterValues);
             for (int i = 0; i < sqlParameterValues.Count; i++)
             {
                 // 获取新建参数名

@@ -7,7 +7,7 @@ namespace CloudEntity.Data
     /// <summary>
     /// 操作数据库的DbHelper
     /// </summary>
-    public abstract class DbHelper : IParameterFactory
+    public abstract class DbHelper
     {
         /// <summary>
         /// 连接字符串
