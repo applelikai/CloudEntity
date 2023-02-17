@@ -40,7 +40,7 @@ namespace CloudEntity.CommandTrees.Commom
                 //创建whereBuilder
                 this.whereBuilder = new BuilderCollection()
                 {
-                    TitleLeftSpace = "   WHERE ",
+                    TitleLeftSpace = "\n   WHERE ",
                     BodyLeftSpace = "     AND ",
                     BodyRightSpace = "\n",
                     LastRightSpace = string.Empty
@@ -96,7 +96,7 @@ namespace CloudEntity.CommandTrees.Commom
             commandText.AppendLine(this.InnerQuerySql);
             commandText.AppendLine(")");
             commandText.AppendLine("  SELECT *");
-            commandText.AppendFormat("    FROM {0}\n", this.TableAlias);
+            commandText.AppendFormat("    FROM {0}", this.TableAlias);
             this.Where.Build(commandText);
             this.OrderBy.Build(commandText);
         }

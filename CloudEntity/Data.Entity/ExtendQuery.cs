@@ -398,14 +398,14 @@ namespace CloudEntity.Data.Entity
             return cloned;
         }
         /// <summary>
-        /// Extendable method: 检索来源数据源某属性是否为空（或不为空）的数据到新的查询数据源
+        /// Extendable method: 复制来源数据源 并为新数据源添加 实体某属性是否为空（或不为空）的数据检索条件
         /// </summary>
         /// <typeparam name="TEntity">对象类型</typeparam>
         /// <typeparam name="TProperty">属性类型</typeparam>
         /// <param name="source">数据源过滤器</param>
         /// <param name="selector">指定对象属性表达式</param>
         /// <param name="isNull">IS NULL 或 IS NOT NULL</param>
-        /// <returns>新的数据源</returns>
+        /// <returns>新的查询数据源</returns>
         public static IDbQuery<TEntity> IsNull<TEntity, TProperty>(this IDbSource<TEntity> source, Expression<Func<TEntity, TProperty>> selector, bool isNull = true)
             where TEntity : class
         {
@@ -419,14 +419,14 @@ namespace CloudEntity.Data.Entity
             return cloned;
         }
         /// <summary>
-        /// Extendable method: 检索来源数据源某属性是否为空（或不为空）的数据到新的查询数据源
+        /// Extendable method: 复制来源数据源 并为新数据源添加 实体某属性是否为空（或不为空）的数据检索条件
         /// </summary>
         /// <typeparam name="TEntity">对象类型</typeparam>
         /// <typeparam name="TProperty">属性类型</typeparam>
         /// <param name="source">数据源过滤器</param>
         /// <param name="selector">指定对象属性表达式</param>
         /// <param name="isNull">IS NULL 或 IS NOT NULL</param>
-        /// <returns>新的数据源</returns>
+        /// <returns>新的查询数据源</returns>
         public static IDbQuery<TEntity> IsNull<TEntity, TProperty>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TProperty>> selector, bool isNull = true)
             where TEntity : class
         {
@@ -440,12 +440,12 @@ namespace CloudEntity.Data.Entity
             return cloned;
         }
         /// <summary>
-        /// Extendable method: 检索来源数据源数据到新的查询数据源
+        /// Extendable method: 复制来源数据源 并为新数据源添加数据检索条件
         /// </summary>
         /// <typeparam name="TEntity">The entity's type.</typeparam>
         /// <param name="source">来源数据源</param>
         /// <param name="predicate">筛选表达式</param>
-        /// <returns>被筛选后的数据源</returns>
+        /// <returns>新的查询数据源</returns>
         public static IDbQuery<TEntity> Where<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
         {
@@ -460,12 +460,12 @@ namespace CloudEntity.Data.Entity
             return cloned;
         }
         /// <summary>
-        /// Extendable method: 检索来源数据源数据到新的查询数据源
+        /// Extendable method: 复制来源数据源 并为新数据源添加数据检索条件
         /// </summary>
         /// <typeparam name="TEntity">The entity's type.</typeparam>
         /// <param name="source">来源数据源</param>
         /// <param name="predicate">筛选表达式</param>
-        /// <returns>被筛选后的数据源</returns>
+        /// <returns>新的查询数据源</returns>
         public static IDbQuery<TEntity> Where<TEntity>(this IDbQuery<TEntity> source, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
         {
@@ -480,24 +480,27 @@ namespace CloudEntity.Data.Entity
             return cloned;
         }
         /// <summary>
-        /// Extendable method: 选定属性查询
+        /// Extendable method: 复制来源数据源 并为新数据源指定需要查询的项（列）
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
         /// <typeparam name="TElement">包含项类型</typeparam>
         /// <param name="source">数据源</param>
         /// <param name="selector">指定查询项表达式</param>
-        /// <returns>查询选定属性的数据源</returns>
+        /// <returns>新的查询数据源</returns>
         public static IDbQuery<TEntity> IncludeBy<TEntity, TElement>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
             where TEntity : class
         {
-            //非空检查
+            // 非空检查
             Check.ArgumentNull(source, nameof(source));
-            Check.ArgumentNull(selector, nameof(selector));
-            //创建新的查询数据源
-            return source.Factory.CreateIncludedQuery(source, selector);
+            // 复制来源数据源到新的查询数据源
+            IDbQuery<TEntity> cloned = source.Factory.CreateQuery(source);
+            // 为复制的数据源指定需要查询的项（列）
+            cloned.SetIncludeBy(selector);
+            // 获取复制的查询数据源
+            return cloned;
         }
         /// <summary>
-        /// Extendable method: 获取关联查询数据源
+        /// Extendable method: 复制来源数据源 并为新数据源关联其他实体查询数据源
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
         /// <typeparam name="TOther">关联的实体类型</typeparam>
@@ -512,33 +515,12 @@ namespace CloudEntity.Data.Entity
         {
             //非空检查
             Check.ArgumentNull(source, nameof(source));
-            Check.ArgumentNull(otherSource, nameof(otherSource));
-            Check.ArgumentNull(selector, nameof(selector));
-            Check.ArgumentNull(predicate, nameof(predicate));
-            //创建关联查询
-            return source.Factory.CreateJoinedQuery(source, otherSource, selector, predicate);
-        }
-        /// <summary>
-        /// Extendable method: 获取关联查询数据源
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TOther">关联的实体类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="otherSource">关联对象的选择性查询数据源</param>
-        /// <param name="selector">指定关联实体类型的属性表达式</param>
-        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
-        /// <returns>关联查询数据源</returns>
-        public static IDbQuery<TEntity> Join<TEntity, TOther>(this IDbQuery<TEntity> source, IDbSelectedQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
-            where TEntity : class
-            where TOther : class
-        {
-            //非空检查
-            Check.ArgumentNull(source, nameof(source));
-            Check.ArgumentNull(otherSource, nameof(otherSource));
-            Check.ArgumentNull(selector, nameof(selector));
-            Check.ArgumentNull(predicate, nameof(predicate));
-            //创建关联查询
-            return source.Factory.CreateJoinedQuery(source, otherSource, selector, predicate);
+            // 复制来源数据源到新的查询数据源
+            IDbQuery<TEntity> cloned = source.Factory.CreateQuery(source);
+            // 为复制的数据源关联其他实体查询数据源
+            cloned.SetJoin(otherSource, selector, predicate);
+            // 获取复制的查询数据源
+            return cloned;
         }
         /// <summary>
         /// Extendable method: 获取左关联查询数据源
@@ -556,33 +538,12 @@ namespace CloudEntity.Data.Entity
         {
             //非空检查
             Check.ArgumentNull(source, nameof(source));
-            Check.ArgumentNull(otherSource, nameof(otherSource));
-            Check.ArgumentNull(selector, nameof(selector));
-            Check.ArgumentNull(predicate, nameof(predicate));
-            //创建关联查询
-            return source.Factory.CreateLeftJoinedQuery(source, otherSource, selector, predicate);
-        }
-        /// <summary>
-        /// Extendable method: 获取左关联查询数据源
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TOther">关联的实体类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="otherSource">关联对象的选择性查询数据源</param>
-        /// <param name="selector">指定关联实体类型的属性表达式</param>
-        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
-        /// <returns>左关联查询数据源</returns>
-        public static IDbQuery<TEntity> LeftJoin<TEntity, TOther>(this IDbQuery<TEntity> source, IDbSelectedQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
-            where TEntity : class
-            where TOther : class
-        {
-            //非空检查
-            Check.ArgumentNull(source, nameof(source));
-            Check.ArgumentNull(otherSource, nameof(otherSource));
-            Check.ArgumentNull(selector, nameof(selector));
-            Check.ArgumentNull(predicate, nameof(predicate));
-            //创建关联查询
-            return source.Factory.CreateLeftJoinedQuery(source, otherSource, selector, predicate);
+            // 复制来源数据源到新的查询数据源
+            IDbQuery<TEntity> cloned = source.Factory.CreateQuery(source);
+            // 为复制的数据源左连接关联其他实体查询数据源
+            cloned.SetLeftJoin(otherSource, selector, predicate);
+            // 获取复制的查询数据源
+            return cloned;
         }
 
         /// <summary>

@@ -4,6 +4,7 @@ namespace CloudEntity.CommandTrees.Commom
 {
     /// <summary>
     /// Join sql表达式节点
+    /// Apple_Li 李凯 15150598493
     /// </summary>
     public class JoinBuilder : INodeBuilder
     {

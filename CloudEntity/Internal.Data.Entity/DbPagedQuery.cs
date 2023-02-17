@@ -14,7 +14,7 @@ namespace CloudEntity.Internal.Data.Entity
     /// 分页查询数据源类
     /// </summary>
     /// <typeparam name="TEntity"></typeparam>
-    internal class DbPagedQuery<TEntity> : DbQueryBase<TEntity>, IDbPagedQuery<TEntity>
+    internal class DbPagedQuery<TEntity> : DbSortedQuery<TEntity>, IDbPagedQuery<TEntity>
         where TEntity : class
     {
         /// <summary>

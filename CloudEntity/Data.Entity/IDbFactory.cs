@@ -51,71 +51,6 @@ namespace CloudEntity.Data.Entity
         /// <returns>新的查询数据源</returns>
         IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source)
             where TEntity : class;
-        /// <summary>
-        /// 创建根据某属性排好序的查询对象
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TKey">实体某属性类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="keySelector">指定实体对象某属性的表达式</param>
-        /// <param name="isDesc">true:降序 false:升序</param>
-        /// <returns>排好序的查询对象</returns>
-        IDbQuery<TEntity> CreateSortedQuery<TEntity, TKey>(IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector, bool isDesc = false)
-            where TEntity : class;
-        #endregion
-        #region 创建关联查询数据源
-        /// <summary>
-        /// 创建连接查询对象
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TOther">关联的实体类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="otherSource">关联对象的数据源</param>
-        /// <param name="selector">指定关联实体类型的属性表达式</param>
-        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
-        /// <returns>连接查询对象</returns>
-        IDbQuery<TEntity> CreateJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
-            where TEntity : class
-            where TOther : class;
-        /// <summary>
-        /// 创建连接查询对象
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TOther">关联的实体类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="otherSource">关联对象的选择性查询数据源</param>
-        /// <param name="selector">指定关联实体类型的属性表达式</param>
-        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
-        /// <returns>连接查询对象</returns>
-        IDbQuery<TEntity> CreateJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbSelectedQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
-            where TEntity : class
-            where TOther : class;
-        /// <summary>
-        /// 创建左连接查询对象
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TOther">关联的实体类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="otherSource">关联对象的数据源</param>
-        /// <param name="selector">指定关联实体类型的属性表达式</param>
-        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
-        /// <returns>左连接查询对象</returns>
-        IDbQuery<TEntity> CreateLeftJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
-            where TEntity : class
-            where TOther : class;
-        /// <summary>
-        /// 创建左连接查询对象
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TOther">关联的实体类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="otherSource">关联对象的选择性查询数据源</param>
-        /// <param name="selector">指定关联实体类型的属性表达式</param>
-        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
-        /// <returns>左连接查询对象</returns>
-        IDbQuery<TEntity> CreateLeftJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbSelectedQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
-            where TEntity : class
-            where TOther : class;
         #endregion
         #region 创建分页查询数据源
         /// <summary>
@@ -142,16 +77,6 @@ namespace CloudEntity.Data.Entity
             where TEntity : class;
         #endregion
         #region 创建包含项或选定项查询数据源
-        /// <summary>
-        /// 创建查询部分字段的数据源
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TElement">包含项类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="selector">指定查询项表达式</param>
-        /// <returns>查询部分字段的数据源</returns>
-        IDbQuery<TEntity> CreateIncludedQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
-            where TEntity : class;
         /// <summary>
         /// 创建选定项查询数据源
         /// </summary>
@@ -201,17 +126,6 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">视图查询数据源</param>
         /// <returns>新的视图查询数据源</returns>
         IDbView<TModel> CreateView<TModel>(IDbView<TModel> source)
-            where TModel : class, new();
-        /// <summary>
-        /// 创建根据某属性排好序的视图查询数据源
-        /// </summary>
-        /// <typeparam name="TModel">视图模型对象</typeparam>
-        /// <typeparam name="TKey">对象某属性类型</typeparam>
-        /// <param name="source">视图查询数据源</param>
-        /// <param name="keySelector">指定视图模型对象某属性的表达式</param>
-        /// <param name="isAsc">true:升序 false:降序</param>
-        /// <returns>排好序的视图查询数据源</returns>
-        IDbView<TModel> CreateSortedView<TModel, TKey>(IDbView<TModel> source, Expression<Func<TModel, TKey>> keySelector, bool isAsc = true)
             where TModel : class, new();
         #endregion
     }

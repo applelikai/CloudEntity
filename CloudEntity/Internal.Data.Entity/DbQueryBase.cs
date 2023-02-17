@@ -1,10 +1,11 @@
 ﻿using CloudEntity.CommandTrees;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
-using CloudEntity.Mapping;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace CloudEntity.Internal.Data.Entity
 {
@@ -46,6 +47,24 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerable<IDbDataParameter> Parameters
         {
             get { return _sqlParameters; }
+        }
+
+        /// <summary>
+        /// 移除为某父节点类型的sql表达式节点
+        /// </summary>
+        /// <param name="parentType">父节点类型</param>
+        protected void RemoveNodeBuilders(SqlType parentType)
+        {
+            // 为避免foreach遍历列表时执行删除会出现异常 使用for循环遍历，为了确保删除干净，从后到前执行删除
+            for (int i = _nodebuilders.Count - 1; i >= 0; i --)
+            {
+                // 若当前sql表达式节点满足条件
+                if (_nodebuilders[i].ParentNodeType == parentType)
+                {
+                    // 则删除当前下标的sql表达式节点
+                    _nodebuilders.RemoveAt(i);
+                }
+            }
         }
 
         /// <summary>
@@ -128,32 +147,6 @@ namespace CloudEntity.Internal.Data.Entity
         {
             foreach (IDbDataParameter sqlParameter in sqlParameters)
                 _sqlParameters.Add(sqlParameter);
-        }
-    }
-    /// <summary>
-    /// 基于实体的数据操作基础类
-    /// Apple_Li 李凯 15150598493
-    /// 2023/02/09 22:58
-    /// </summary>
-    /// <typeparam name="TEntity">实体类型</typeparam>
-    internal class DbQueryBase<TEntity> : DbQueryBase
-        where TEntity : class
-    {
-        /// <summary>
-        /// Mapper容器
-        /// </summary>
-        protected IMapperContainer MapperContainer { get; private set; }
-
-        /// <summary>
-        /// 创建操作数据库的基础对象
-        /// </summary>
-        /// <param name="mapperContainer">Mapper容器</param>
-        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
-        /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbQueryBase(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
-            : base(commandTreeFactory, dbHelper)
-        {
-            this.MapperContainer = mapperContainer;
         }
     }
 }

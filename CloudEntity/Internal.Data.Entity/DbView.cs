@@ -17,7 +17,7 @@ namespace CloudEntity.Internal.Data.Entity
     /// 最后修改时间：2023/02/15 23:11
     /// </summary>
     /// <typeparam name="TModel">对象类型</typeparam>
-    internal class DbView<TModel> : DbQueryBase, IDbView<TModel>
+    internal class DbView<TModel> : DbSortedQuery, IDbView<TModel>
         where TModel : class, new()
     {
         /// <summary>
@@ -64,6 +64,20 @@ namespace CloudEntity.Internal.Data.Entity
             }
             //返回模型对象
             return model;
+        }
+
+        /// <summary>
+        /// 获取orderby节点的子节点
+        /// </summary>
+        /// <param name="memberExpression">成员表达式</param>
+        /// <param name="isDesc">是否降序[true:降序 false:升序]</param>
+        /// <returns>orderby节点的子节点</returns>
+        protected override INodeBuilder GetOrderbyNodeBuilder(MemberExpression memberExpression, bool isDesc)
+        {
+            //获取列名
+            string columnName = memberExpression.Member.Name;
+            //获取不使用别名的OrderBy节点的子表达式(排序时，禁止使用别名)
+            return base.CommandTreeFactory.GetOrderByChildBuilder(_tableAlias, columnName, isDesc);
         }
 
         /// <summary>
@@ -180,6 +194,44 @@ namespace CloudEntity.Internal.Data.Entity
             // 添加sql参数列表
             for (int i = 0; i < parameterNames.Length; i++)
                 base.AddSqlParameter(parameterNames[i], values[i]);
+            // 获取当前视图查询数据源
+            return this;
+        }
+        /// <summary>
+        /// 为数据源设置排序条件
+        /// </summary>
+        /// <param name="keySelector">指定排序项的表达式</param>
+        /// <param name="isDesc">是否为降序</param>
+        /// <typeparam name="TKey">排序项类型</typeparam>
+        /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
+        public IDbView<TModel> SetSort<TKey>(Expression<Func<TModel, TKey>> keySelector, bool isDesc = false)
+        {
+            // 非空检查
+            Check.ArgumentNull(keySelector, nameof(keySelector));
+            // 获取orderby节点的子节点集合
+            IEnumerable<INodeBuilder> nodeBuilders = base.GetOrderbyNodeBuilders(keySelector, isDesc);
+            // 添加orderby节点的子节点集合
+            base.AddNodeBuilders(nodeBuilders);
+            // 获取当前视图查询数据源
+            return this;
+        }
+        /// <summary>
+        /// 为数据源重新设置排序条件（之前的排序条件会被清空）
+        /// </summary>
+        /// <param name="keySelector">指定排序项的表达式</param>
+        /// <param name="isDesc">是否为降序</param>
+        /// <typeparam name="TKey">排序项类型</typeparam>
+        /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
+        public IDbView<TModel> SetSortBy<TKey>(Expression<Func<TModel, TKey>> keySelector, bool isDesc = false)
+        {
+            // 非空检查
+            Check.ArgumentNull(keySelector, nameof(keySelector));
+            // 清空之前的sql排序表达式节点
+            base.RemoveNodeBuilders(SqlType.OrderBy);
+            // 获取orderby节点的子节点集合
+            IEnumerable<INodeBuilder> nodeBuilders = base.GetOrderbyNodeBuilders(keySelector, isDesc);
+            // 添加orderby节点的子节点集合
+            base.AddNodeBuilders(nodeBuilders);
             // 获取当前视图查询数据源
             return this;
         }

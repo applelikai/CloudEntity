@@ -55,5 +55,21 @@ namespace CloudEntity.Data.Entity
         /// <typeparam name="TProperty">模型属性类型</typeparam>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
         IDbView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlFormat, params TProperty[] values);
+        /// <summary>
+        /// 为数据源设置排序条件
+        /// </summary>
+        /// <param name="keySelector">指定排序项的表达式</param>
+        /// <param name="isDesc">是否为降序</param>
+        /// <typeparam name="TKey">排序项类型</typeparam>
+        /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
+        IDbView<TModel> SetSort<TKey>(Expression<Func<TModel, TKey>> keySelector, bool isDesc = false);
+        /// <summary>
+        /// 为数据源重新设置排序条件（之前的排序条件会被清空）
+        /// </summary>
+        /// <param name="keySelector">指定排序项的表达式</param>
+        /// <param name="isDesc">是否为降序</param>
+        /// <typeparam name="TKey">排序项类型</typeparam>
+        /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
+        IDbView<TModel> SetSortBy<TKey>(Expression<Func<TModel, TKey>> keySelector, bool isDesc = false);
     }
 }

@@ -117,34 +117,44 @@ public class Program
     {
         // 获取角色数据源
         IDbQuery<Role> roles = _container.CreateQuery<Role>()
-            .IncludeBy(r => r.RoleName);
+            .SetIncludeBy(r => r.RoleName);
         // 获取用户数据源
         IDbQuery<User> users = _container.CreateQuery<User>()
-            .IncludeBy(u => new { u.UserName, u.CreatedTime})
-            .Join(roles, u => u.Role, (u, r) => u.RoleId == r.RoleId)
-            .Like(u => u.UserName, "ap%");
+            .SetIncludeBy(u => new { u.UserName, u.CreatedTime})
+            .SetLeftJoin(roles, u => u.Role, (u, r) => u.RoleId == r.RoleId)
+            .SetLike(u => u.UserName, "ap%")
+            .SetSort(u => u.Role.RoleName);
         // 第一次打印用户列表
-        Program.PrintUsers(users);
+        // Program.PrintUsers(users);
         // 第二次映射为微信用户列表并打印
-        Program.PrintUsers(users.Cast<WechatUser>());
+        // Program.PrintUsers(users.Cast<WechatUser>());
         // 获取用户分页查询数据源
-        IDbPagedQuery<User> pagedUsers = users.PagingByDescending(u => u.UserName, 10, 1);
+        IDbPagedQuery<User> pagedUsers = users.PagingByDescending(u => u.CreatedTime, 10, 1);
         // 第三次打印用户列表
         Program.PrintUsers(pagedUsers);
         // 第四次映射为微信用户列表并打印
-        Program.PrintUsers(pagedUsers.Cast<WechatUser>());
+        // Program.PrintUsers(pagedUsers.Cast<WechatUser>());
     }
     /// <summary>
     /// 测试IN语句查询
     /// </summary>
     private static void QueryTestIn()
     {
-        // 获取用户姓名数组
-        string[] names = new string[] { "admin", "apple", "pear" };
+        // 获取角色id数据源
+        IDbSelectedQuery<string> roleIds = _container.CreateQuery<Role>().Top(10, r => r.RoleId);
         // 获取用户数据源
-        IDbQuery<User> users = _container.CreateQuery<User>().SetIn(u => u.UserName, names);
+        IDbQuery<User> users = _container.CreateQuery<User>().OrderByDescending(u => u.CreatedTime);
         // 打印用户列表
-        Program.PrintUsers(users);
+        Program.PrintUsers(users.Top(10));
+    }
+    /// <summary>
+    /// 选定项查询测试
+    /// </summary>
+    private static void QueryTestSelect()
+    {
+        // 获取用户数据源
+        IDbQuery<User> users = _container.CreateQuery<User>();
+        // 获取
     }
     /// <summary>
     /// 测试Between查询
@@ -213,11 +223,10 @@ public class Program
         string querySql = users.ToSqlString();
         IDbDataParameter[] sqlParameters = users.Parameters.ToArray();
         // 获取查询视图
-        IDbView<WechatUser> wechatUsers = _container.CreateView<WechatUser>(querySql, sqlParameters);
-        // 获取角色名称数据源
-        IDbSelectedQuery<string> roleNames = _container.CreateQuery<Role>().Select(r => r.RoleName);
-        // 添加数据检索条件
-        wechatUsers.SetIn(u => u.RoleName, roleNames, false);
+        IDbView<WechatUser> wechatUsers = _container.CreateView<WechatUser>(querySql, sqlParameters)
+            .SetIsNull(u => u.UserName, false)
+            .OrderByDescending(u => u.CreatedTime)
+            .ThenBy(u => u.UserName);
         // 打印用户列表
         Program.PrintUsers(wechatUsers);
     }
@@ -227,9 +236,7 @@ public class Program
     /// <param name="args">控制台参数</param>
     private static void Main(string[] args)
     {
-        // 获取微信用户视图查询数据源
-        IDbView<WechatUser> wechatUsers = Program.GetWechatUsers();
-        // IN查询测试
-        Program.TestLike(wechatUsers);
+        // 查询测试
+        Program.ViewQueryTest();
     }
 }

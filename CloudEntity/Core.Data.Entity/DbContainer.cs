@@ -8,7 +8,6 @@ using CloudEntity.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Linq.Expressions;
 
 namespace CloudEntity.Core.Data.Entity
@@ -74,80 +73,6 @@ namespace CloudEntity.Core.Data.Entity
         }
         
         /// <summary>
-        /// 获取sql成员表达式节点
-        /// </summary>
-        /// <param name="expression">表达式</param>
-        /// <returns>sql成员表达式节点</returns>
-        private ISqlBuilder GetSqlBuilder(Expression expression)
-        {
-            //获取成员表达式
-            MemberExpression memberExpression = expression.GetMemberExpression();
-            //获取当前实体类型的Table元数据解析器
-            ITableMapper tableMapper = _mapperContainer.GetTableMapper(memberExpression.Expression.Type);
-            //获取columnMapper
-            IColumnMapper columnMapper = tableMapper.GetColumnMapper(memberExpression.Member.Name);
-            //获取sql列节点生成器
-            return _commandTreeFactory.GetColumnBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName);
-        }
-        /// <summary>
-        /// 获取sql表达式节点
-        /// </summary>
-        /// <param name="expression">表达式</param>
-        /// <returns>sql表达式节点</returns>
-        private INodeBuilder GetNodeBuilder(Expression expression)
-        {
-            switch (expression.NodeType)
-            {
-                //解析普通二叉树表达式节点
-                case ExpressionType.GreaterThan:            //大于     >
-                case ExpressionType.GreaterThanOrEqual:     //大于等于  >=
-                case ExpressionType.LessThan:               //小于     <
-                case ExpressionType.LessThanOrEqual:        //小于等于  <=
-                case ExpressionType.Equal:                  //等于     ==
-                case ExpressionType.NotEqual:               //不等于   !=
-                    BinaryExpression binaryExpression = expression as BinaryExpression;
-                    return new BinaryBuilder()
-                    {
-                        LeftBuilder = this.GetSqlBuilder(binaryExpression.Left),
-                        NodeType = binaryExpression.NodeType,
-                        RightBuilder = this.GetSqlBuilder(binaryExpression.Right)
-                    };
-                //解析 AND OR表达式节点
-                case ExpressionType.And:
-                case ExpressionType.AndAlso:
-                case ExpressionType.Or:
-                case ExpressionType.OrElse:
-                    BinaryExpression andOrExpression = expression as BinaryExpression;
-                    return new BinaryBuilder()
-                    {
-                        LeftBuilder = this.GetNodeBuilder(andOrExpression.Left),
-                        NodeType = andOrExpression.NodeType,
-                        RightBuilder = this.GetNodeBuilder(andOrExpression.Right)
-                    };
-                default:
-                    throw new Exception(string.Format("unknow expression:{0]", expression));
-            }
-        }
-        /// <summary>
-        /// 获取Column节点列表
-        /// </summary>
-        /// <param name="tableMapper">Table元数据解析器</param>
-        /// <param name="propertyNames">属性名数组</param>
-        /// <returns>Column节点列表</returns>
-        private IEnumerable<INodeBuilder> GetColumnBuilders(ITableMapper tableMapper, IEnumerable<string> propertyNames)
-        {
-            //遍历所有的Column元数据解析器
-            foreach (IColumnMapper columnMapper in tableMapper.GetColumnMappers())
-            {
-                //若propertyNames中包含当前Property元数据解析器的Property名称
-                if (propertyNames.Contains(columnMapper.Property.Name))
-                {
-                    //依次获取column节点生成器
-                    yield return _commandTreeFactory.GetColumnBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, columnMapper.ColumnAlias);
-                }
-            }
-        }
-        /// <summary>
         /// 过滤获取统计查询Sql表达式节点集合
         /// </summary>
         /// <param name="nodeBuilders">源Sql表达式节点集合</param>
@@ -198,221 +123,40 @@ namespace CloudEntity.Core.Data.Entity
                 }
             }
         }
-        /// <summary>
-        /// 解析关联表达式获取sql表达式节点迭代器
-        /// </summary>
-        /// <param name="expression">条件表达式主体</param>
-        /// <returns>sql表达式节点迭代器</returns>
-        private IEnumerable<INodeBuilder> GetJoinedOnNodeBuilders(Expression expression)
-        {
-            switch (expression.NodeType)
-            {
-                //解析普通二叉树表达式节点
-                case ExpressionType.GreaterThan:            //大于     >
-                case ExpressionType.GreaterThanOrEqual:     //大于等于  >=
-                case ExpressionType.LessThan:               //小于     <
-                case ExpressionType.LessThanOrEqual:        //小于等于  <=
-                case ExpressionType.Equal:                  //等于     ==
-                case ExpressionType.NotEqual:               //不等于   !=
-                //解析Or节点
-                case ExpressionType.Or:
-                case ExpressionType.OrElse:
-                    yield return this.GetNodeBuilder(expression);
-                    break;
-                //解析And节点
-                case ExpressionType.And:
-                case ExpressionType.AndAlso:
-                    //获取AND二叉树表达式主体
-                    BinaryExpression andExpression = expression as BinaryExpression;
-                    //解析表达式主体的左节点，后去sql表达式生成器集合
-                    foreach (INodeBuilder nodeBuilder in this.GetJoinedOnNodeBuilders(andExpression.Left))
-                        yield return nodeBuilder;
-                    //解析表达式主体的右节点，后去sql表达式生成器集合
-                    foreach (INodeBuilder nodeBuilder in this.GetJoinedOnNodeBuilders(andExpression.Right))
-                        yield return nodeBuilder;
-                    break;
-                //不可解析的表达式直接扔出异常
-                default:
-                    throw new Exception(string.Format("unknow expression: {0}", expression));
-            }
-        }
-        /// <summary>
-        /// 解析关联表达式获取sql表达式节点迭代器
-        /// </summary>
-        /// <param name="expression">条件表达式主体</param>
-        /// <param name="nodeBuilders">主表sql表达式节点集合</param>
-        /// <param name="otherSourceNodeBuilders">从表sql表达式节点集合</param>
-        /// <param name="getJoinBuilder">传入tableBuilder获取joinBuilder的函数</param>
-        /// <returns>关联查询的sql表达式节点集合</returns>
-        private IEnumerable<INodeBuilder> GetJoinedQueryNodeBuilders(Expression expression, IEnumerable<INodeBuilder> nodeBuilders, IEnumerable<INodeBuilder> otherSourceNodeBuilders, Func<TableBuilder, JoinBuilder> getJoinBuilder)
-        {
-            //记录列名
-            IList<string> columnNames = new List<string>();
-            //返回主表sql表达式节点集合
-            foreach (INodeBuilder nodeBuilder in nodeBuilders)
-            {
-                //去除相同列名的列
-                if (nodeBuilder.BuilderType == BuilderType.Column)
-                {
-                    ColumnBuilder columnBuilder = nodeBuilder as ColumnBuilder;
-                    if (columnNames.Contains(columnBuilder.ColumnName))
-                        continue;
-                    columnNames.Add(columnBuilder.ColumnName);
-                }
-                //返回主表表达式节点
-                yield return nodeBuilder;
-            }
-            //返回从表sql表达式节点集合
-            foreach (INodeBuilder nodeBuilder in otherSourceNodeBuilders)
-            {
-                //去除相同列名的列
-                if (nodeBuilder.BuilderType == BuilderType.Column)
-                {
-                    ColumnBuilder columnBuilder = nodeBuilder as ColumnBuilder;
-                    if (columnNames.Contains(columnBuilder.ColumnName))
-                        continue;
-                    columnNames.Add(columnBuilder.ColumnName);
-                }
-                //获取从表Table表达式节点并生成JOIN表达式节点
-                if (nodeBuilder.BuilderType == BuilderType.Table)
-                {
-                    //获取joinBuilder节点
-                    TableBuilder tableBuilder = nodeBuilder as TableBuilder;
-                    JoinBuilder joinBuilder = getJoinBuilder(tableBuilder);
-                    //拼接join on表达式节点
-                    foreach (ISqlBuilder sqlBuilder in this.GetJoinedOnNodeBuilders(expression))
-                        joinBuilder.OnBuilders.Append(sqlBuilder);
-                    //返回joinBuilder节点并跳过
-                    yield return joinBuilder;
-                    continue;
-                }
-                //返回其他类型的表达式节点
-                yield return nodeBuilder;
-            }
-        }
-        /// <summary>
-        /// 获取选定项查询命令生成树子节点集合
-        /// </summary>
-        /// <param name="nodeBuilders">源Sql表达式节点集合</param>
-        /// <param name="selector">选定查询项表达式</param>
-        /// <param name="tableMapper">Table元数据解析器</param>
-        /// <returns>选定项查询命令生成树子节点集合</returns>
-        private IEnumerable<INodeBuilder> GetSelectedQueryNodeBuilders(IEnumerable<INodeBuilder> nodeBuilders, LambdaExpression selector, ITableMapper tableMapper)
-        {
-            //解析Lambda Select表达式为nodeBuilders添加父类型为Select的子sql表达式节点
-            switch (selector.Body.NodeType)
-            {
-                //解析转换表达式及其成员表达式(e => e.Property1)
-                case ExpressionType.Convert:
-                case ExpressionType.MemberAccess:
-                    //获取成员表达式
-                    MemberExpression memberExpression = selector.Body.GetMemberExpression();
-                    //获取当前实体类型的Table元数据解析器
-                    ITableMapper currentTableMapper = _mapperContainer.GetTableMapper(memberExpression.Expression.Type);
-                    //获取columnMapper
-                    IColumnMapper columnMapper = currentTableMapper.GetColumnMapper(memberExpression.Member.Name);
-                    //依次获取column节点生成器
-                    yield return _commandTreeFactory.GetColumnBuilder(currentTableMapper.Header.TableAlias, columnMapper.ColumnName, columnMapper.ColumnAlias);
-                    break;
-                //解析MemberInitExpression(e => new { PropertyA = e.Property1, PropertyB = a.Property2})
-                case ExpressionType.MemberInit:
-                    MemberInitExpression memberInitExpression = selector.Body as MemberInitExpression;
-                    //获取表达式中包含的TEntity的所有属性的名称
-                    string[] propertyNames = new string[memberInitExpression.Bindings.Count];
-                    for (int i = 0; i < memberInitExpression.Bindings.Count; i++)
-                    {
-                        MemberBinding memberBing = memberInitExpression.Bindings[i];
-                        propertyNames[i] = memberBing.ToString().Split('.').Last();
-                    }
-                    //为nodeBuilders添加父类型为Select的子sql表达式节点
-                    foreach (INodeBuilder columnBuilder in this.GetColumnBuilders(tableMapper, propertyNames))
-                        yield return columnBuilder;
-                    break;
-                //解析NewExpression(e => new Model(e.Property1, e.Property2))
-                case ExpressionType.New:
-                    NewExpression newExpression = selector.Body as NewExpression;
-                    IEnumerable<string> memberNames = newExpression.Arguments.OfType<MemberExpression>().Select(m => m.Member.Name);
-                    //为nodeBuilders添加父类型为Select的子sql表达式节点
-                    foreach (INodeBuilder columnBuilder in this.GetColumnBuilders(tableMapper, memberNames))
-                        yield return columnBuilder;
-                    break;
-                default:
-                    throw new Exception(string.Format("Unknow Expression: {0}", selector));
-            }
-            //返回源源Sql表达式节点集合非Select父节点的所有子节点集合
-            foreach (INodeBuilder nodeBuilder in nodeBuilders)
-            {
-                if (nodeBuilder.ParentNodeType != SqlType.Select)
-                    yield return nodeBuilder;
-            }
-        }
-        #region 获取OrderBy的子节点集合
-        /// <summary>
-        /// 获取orderby节点的子节点
-        /// </summary>
-        /// <param name="memberExpression">成员表达式</param>
-        /// <param name="isDesc">是否降序[true:降序 false:升序]</param>
-        /// <returns>orderby节点的子节点</returns>
-        private INodeBuilder GetOrderbyNodeBuilder(MemberExpression memberExpression, bool isDesc)
-        {
-            //获取当前实体类型的Table元数据解析器
-            ITableMapper tableMapper = _mapperContainer.GetTableMapper(memberExpression.Expression.Type);
-            //获取columnMapper
-            IColumnMapper columnMapper = tableMapper.GetColumnMapper(memberExpression.Member.Name);
-            //获取不使用别名的OrderBy节点的子表达式(排序时，禁止使用别名)
-            return _commandTreeFactory.GetOrderByChildBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, isDesc);
-        }
-        /// <summary>
-        /// 获取orderby节点的子节点集合
-        /// </summary>
-        /// <param name="memberExpressions">成员表达式列表</param>
-        /// <param name="isDesc">是否降序[true:降序 false:升序]</param>
-        /// <returns>orderby节点的子节点集合</returns>
-        private IEnumerable<INodeBuilder> GetOrderbyNodeBuilders(IEnumerable<MemberExpression> memberExpressions, bool isDesc)
-        {
-            //遍历所有的成员表达式
-            foreach (MemberExpression memberExpression in memberExpressions)
-            {
-                //依次获取orderby节点的子表达式节点
-                yield return this.GetOrderbyNodeBuilder(memberExpression, isDesc);
-            }
-        }
-        /// <summary>
-        /// 获取orderby节点的子节点集合
-        /// </summary>
-        /// <param name="selector">选定排序项表达式</param>
-        /// <param name="isDesc">true:降序 false:升序</param>
-        /// <returns>orderby节点的子节点集合</returns>
-        private IEnumerable<INodeBuilder> GetOrderbyNodeBuilders(LambdaExpression selector, bool isDesc)
-        {
-            //解析Lambda Select表达式为nodeBuilders添加父类型为Select的子sql表达式节点
-            switch (selector.Body.NodeType)
-            {
-                //解析转换表达式及其成员表达式(e => e.Property1)
-                case ExpressionType.Convert:
-                case ExpressionType.MemberAccess:
-                    //获取成员表达式
-                    MemberExpression memberExpression = selector.Body.GetMemberExpression();
-                    //生成并返回OrderBy节点的子节点
-                    yield return this.GetOrderbyNodeBuilder(memberExpression, isDesc);
-                    break;
-                //解析NewExpression(e => new Model(e.Property1, e.Property2))
-                case ExpressionType.New:
-                    //获取成员数组
-                    NewExpression newExpression = selector.Body as NewExpression;
-                    //获取成员表达式列表
-                    IEnumerable<MemberExpression> memberExpressions = newExpression.Arguments.OfType<MemberExpression>();
-                    //为nodeBuilders添加父类型为Select的子sql表达式节点
-                    foreach (INodeBuilder columnBuilder in this.GetOrderbyNodeBuilders(memberExpressions, isDesc))
-                        yield return columnBuilder;
-                    break;
-                //遇到未知类型的表达式直接异常
-                default:
-                    throw new Exception(string.Format("Unknow Expression: {0}", selector));
-            }
-        }
-        #endregion
         #region 获取数据源操作对象
+        /// <summary>
+        /// 复制来源数据源信息到分页查询数据源
+        /// </summary>
+        /// <param name="source">来源数据源</param>
+        /// <param name="cloned">分页查询数据源</param>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        private void Clone<TEntity>(IDbQuery<TEntity> source, DbPagedQuery<TEntity> cloned)
+            where TEntity : class
+        {
+            // 复制sql表达式节点列表
+            cloned.AddNodeBuilders(source.NodeBuilders);
+            // 复制sql参数列表
+            cloned.AddSqlParameters(source.Parameters);
+            // 复制关联的对象链接列表
+            cloned.AddPropertyLinkers(source.PropertyLinkers);
+        }
+        /// <summary>
+        /// 复制来源数据源信息到选定项数据源
+        /// </summary>
+        /// <param name="source">来源数据源</param>
+        /// <param name="cloned">选定项数据源</param>
+        /// <typeparam name="TElement">包含选定项的类型</typeparam>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        private void Clone<TElement, TEntity>(IDbQuery<TEntity> source, DbSelectedQuery<TElement, TEntity> cloned)
+            where TEntity : class
+        {
+            // 复制sql表达式节点列表
+            cloned.AddNodeBuilders(source.NodeBuilders);
+            // 复制sql参数列表
+            cloned.AddSqlParameters(source.Parameters);
+            // 复制关联的对象链接列表
+            cloned.AddPropertyLinkers(source.PropertyLinkers);
+        }
         /// <summary>
         /// 获取复制的查询数据源
         /// </summary>
@@ -429,44 +173,6 @@ namespace CloudEntity.Core.Data.Entity
             // 复制sql参数列表
             cloned.AddSqlParameters(source.Parameters);
             // 获取查询数据源
-            return cloned;
-        }
-        /// <summary>
-        /// 获取复制的查询数据源
-        /// </summary>
-        /// <param name="source">源数据源</param>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <returns>查询数据源</returns>
-        private DbQuery<TEntity> CloneToQuery<TEntity>(IDbQuery<TEntity> source)
-            where TEntity : class
-        {
-            // 创建查询数据源
-            DbQuery<TEntity> cloned = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
-            // 复制sql表达式节点列表
-            cloned.AddNodeBuilders(source.NodeBuilders);
-            // 复制sql参数列表
-            cloned.AddSqlParameters(source.Parameters);
-            // 复制关联的对象链接列表
-            cloned.AddPropertyLinkers(source.PropertyLinkers);
-            // 获取查询数据源
-            return cloned;
-        }
-        /// <summary>
-        /// 复制视图查询数据源
-        /// </summary>
-        /// <param name="source">视图查询数据源</param>
-        /// <typeparam name="TModel">视图结果类型</typeparam>
-        /// <returns>视图查询数据源</returns>
-        private DbView<TModel> CloneView<TModel>(IDbView<TModel> source)
-            where TModel : class, new()
-        {
-            // 创建新的视图数据源
-            DbView<TModel> cloned = new DbView<TModel>(this, _commandTreeFactory, this.DbHelper, _predicateParserFactory, source.InnerQuerySql);
-            // 复制sql表达式节点列表
-            cloned.AddNodeBuilders(source.NodeBuilders);
-            // 复制sql参数列表
-            cloned.AddSqlParameters(source.Parameters);
-            // 获取复制的数据源
             return cloned;
         }
         #endregion
@@ -611,13 +317,13 @@ namespace CloudEntity.Core.Data.Entity
         public void RenameTable(Type entityType, string oldTableName)
         {
             //检查Table初始化器是否为空,直接退出
-            if (this._tableInitializer == null)
+            if (_tableInitializer == null)
                 return;
             //获取TableMapper
-            ITableMapper tableMapper = this._mapperContainer.GetTableMapper(entityType);
+            ITableMapper tableMapper = _mapperContainer.GetTableMapper(entityType);
             //若Table未生成,则从旧表修改
-            if (!this._tableInitializer.IsExist(this.DbHelper, tableMapper.Header))
-                this._tableInitializer.RenameTable(this.DbHelper, tableMapper.Header, oldTableName);
+            if (!_tableInitializer.IsExist(this.DbHelper, tableMapper.Header))
+                _tableInitializer.RenameTable(this.DbHelper, tableMapper.Header, oldTableName);
         }
         /// <summary>
         /// 删除实体类Mapping的表
@@ -626,13 +332,13 @@ namespace CloudEntity.Core.Data.Entity
         public void DropTable(Type entityType)
         {
             //检查Table初始化器是否为空,直接退出
-            if (this._tableInitializer == null)
+            if (_tableInitializer == null)
                 return;
             //获取TableMapper
-            ITableMapper tableMapper = this._mapperContainer.GetTableMapper(entityType);
+            ITableMapper tableMapper = _mapperContainer.GetTableMapper(entityType);
             //若Table存在,则删除Table
-            if (this._tableInitializer.IsExist(this.DbHelper, tableMapper.Header))
-                this._tableInitializer.DropTable(this.DbHelper, tableMapper.Header);
+            if (_tableInitializer.IsExist(this.DbHelper, tableMapper.Header))
+                _tableInitializer.DropTable(this.DbHelper, tableMapper.Header);
         }
         /// <summary>
         /// 创建事故执行器
@@ -688,7 +394,7 @@ namespace CloudEntity.Core.Data.Entity
         public IDbScalar CreateScalar(IDbBase dbBase, string functionName)
         {
             // 创建DbScaler对象
-            DbScalar dbScalar = new DbScalar(this._mapperContainer, this._commandTreeFactory, this.DbHelper);
+            DbScalar dbScalar = new DbScalar(_mapperContainer, _commandTreeFactory, this.DbHelper);
             // 加载sql表达式节点列表
             foreach (INodeBuilder nodeBuilder in this.GetFunctionNodeBuilders(dbBase.NodeBuilders, functionName))
                 dbScalar.AddNodeBuilder(nodeBuilder);
@@ -708,7 +414,7 @@ namespace CloudEntity.Core.Data.Entity
         public IDbScalar CreateScalar(IDbBase dbBase, string functionName, LambdaExpression lambdaExpression)
         {
             // 创建DbScaler对象
-            DbScalar dbScalar = new DbScalar(this._mapperContainer, this._commandTreeFactory, this.DbHelper);
+            DbScalar dbScalar = new DbScalar(_mapperContainer, _commandTreeFactory, this.DbHelper);
             // 加载sql表达式节点列表
             foreach (INodeBuilder nodeBuilder in this.GetFunctionNodeBuilders(dbBase.NodeBuilders, functionName, lambdaExpression))
                 dbScalar.AddNodeBuilder(nodeBuilder);
@@ -756,139 +462,16 @@ namespace CloudEntity.Core.Data.Entity
         public IDbQuery<TEntity> CreateQuery<TEntity>(IDbQuery<TEntity> source)
             where TEntity : class
         {
-            // 复制新的查询数据源
-            DbQuery<TEntity> cloned = this.CloneToQuery(source);
-            // 获取新的查询数据源
+            // 创建查询数据源
+            DbQuery<TEntity> cloned = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
+            // 复制sql表达式节点列表
+            cloned.AddNodeBuilders(source.NodeBuilders);
+            // 复制sql参数列表
+            cloned.AddSqlParameters(source.Parameters);
+            // 复制关联的对象链接列表
+            cloned.AddPropertyLinkers(source.PropertyLinkers);
+            // 获取查询数据源
             return cloned;
-        }
-        /// <summary>
-        /// 创建根据某属性排好序的查询数据源
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TKey">实体某属性类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="keySelector">指定实体对象某属性的表达式</param>
-        /// <param name="isDesc">true:降序 false:升序</param>
-        /// <returns>排好序的查询数据源</returns>
-        public IDbQuery<TEntity> CreateSortedQuery<TEntity, TKey>(IDbQuery<TEntity> source, Expression<Func<TEntity, TKey>> keySelector, bool isDesc = false)
-            where TEntity : class
-        {
-            // 复制查询数据源
-            DbQuery<TEntity> cloned = this.CloneToQuery(source);
-            // 加载sql表达式节点列表
-            cloned.AddNodeBuilders(this.GetOrderbyNodeBuilders(keySelector, isDesc));
-            // 最终获取复制的数据源
-            return cloned;
-        }
-        #endregion
-        #region 创建关联查询数据源
-        /// <summary>
-        /// 创建连接查询数据源
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TOther">关联的实体类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="otherSource">关联对象的数据源</param>
-        /// <param name="selector">指定关联实体类型的属性表达式</param>
-        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
-        /// <returns>连接查询数据源</returns>
-        public IDbQuery<TEntity> CreateJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
-            where TEntity : class
-            where TOther : class
-        {
-            // 创建新的查询数据源
-            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
-            // 加载sql表达式节点列表
-            foreach (INodeBuilder nodeBuilder in this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetInnerJoinBuilder))
-                query.AddNodeBuilder(nodeBuilder);
-            // 加载去除重复参数名的sql参数列表
-            query.AddSqlParameters(source.Parameters.Concat(otherSource.Parameters).DistinctBy(p => p.ParameterName));
-            // 加载关联对象属性链接列表
-            query.AddPropertyLinkers(source.PropertyLinkers);
-            query.AddPropertyLinker(new PropertyLinker(selector.Body.GetProperty(), otherSource.PropertyLinkers.ToArray()));
-            // 返回新的查询数据源
-            return query;
-        }
-        /// <summary>
-        /// 创建连接查询数据源
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TOther">关联的实体类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="otherSource">关联对象的选择性查询数据源</param>
-        /// <param name="selector">指定关联实体类型的属性表达式</param>
-        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
-        /// <returns>连接查询数据源</returns>
-        public IDbQuery<TEntity> CreateJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbSelectedQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
-            where TEntity : class
-            where TOther : class
-        {
-            // 创建新的查询数据源
-            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
-            // 加载sql表达式节点列表
-            foreach (INodeBuilder nodeBuilder in this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetInnerJoinBuilder))
-                query.AddNodeBuilder(nodeBuilder);
-            // 加载去除重复参数名的sql参数列表
-            query.AddSqlParameters(source.Parameters.Concat(otherSource.Parameters).DistinctBy(p => p.ParameterName));
-            // 加载关联对象属性链接
-            query.AddPropertyLinkers(source.PropertyLinkers);
-            query.AddPropertyLinker(new PropertyLinker(selector.Body.GetProperty()));
-            // 获取新的查询数据源
-            return query;
-        }
-        /// <summary>
-        /// 创建左连接查询数据源
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TOther">关联的实体类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="otherSource">关联对象的数据源</param>
-        /// <param name="selector">指定关联实体类型的属性表达式</param>
-        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
-        /// <returns>左连接查询数据源</returns>
-        public IDbQuery<TEntity> CreateLeftJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
-            where TEntity : class
-            where TOther : class
-        {
-            // 创建新的查询数据源
-            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
-            // 加载sql表达式节点列表
-            foreach (INodeBuilder nodeBuilder in this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetLeftJoinBuilder))
-                query.AddNodeBuilder(nodeBuilder);
-            // 加载去除重复参数名的sql参数列表
-            query.AddSqlParameters(source.Parameters.Concat(otherSource.Parameters).DistinctBy(p => p.ParameterName));
-            // 加载关联对象属性链接
-            query.AddPropertyLinkers(source.PropertyLinkers);
-            query.AddPropertyLinker(new PropertyLinker(selector.Body.GetProperty(), otherSource.PropertyLinkers.ToArray()));
-            // 返回新的查询数据源
-            return query;
-        }
-        /// <summary>
-        /// 创建左连接查询数据源
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TOther">关联的实体类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="otherSource">关联对象的选择性查询数据源</param>
-        /// <param name="selector">指定关联实体类型的属性表达式</param>
-        /// <param name="predicate">TEntity 与 TOther关系表达式</param>
-        /// <returns>左连接查询数据源</returns>
-        public IDbQuery<TEntity> CreateLeftJoinedQuery<TEntity, TOther>(IDbQuery<TEntity> source, IDbSelectedQuery<TOther> otherSource, Expression<Func<TEntity, TOther>> selector, Expression<Func<TEntity, TOther, bool>> predicate)
-            where TEntity : class
-            where TOther : class
-        {
-            // 创建新的查询数据源
-            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
-            // 加载sql表达式节点列表
-            foreach (INodeBuilder nodeBuilder in this.GetJoinedQueryNodeBuilders(predicate.Body, source.NodeBuilders, otherSource.NodeBuilders, JoinBuilder.GetLeftJoinBuilder))
-                query.AddNodeBuilder(nodeBuilder);
-            // 加载去除重复参数名的sql参数列表
-            query.AddSqlParameters(source.Parameters.Concat(otherSource.Parameters).DistinctBy(p => p.ParameterName));
-            // 加载关联对象属性链接列表
-            query.AddPropertyLinkers(source.PropertyLinkers);
-            query.AddPropertyLinker(new PropertyLinker(selector.Body.GetProperty()));
-            // 返回新的查询数据源
-            return query;
         }
         #endregion
         #region 创建分页查询数据源
@@ -903,20 +486,16 @@ namespace CloudEntity.Core.Data.Entity
         public IDbPagedQuery<TEntity> CreatePagedQuery<TEntity>(IDbQuery<TEntity> source, int pageSize, int pageIndex)
             where TEntity : class
         {
-            // 创建分页查询数据源
-            DbPagedQuery<TEntity> query = new DbPagedQuery<TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper)
+            // 构建分页查询数据源
+            DbPagedQuery<TEntity> cloned = new DbPagedQuery<TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper)
             {
                 PageIndex = pageIndex,
                 PageSize = pageSize
             };
-            // 加载sql表达式节点列表
-            query.AddNodeBuilders(source.NodeBuilders);
-            // 加载sql参数列表
-            query.AddSqlParameters(source.Parameters);
-            // 加载关联对象属性链接列表
-            query.AddPropertyLinkers(source.PropertyLinkers);
-            // 返回新的查询数据源
-            return query;
+            // 复制来源数据源到分页查询数据源
+            this.Clone(source, cloned);
+            // 获取分页查询数据源
+            return cloned;
         }
         /// <summary>
         /// 创建分页查询数据源
@@ -931,48 +510,21 @@ namespace CloudEntity.Core.Data.Entity
         public IDbPagedQuery<TEntity> CreatePagedQuery<TEntity>(IDbQuery<TEntity> source, Expression<Func<TEntity, object>> orderBySelector, int pageSize, int pageIndex, bool isDesc = false)
             where TEntity : class
         {
-            //创建分页查询数据源
-            DbPagedQuery<TEntity> query = new DbPagedQuery<TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper)
+            // 构建分页查询数据源
+            DbPagedQuery<TEntity> cloned = new DbPagedQuery<TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper)
             {
                 PageIndex = pageIndex,
                 PageSize = pageSize
             };
-            // 加载sql表达式节点列表
-            query.AddNodeBuilders(source.NodeBuilders);
-            query.AddNodeBuilders(this.GetOrderbyNodeBuilders(orderBySelector, isDesc));
-            // 加载sql参数列表
-            query.AddSqlParameters(source.Parameters);
-            // 加载关联对象属性链接列表
-            query.AddPropertyLinkers(source.PropertyLinkers);
-            // 返回新的查询数据源
-            return query;
+            // 复制来源数据源到分页查询数据源
+            this.Clone(source, cloned);
+            // 为分页查询数据源设置排序条件
+            cloned.SetOrderBy(orderBySelector, isDesc);
+            // 获取分页查询数据源
+            return cloned;
         }
         #endregion
         #region 创建包含项或选定项查询数据源
-        /// <summary>
-        /// 创建查询部分字段的数据源
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <typeparam name="TElement">映射类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="selector">指定查询项表达式</param>
-        /// <returns>查询部分字段的数据源</returns>
-        public IDbQuery<TEntity> CreateIncludedQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
-            where TEntity : class
-        {
-            // 获取Table元数据解析器
-            ITableMapper tableMapper = _mapperContainer.GetTableMapper(typeof(TEntity));
-            // 创建新的查询数据源
-            DbQuery<TEntity> query = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper, this, _mapperPredicateParserFactory);
-            // 加载sql表达式节点列表
-            query.AddNodeBuilders(this.GetSelectedQueryNodeBuilders(source.NodeBuilders, selector, tableMapper));
-            // 加载sql参数列表
-            query.AddSqlParameters(source.Parameters);
-            // 加载关联对象属性链接列表
-            query.AddPropertyLinkers(source.PropertyLinkers);
-            // 获取查询数据源
-            return query;
-        }
         /// <summary>
         /// 创建选定项查询数据源
         /// </summary>
@@ -984,21 +536,16 @@ namespace CloudEntity.Core.Data.Entity
         public IDbSelectedQuery<TElement> CreateSelectedQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
             where TEntity : class
         {
-            // 获取Table元数据解析器
-            ITableMapper tableMapper = _mapperContainer.GetTableMapper(typeof(TEntity));
-            // 创建新的查询数据源
-            DbSelectedQuery<TElement, TEntity> query = new DbSelectedQuery<TElement, TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper)
-            {
-                Convert = selector.Compile()
-            };
-            // 加载sql表达式节点列表
-            query.AddNodeBuilders(this.GetSelectedQueryNodeBuilders(source.NodeBuilders, selector, tableMapper));
-            // 加载sql参数列表
-            query.AddSqlParameters(source.Parameters);
-            // 加载关联对象属性链接列表
-            query.AddPropertyLinkers(source.PropertyLinkers);
-            // 获取查询数据源
-            return query;
+            // 构建选定项查询数据源
+            DbSelectedQuery<TElement, TEntity> cloned = new DbSelectedQuery<TElement, TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper);
+            // 复制来源数据源信息到选定项查询数据源
+            this.Clone(source, cloned);
+            // 为复制的数据源指定要查询的选定项
+            cloned.SetSelectBy(selector);
+            // 指定转换实体对象为TElement类型的委托
+            cloned.Convert = selector.Compile();
+            // 最后获取复制的数据源
+            return cloned;
         }
         /// <summary>
         /// 创建去除重复项查询数据源
@@ -1011,21 +558,16 @@ namespace CloudEntity.Core.Data.Entity
         public IDbSelectedQuery<TElement> CreateDistinctQuery<TEntity, TElement>(IDbQuery<TEntity> source, Expression<Func<TEntity, TElement>> selector)
             where TEntity : class
         {
-            // 获取Table元数据解析器
-            ITableMapper tableMapper = this._mapperContainer.GetTableMapper(typeof(TEntity));
-            // 创建新的查询数据源
-            DbDistinctQuery<TElement, TEntity> query = new DbDistinctQuery<TElement, TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper)
-            {
-                Convert = selector.Compile()
-            };
-            // 加载sql表达式节点列表
-            query.AddNodeBuilders(this.GetSelectedQueryNodeBuilders(source.NodeBuilders, selector, tableMapper));
-            // 加载sql参数列表
-            query.AddSqlParameters(source.Parameters);
-            // 加载关联对象属性链接列表
-            query.AddPropertyLinkers(source.PropertyLinkers);
-            // 获取查询数据源
-            return query;
+            // 构建去除重复项查询数据源
+            DbDistinctQuery<TElement, TEntity> cloned = new DbDistinctQuery<TElement, TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper);
+            // 复制来源数据源信息到去除重复项查询数据源
+            this.Clone(source, cloned);
+            // 为复制的数据源指定要查询的选定项
+            cloned.SetSelectBy(selector);
+            // 指定转换实体对象为TElement类型的委托
+            cloned.Convert = selector.Compile();
+            // 最后获取复制的数据源
+            return cloned;
         }
         /// <summary>
         /// 创建TOP选定项查询数据源
@@ -1037,21 +579,14 @@ namespace CloudEntity.Core.Data.Entity
         public IDbSelectedQuery<TEntity> CreateTopSelectedQuery<TEntity>(IDbQuery<TEntity> source, int topCount)
             where TEntity : class
         {
-            // 获取Table元数据解析器
-            ITableMapper tableMapper = _mapperContainer.GetTableMapper(typeof(TEntity));
             // 创建新的查询数据源
-            DbTopSelectedQuery<TEntity, TEntity> query = new DbTopSelectedQuery<TEntity, TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, topCount)
-            {
-                Convert = e => e
-            };
-            // 加载sql表达式节点列表
-            query.AddNodeBuilders(source.NodeBuilders);
-            // 加载sql参数列表
-            query.AddSqlParameters(source.Parameters);
-            // 加载关联对象属性链接列表
-            query.AddPropertyLinkers(source.PropertyLinkers);
-            // 获取查询数据源
-            return query;
+            DbTopSelectedQuery<TEntity, TEntity> cloned = new DbTopSelectedQuery<TEntity, TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper, topCount);
+            // 复制来源数据源信息到去除重复项查询数据源
+            this.Clone(source, cloned);
+            // 指定转换实体对象为TElement类型的委托
+            cloned.Convert = e => e;
+            // 最后获取复制的数据源
+            return cloned;
         }
         /// <summary>
         /// 创建TOP选定项查询数据源
@@ -1065,21 +600,16 @@ namespace CloudEntity.Core.Data.Entity
         public IDbSelectedQuery<TElement> CreateTopSelectedQuery<TEntity, TElement>(IDbQuery<TEntity> source, int topCount, Expression<Func<TEntity, TElement>> selector)
             where TEntity : class
         {
-            // 获取Table元数据解析器
-            ITableMapper tableMapper = _mapperContainer.GetTableMapper(typeof(TEntity));
             // 创建新的查询数据源
-            DbTopSelectedQuery<TElement, TEntity> query = new DbTopSelectedQuery<TElement, TEntity>(_mapperContainer, this._commandTreeFactory, this._dbHelper, topCount)
-            {
-                Convert = selector.Compile()
-            };
-            // 加载sql表达式节点列表
-            query.AddNodeBuilders(this.GetSelectedQueryNodeBuilders(source.NodeBuilders, selector, tableMapper));
-            // 加载sql参数列表
-            query.AddSqlParameters(source.Parameters);
-            // 加载关联对象属性链接列表
-            query.AddPropertyLinkers(source.PropertyLinkers);
-            // 获取查询数据源
-            return query;
+            DbTopSelectedQuery<TElement, TEntity> cloned = new DbTopSelectedQuery<TElement, TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper, topCount);
+            // 复制来源数据源信息到去除重复项查询数据源
+            this.Clone(source, cloned);
+            // 为复制的数据源指定要查询的选定项
+            cloned.SetSelectBy(selector);
+            // 指定转换实体对象为TElement类型的委托
+            cloned.Convert = selector.Compile();
+            // 最后获取复制的数据源
+            return cloned;
         }
         #endregion
         #region 创建sql视图查询数据源
@@ -1109,29 +639,13 @@ namespace CloudEntity.Core.Data.Entity
         public IDbView<TModel> CreateView<TModel>(IDbView<TModel> source)
             where TModel : class, new()
         {
-            // 复制数据源
-            DbView<TModel> cloned = this.CloneView(source);
+            // 创建新的视图数据源
+            DbView<TModel> cloned = new DbView<TModel>(this, _commandTreeFactory, this.DbHelper, _predicateParserFactory, source.InnerQuerySql);
+            // 复制sql表达式节点列表
+            cloned.AddNodeBuilders(source.NodeBuilders);
+            // 复制sql参数列表
+            cloned.AddSqlParameters(source.Parameters);
             // 获取复制的数据源
-            return cloned;
-        }
-        /// <summary>
-        /// 创建根据某属性排好序的视图查询数据源
-        /// </summary>
-        /// <typeparam name="TModel">视图模型对象</typeparam>
-        /// <typeparam name="TKey">对象某属性类型</typeparam>
-        /// <param name="source">视图查询数据源</param>
-        /// <param name="keySelector">指定视图模型对象某属性的表达式</param>
-        /// <param name="isAsc">true:升序 false:降序</param>
-        /// <returns>排好序的视图查询数据源</returns>
-        public IDbView<TModel> CreateSortedView<TModel, TKey>(IDbView<TModel> source, Expression<Func<TModel, TKey>> keySelector, bool isAsc = true)
-            where TModel : class, new()
-        {
-            // 复制数据源
-            DbView<TModel> cloned = this.CloneView(source);
-            // 添加获取查询条件表达式节点
-            INodeBuilder nodeBuilder = new NodeBuilder(SqlType.OrderBy, "t.{0} {1}", keySelector.Body.GetMemberExpression().Member.Name, isAsc ? "ASC" : "DESC");
-            cloned.AddNodeBuilder(nodeBuilder);
-            // 创建并返回视图查询数据源
             return cloned;
         }
         #endregion

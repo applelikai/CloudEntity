@@ -6,20 +6,41 @@ using System.Data;
 namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
-    /// 事故执行器
+    /// 事务执行器
     /// </summary>
     internal class DbExecutor : IDbExecutor
     {
-        private bool isCommit;                                  //是否已提交
-        private IDbContainer container;                         //数据容器
-        private IDbConnection connection;                       //数据库连接
-        private IDbTransaction transaction;                     //事故
-        private IDictionary<Type, object> operators;            //操作器字典
-        private object operatorsLocker = new object();          //控制操作器字典的线程锁
-        private static object transactionLocker = new object(); //事故执行线程锁
+        /// <summary>
+        /// 是否已提交
+        /// </summary>
+        private bool isCommit;
+        /// <summary>
+        /// 数据容器
+        /// </summary>
+        private IDbContainer container;
+        /// <summary>
+        /// 数据库连接
+        /// </summary>
+        private IDbConnection connection;
+        /// <summary>
+        /// 事务
+        /// </summary>
+        private IDbTransaction transaction;
+        /// <summary>
+        /// 操作器字典
+        /// </summary>
+        private IDictionary<Type, object> operators;
+        /// <summary>
+        /// 控制操作器字典的线程锁
+        /// </summary>
+        private object operatorsLocker = new object();
+        /// <summary>
+        /// 事务执行线程锁
+        /// </summary>
+        private static object transactionLocker = new object();
         
         /// <summary>
-        /// 创建事故执行器
+        /// 创建事务执行器
         /// </summary>
         /// <param name="container">数据容器</param>
         internal DbExecutor(IDbContainer container)
@@ -27,7 +48,7 @@ namespace CloudEntity.Internal.Data.Entity
             //赋值
             this.container = container;
             this.operators = new Dictionary<Type, dynamic>();
-            //开启事故
+            //开启事务
             this.container.DbHelper.BeginTransaction(out this.connection, out this.transaction);
         }
 

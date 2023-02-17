@@ -27,7 +27,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
             commandText.AppendLine(base.InnerQuerySql);
             commandText.AppendLine(")");
             commandText.AppendLine("  SELECT *");
-            commandText.AppendFormat("    FROM \"{0}\"\n", base.TableAlias);
+            commandText.AppendFormat("    FROM \"{0}\"", base.TableAlias);
             this.Where.Build(commandText);
             this.OrderBy.Build(commandText);
         }
