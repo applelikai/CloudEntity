@@ -148,6 +148,42 @@ namespace CloudEntity.Internal.Data.Entity
             return this;
         }
         /// <summary>
+        /// 设置数据源数据检索条件
+        /// </summary>
+        /// <param name="selector">指定对象成员表达式</param>
+        /// <param name="sqlFormat">sql条件格式化字符串</param>
+        /// <param name="values">sql参数值数组</param>
+        /// <typeparam name="TProperty">模型属性类型</typeparam>
+        /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
+        public IDbView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlFormat, params TProperty[] values)
+        {
+            // 获取成员表达式
+            MemberExpression memberExpression = selector.Body.GetMemberExpression();
+            // 获取属性名称为视图查询映射列名
+            string columnName = memberExpression.Member.Name;
+            // 获取此属性名称开头的参数名的个数
+            int count = base.Parameters.Count(p => p.ParameterName.StartsWith(columnName));
+            // 初始化参数名称数组
+            string[] parameterNames = new string[values.Length];
+            // 遍历参数值列表，加载sql参数名称数组
+            for (int i = 0; i < values.Length; i++)
+                parameterNames[i] = $"{columnName}{(i + count).ToString()}";
+            // 获取视图查询临时表名
+            string tableAlias = typeof(TModel).Name.ToLower();
+            // 获取右边的sql表达式
+            string rightSqlExpression = string.Format(sqlFormat, parameterNames);
+            // 获取查询条件表达式节点
+            INodeBuilder nodeBuilder = base.CommandTreeFactory.GetWhereChildBuilder(tableAlias, columnName, rightSqlExpression);
+
+            // 添加获取查询条件表达式节点
+            base.AddNodeBuilder(nodeBuilder);
+            // 添加sql参数列表
+            for (int i = 0; i < parameterNames.Length; i++)
+                base.AddSqlParameter(parameterNames[i], values[i]);
+            // 获取当前视图查询数据源
+            return this;
+        }
+        /// <summary>
         /// 获取枚举器
         /// </summary>
         /// <returns>枚举器</returns>

@@ -36,6 +36,25 @@ public class Program
         _container = DbContainer.Get(connectionString);
     }
     /// <summary>
+    /// 获取微信用户视图查询数据源
+    /// </summary>
+    /// <returns>微信用户视图查询数据源</returns>
+    private static IDbView<WechatUser> GetWechatUsers()
+    {
+        // 构建角色查询数据源
+        IDbQuery<Role> roles = _container.CreateQuery<Role>()
+            .IncludeBy(r => r.RoleName);
+        // 构建用户查询数据源
+        IDbQuery<User> users = _container.CreateQuery<User>()
+            .IncludeBy(u => new { u.UserName, u.Password, u.CreatedTime})
+            .Join(roles, u => u.Role, (u, r) => u.RoleId == r.RoleId);
+        // 获取sql和参数
+        string querySql = users.ToSqlString();
+        IDbDataParameter[] sqlParameters = users.Parameters.ToArray();
+        // 获取视图查询数据源
+        return _container.CreateView<WechatUser>(querySql, sqlParameters);
+    }
+    /// <summary>
     /// 初始化所有表
     /// </summary>
     private static void InitTables()
@@ -76,7 +95,7 @@ public class Program
         // 遍历用户并打印
         foreach (User user in users)
         {
-            Console.WriteLine("{0} {1}", user.Role?.RoleName, user.UserName);
+            Console.WriteLine("{0} {1} {2:yyyy/MM/dd HH:mm:ss}", user.Role?.RoleName, user.UserName, user.CreatedTime);
         }
     }
     /// <summary>
@@ -96,16 +115,14 @@ public class Program
     /// </summary>
     private static void QueryTest()
     {
-        //获取时间
-        DateTime start = DateTime.Parse("2023/02/06 00:00:00");
         // 获取角色数据源
         IDbQuery<Role> roles = _container.CreateQuery<Role>()
             .IncludeBy(r => r.RoleName);
         // 获取用户数据源
         IDbQuery<User> users = _container.CreateQuery<User>()
-            .IncludeBy(u => new { u.UserName, u.Password})
+            .IncludeBy(u => new { u.UserName, u.CreatedTime})
             .Join(roles, u => u.Role, (u, r) => u.RoleId == r.RoleId)
-            .IsNull(u => u.UserName, false);
+            .Like(u => u.UserName, "ap%");
         // 第一次打印用户列表
         Program.PrintUsers(users);
         // 第二次映射为微信用户列表并打印
@@ -122,11 +139,24 @@ public class Program
     /// </summary>
     private static void QueryTestIn()
     {
-        // 获取角色id数据源
-        IDbSelectedQuery<string> roleIds = _container.CreateQuery<Role>().Select(r => r.RoleId);
+        // 获取用户姓名数组
+        string[] names = new string[] { "admin", "apple", "pear" };
         // 获取用户数据源
-        IDbQuery<User> users = _container.CreateQuery<User>().SetIn(u => u.RoleId, roleIds);
+        IDbQuery<User> users = _container.CreateQuery<User>().SetIn(u => u.UserName, names);
         // 打印用户列表
+        Program.PrintUsers(users);
+    }
+    /// <summary>
+    /// 测试Between查询
+    /// </summary>
+    private static void TestBetween()
+    {
+        //获取时间
+        DateTime start = DateTime.Parse("2023/01/01 00:00:00");
+        // 获取用户数据源
+        IDbQuery<User> users = _container.CreateQuery<User>()
+            .Between(u => u.CreatedTime, start, DateTime.Now);
+        // 第一次打印用户列表
         Program.PrintUsers(users);
     }
     /// <summary>
@@ -136,10 +166,35 @@ public class Program
     private static void TestBetween(IDbView<WechatUser> users)
     {
         // 获取开始时间
-        DateTime start = DateTime.Parse("2023/02/07 00:00:00");
+        DateTime start = DateTime.Parse("2023/02/05 00:00:00");
         // 添加查询条件
         users = users.Between(u => u.CreatedTime, start, DateTime.Now);
+        // 打印参数列表
         // 打印
+        Program.PrintUsers(users);
+    }
+    /// <summary>
+    /// 测试IN查询
+    /// </summary>
+    /// <param name="users">用户数据源</param>
+    private static void TestIn(IDbView<WechatUser> users)
+    {
+        // 获取用户名数组
+        string[] names = new string[] { "admin", "apple", "bob" };
+        // 添加数据源检索条件
+        users.SetIn(u => u.UserName, names);
+        // 打印用户列表
+        Program.PrintUsers(users);
+    }
+    /// <summary>
+    /// 测试LIKE查询
+    /// </summary>
+    /// <param name="users">用户数据源</param>
+    private static void TestLike(IDbView<WechatUser> users)
+    {
+        // 添加数据源检索条件
+        users.SetLike(u => u.UserName, "ap%", false);
+        // 打印用户列表
         Program.PrintUsers(users);
     }
     /// <summary>
@@ -165,8 +220,6 @@ public class Program
         wechatUsers.SetIn(u => u.RoleName, roleNames, false);
         // 打印用户列表
         Program.PrintUsers(wechatUsers);
-        // 测试IN查询
-        // Program.TestIn(wechatUsers);
     }
     /// <summary>
     /// 开始执行
@@ -174,7 +227,9 @@ public class Program
     /// <param name="args">控制台参数</param>
     private static void Main(string[] args)
     {
-        // 查询测试
-        Program.ViewQueryTest();
+        // 获取微信用户视图查询数据源
+        IDbView<WechatUser> wechatUsers = Program.GetWechatUsers();
+        // IN查询测试
+        Program.TestLike(wechatUsers);
     }
 }

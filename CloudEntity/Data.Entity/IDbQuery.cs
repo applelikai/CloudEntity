@@ -47,6 +47,15 @@ namespace CloudEntity.Data.Entity
         /// <returns>数据源（还是原来的数据源并未复制）</returns>
         IDbQuery<TEntity> SetWhere<TProperty>(Expression<Func<TEntity, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] sqlParameters);
         /// <summary>
+        /// 设置数据源数据检索条件
+        /// </summary>
+        /// <param name="selector">指定对象成员表达式</param>
+        /// <param name="sqlFormat">sql条件格式化字符串</param>
+        /// <param name="values">sql参数值数组</param>
+        /// <typeparam name="TProperty">实体属性类型</typeparam>
+        /// <returns>数据源（还是原来的数据源并未复制）</returns>
+        IDbQuery<TEntity> SetWhere<TProperty>(Expression<Func<TEntity, TProperty>> selector, string sqlFormat, params TProperty[] values);
+        /// <summary>
         /// 将此数据源的查询结果映射为TModel对象数据源
         /// </summary>
         /// <typeparam name="TModel">TModel对象（只要是有无参构造函数的类就可以）</typeparam>

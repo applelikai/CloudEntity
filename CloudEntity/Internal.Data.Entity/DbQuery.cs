@@ -183,6 +183,40 @@ namespace CloudEntity.Internal.Data.Entity
             return this;
         }
         /// <summary>
+        /// 设置数据源数据检索条件
+        /// </summary>
+        /// <param name="selector">指定对象成员表达式</param>
+        /// <param name="sqlFormat">sql条件格式化字符串</param>
+        /// <param name="values">sql参数值数组</param>
+        /// <typeparam name="TProperty">实体属性类型</typeparam>
+        /// <returns>数据源（还是原来的数据源并未复制）</returns>
+        public IDbQuery<TEntity> SetWhere<TProperty>(Expression<Func<TEntity, TProperty>> selector, string sqlFormat, params TProperty[] values)
+        {
+            // 获取成员表达式
+            MemberExpression memberExpression = selector.Body.GetMemberExpression();
+            // 获取属性名称
+            string memberName = memberExpression.Member.Name;
+            // 获取此属性名称开头的使用次数
+            int times = base.Parameters.Count(p => p.ParameterName.StartsWith(memberName));
+            // 初始化参数名称数组
+            string[] parameterNames = new string[values.Length];
+            // 遍历参数值列表，加载sql参数名称数组
+            for (int i = 0; i < values.Length; i++)
+                parameterNames[i] = $"{memberName}{(i + times).ToString()}";
+            // 获取右边的sql表达式
+            string rightSqlExpression = string.Format(sqlFormat, parameterNames);
+            // 获取查询条件表达式节点
+            INodeBuilder nodeBuilder = this.GetWhereChildBuilder(memberExpression, rightSqlExpression);
+            
+            // 添加sql表达式节点
+            base.AddNodeBuilder(nodeBuilder);
+            // 添加sql参数列表
+            for (int i = 0; i < parameterNames.Length; i++)
+                base.AddSqlParameter(parameterNames[i], values[i]);
+            // 再次获取下当前查询数据源方面链式操作
+            return this;
+        }
+        /// <summary>
         /// 将此数据源的查询结果映射为TModel对象数据源
         /// </summary>
         /// <typeparam name="TModel">TModel对象（只要是有无参构造函数的类就可以）</typeparam>

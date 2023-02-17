@@ -46,5 +46,14 @@ namespace CloudEntity.Data.Entity
         /// <typeparam name="TProperty">模型属性类型</typeparam>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
         IDbView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] sqlParameters);
+        /// <summary>
+        /// 设置数据源数据检索条件
+        /// </summary>
+        /// <param name="selector">指定对象成员表达式</param>
+        /// <param name="sqlFormat">sql条件格式化字符串</param>
+        /// <param name="values">sql参数值数组</param>
+        /// <typeparam name="TProperty">模型属性类型</typeparam>
+        /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
+        IDbView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlFormat, params TProperty[] values);
     }
 }
