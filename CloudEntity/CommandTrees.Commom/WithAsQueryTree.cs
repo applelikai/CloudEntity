@@ -6,7 +6,7 @@ namespace CloudEntity.CommandTrees.Commom
     /// With As 查询命令生成树
     /// 李凯 Apple_Li 15150598493
     /// </summary>
-    internal class WithAsQueryTree : CommandTree
+    public class WithAsQueryTree : CommandTree
     {
         /// <summary>
         /// 查询命令生成树的Where节点

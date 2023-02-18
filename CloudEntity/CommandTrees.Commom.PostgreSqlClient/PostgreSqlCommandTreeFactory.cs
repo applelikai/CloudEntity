@@ -211,18 +211,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
             //创建with as查询命令生成树
             PostgreSqlWithAsQueryTree withAsQueryTree = new PostgreSqlWithAsQueryTree(this.ParameterMarker, innerQuerySql, tableAlias);
             //加载查询条件节点
-            foreach (INodeBuilder nodeBuilder in queryChildBuilders)
-            {
-                switch (nodeBuilder.ParentNodeType)
-                {
-                    case SqlType.Where:
-                        withAsQueryTree.Where.Append(nodeBuilder);
-                        break;
-                    case SqlType.OrderBy:
-                        withAsQueryTree.OrderBy.Append(nodeBuilder);
-                        break;
-                }
-            }
+            base.LoadQueryTree(withAsQueryTree, queryChildBuilders);
             //返回with as查询命令生成树
             return withAsQueryTree;
         }

@@ -15,7 +15,7 @@ namespace CloudEntity.CommandTrees.Commom.OracleClient
         protected override void AppendDelete(StringBuilder commandText)
         {
             //拼接DELETE
-            commandText.AppendLine("DELETE");
+            commandText.Append("DELETE");
         }
 
         /// <summary>

@@ -4,8 +4,8 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
 {
     /// <summary>
     /// 用于PostgreSql的Delete命令生成树
-    /// 李凯 Apple_Li 2021/09/21
-    /// 最后修改时间：2023/02/05
+    /// Apple_Li 李凯 15150598493
+    /// 2021/09/21 最后修改时间：2023/02/17 20:17
     /// </summary>
     internal class PostgreSqlDeleteTree : DeleteTree
     {
@@ -16,7 +16,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         protected override void AppendDelete(StringBuilder commandText)
         {
             //拼接DELETE
-            commandText.AppendLine("DELETE");
+            commandText.Append("DELETE");
         }
         /// <summary>
         /// 拼接FROM表达式
@@ -29,10 +29,10 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         {
             //若数据库架构名为空，则直接拼接表名
             if (string.IsNullOrEmpty(schemaName))
-                commandText.AppendLine($"  FROM \"{tableName}\" \"{tableAlias}\"");
+                commandText.AppendFormat("\n  FROM \"{0}\" \"{1}\"", tableName, tableAlias);
             //否则则拼接架构名.表名
             else
-                commandText.AppendLine($"  FROM {schemaName}.\"{tableName}\" \"{tableAlias}\"");
+                commandText.AppendFormat("\n  FROM {0}.\"{1}\" \"{2}\"", schemaName, tableName, tableAlias);
         }
 
         /// <summary>

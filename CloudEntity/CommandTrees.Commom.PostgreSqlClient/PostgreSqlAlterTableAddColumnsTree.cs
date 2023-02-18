@@ -6,7 +6,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
     /// 用于PostgreSql的为Table添加列的语句生成树
     /// Apple_Li 李凯 15150598493
     /// </summary>
-    public class PostgreSqlAlterTableAddColumnsTree : AlterTableAddColumnsTree
+    internal class PostgreSqlAlterTableAddColumnsTree : AlterTableAddColumnsTree
     {
         /// <summary>
         /// 拼接ALTER TABLE
@@ -18,10 +18,10 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         {
             //若架构名为空 则直接拼接[ALTER 表名]
             if (string.IsNullOrEmpty(schemaName))
-                commandText.Append($"ALTER TABLE \"{tableName}\"");
+                commandText.AppendFormat("ALTER TABLE \"{0}\"", tableName);
             //若不为空，则拼接[ALTER 架构名.表名]
             else
-                commandText.Append($"ALTER TABLE {schemaName}.\"{tableName}\"");
+                commandText.AppendFormat("ALTER TABLE {0}.\"{1}\"", schemaName, tableName);
         }
         /// <summary>
         /// 拼接添加列名
@@ -30,7 +30,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         /// <param name="columnName">列名</param>
         protected override void AppendAddColumn(StringBuilder commandText, string columnName)
         {
-            commandText.Append($" ADD \"{columnName}\"");
+            commandText.AppendFormat(" ADD \"{0}\"", columnName);
         }
 
         /// <summary>

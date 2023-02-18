@@ -4,7 +4,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
 {
     /// <summary>
     /// 用于My Sql的Update命令生成树
-    /// 李凯 Apple_Li
+    /// Apple_Li 李凯 15150598493
     /// </summary>
     internal class MySqlUpdateTree : UpdateTree
     {
@@ -25,9 +25,9 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         {
             //拼接UPDATE
             if (string.IsNullOrEmpty(base.SchemaName))
-                commandText.AppendFormat("UPDATE {0} {1}\n", base.TableName, base.TableAlias);
+                commandText.AppendFormat("UPDATE {0} {1}", base.TableName, base.TableAlias);
             else
-                commandText.AppendFormat("UPDATE {0}.{1} {2}\n", base.SchemaName, base.TableName, base.TableAlias);
+                commandText.AppendFormat("UPDATE {0}.{1} {2}", base.SchemaName, base.TableName, base.TableAlias);
             //拼接SET
             this.Set.Build(commandText);
             //拼接WHERE

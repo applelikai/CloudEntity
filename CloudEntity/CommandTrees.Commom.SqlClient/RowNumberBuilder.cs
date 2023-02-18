@@ -41,7 +41,7 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
             }
             //拼接结尾
             commandText.Append(")");
-            commandText.Append(" RowNumber");
+            commandText.Append(" [RowNumber]");
         }
     }
 }

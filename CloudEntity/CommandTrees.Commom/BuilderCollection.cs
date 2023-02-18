@@ -6,14 +6,30 @@ namespace CloudEntity.CommandTrees.Commom
 {
     /// <summary>
     /// sql节点集
+    /// Apple_Li 李凯 15150598493
     /// </summary>
     public class BuilderCollection : IBuilderCollection
     {
-        private string titleLeftSpace;              //标题左空格
-        private string bodyLeftSpace;               //主体左空格
-        private string bodyRightSpace;              //主体右空格
-        private string lastRightSpace;              //主体尾空格
-        private IList<ISqlBuilder> sqlBuilders;     //sql节点集合
+        /// <summary>
+        /// 标题左空格
+        /// </summary>
+        private string titleLeftSpace;
+        /// <summary>
+        /// 主体左空格
+        /// </summary>
+        private string bodyLeftSpace;
+        /// <summary>
+        /// 主体右空格
+        /// </summary>
+        private string bodyRightSpace;
+        /// <summary>
+        /// 主体尾空格
+        /// </summary>
+        private string lastRightSpace;
+        /// <summary>
+        /// sql节点集合
+        /// </summary>
+        private IList<ISqlBuilder> sqlBuilders;
 
         /// <summary>
         /// sql节点集合

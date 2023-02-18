@@ -6,7 +6,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
     /// 用于PostgreSql的建表语句生成树
     /// Apple_Li 李凯 15150598493
     /// </summary>
-    public class PostgreSqlBuildTableTree : BuildTableTree
+    internal class PostgreSqlBuildTableTree : BuildTableTree
     {
         /// <summary>
         /// 拼接CREATE TABLE语句
@@ -18,10 +18,10 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         {
             //若架构名为空 则直接拼接表名
             if (string.IsNullOrEmpty(schemaName))
-                commandText.AppendLine($"CREATE TABLE \"{tableName}\"");
+                commandText.AppendFormat("CREATE TABLE \"{0}\"\n", tableName);
             //若不为空，则拼接 架构名.表名
             else
-                commandText.AppendLine($"CREATE TABLE {schemaName}.\"{tableName}\"");
+                commandText.AppendFormat("CREATE TABLE {0}.\"{1}\"\n", schemaName, tableName);
         }
         /// <summary>
         /// 拼接列名
@@ -31,7 +31,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         protected override void AppendColumnName(StringBuilder commandText, string columnName)
         {
             //拼接列名
-            commandText.Append($"\t\"{columnName}\"");
+            commandText.AppendFormat("\t\"{0}\"", columnName);
         }
 
         /// <summary>

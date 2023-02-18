@@ -30,14 +30,14 @@ namespace CloudEntity.CommandTrees.Commom
         /// </summary>
         protected IBuilderCollection InsertCollection
         {
-            get { return _insertCollection ?? (_insertCollection = new BuilderCollection("            (", "             ", ",\n", ")\n")); }
+            get { return _insertCollection; }
         }
         /// <summary>
         /// Values语句段生成器
         /// </summary>
         protected IBuilderCollection ValueCollection
         {
-            get { return _valueCollection ?? (_valueCollection = new BuilderCollection("     VALUES (", "             ", ",\n", ")\n")); }
+            get { return _valueCollection; }
         }
 
         /// <summary>
@@ -50,10 +50,10 @@ namespace CloudEntity.CommandTrees.Commom
         {
             //若数据库架构名为空，则直接拼接表名
             if (string.IsNullOrEmpty(schemaName))
-                commandText.AppendLine($"INSERT INTO {tableName}");
+                commandText.AppendFormat("INSERT INTO {0}", tableName);
             //否则则拼接架构名.表名
             else
-                commandText.AppendLine($"INSERT INTO {schemaName}.{tableName}");
+                commandText.AppendFormat("INSERT INTO {0}.{1}", schemaName, tableName);
         }
 
         /// <summary>
@@ -65,8 +65,12 @@ namespace CloudEntity.CommandTrees.Commom
         public InsertTree(string schemaName, string tableName, char parameterMarker)
             : base(parameterMarker)
         {
+            // 赋值
             _schemaName = schemaName;
             _tableName = tableName;
+            // 初始化
+            _insertCollection = new BuilderCollection("\n            (", "             ", ",\n", ")");
+            _valueCollection = new BuilderCollection("\n     VALUES (", "             ", ",\n", ")");
         }
         /// <summary>
         /// 拼接Column及Parameter节点

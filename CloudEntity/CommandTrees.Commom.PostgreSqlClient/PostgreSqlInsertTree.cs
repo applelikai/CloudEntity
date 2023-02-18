@@ -4,7 +4,8 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
 {
     /// <summary>
     /// 用于PostgreSql的Insert命令生成树
-    /// 李凯 Apple_Li 2021/09/21
+    /// Apple_Li 李凯 15150598493
+    /// 2021/09/21
     /// </summary>
     internal class PostgreSqlInsertTree : InsertTree
     {
@@ -18,10 +19,10 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         {
             //若数据库架构名为空，则直接拼接表名
             if (string.IsNullOrEmpty(schemaName))
-                commandText.AppendLine($"INSERT INTO \"{tableName}\"");
+                commandText.AppendFormat("INSERT INTO \"{0}\"", tableName);
             //否则则拼接架构名.表名
             else
-                commandText.AppendLine($"INSERT INTO {schemaName}.\"{tableName}\"");
+                commandText.AppendFormat("INSERT INTO {0}.\"{1}\"", schemaName, tableName);
         }
 
         /// <summary>

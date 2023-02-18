@@ -121,7 +121,27 @@ namespace CloudEntity.CommandTrees.Commom
                 }
             }
         }
-
+        /// <summary>
+        /// 加载With As查询命令生成树
+        /// </summary>
+        /// <param name="queryTree">With As查询命令生成树</param>
+        /// <param name="queryChildBuilders">查询命令生成树的子节点集</param>
+        protected void LoadQueryTree(WithAsQueryTree queryTree, IEnumerable<INodeBuilder> queryChildBuilders)
+        {
+            //加载查询条件节点
+            foreach (INodeBuilder nodeBuilder in queryChildBuilders)
+            {
+                switch (nodeBuilder.ParentNodeType)
+                {
+                    case SqlType.Where:
+                        queryTree.Where.Append(nodeBuilder);
+                        break;
+                    case SqlType.OrderBy:
+                        queryTree.OrderBy.Append(nodeBuilder);
+                        break;
+                }
+            }
+        }
         #region 获取sql表达式节点
         /// <summary>
         /// 获取sql参数表达式
@@ -390,18 +410,7 @@ namespace CloudEntity.CommandTrees.Commom
             //创建with as查询命令生成树
             WithAsQueryTree withAsQueryTree = new WithAsQueryTree(this.ParameterMarker, innerQuerySql, tableAlias);
             //加载查询条件节点
-            foreach (INodeBuilder nodeBuilder in queryChildBuilders)
-            {
-                switch (nodeBuilder.ParentNodeType)
-                {
-                    case SqlType.Where:
-                        withAsQueryTree.Where.Append(nodeBuilder);
-                        break;
-                    case SqlType.OrderBy:
-                        withAsQueryTree.OrderBy.Append(nodeBuilder);
-                        break;
-                }
-            }
+            this.LoadQueryTree(withAsQueryTree, queryChildBuilders);
             //返回with as查询命令生成树
             return withAsQueryTree;
         }

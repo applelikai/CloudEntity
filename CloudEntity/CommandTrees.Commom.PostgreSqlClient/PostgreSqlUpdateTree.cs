@@ -4,7 +4,8 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
 {
     /// <summary>
     /// 用于PostgreSql的Update命令生成树
-    /// 李凯 Apple_Li 2021/09/19 ~ 2021/09/21
+    /// Apple_Li 李凯 15150598493
+    /// 2021/09/19 ~ 2023/02/17 23:20
     /// </summary>
     internal class PostgreSqlUpdateTree : UpdateTree
     {
@@ -25,9 +26,9 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         {
             //拼接UPDATE
             if (string.IsNullOrEmpty(base.SchemaName))
-                commandText.AppendFormat("UPDATE \"{0}\" \"{1}\"\n", base.TableName, base.TableAlias);
+                commandText.AppendFormat("UPDATE \"{0}\" \"{1}\"", base.TableName, base.TableAlias);
             else
-                commandText.AppendFormat("UPDATE {0}.\"{1}\" \"{2}\"\n", base.SchemaName, base.TableName, base.TableAlias);
+                commandText.AppendFormat("UPDATE {0}.\"{1}\" \"{2}\"", base.SchemaName, base.TableName, base.TableAlias);
             //拼接SET
             this.Set.Build(commandText);
             //拼接WHERE

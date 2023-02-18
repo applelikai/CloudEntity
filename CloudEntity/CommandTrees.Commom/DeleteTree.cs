@@ -5,6 +5,7 @@ namespace CloudEntity.CommandTrees.Commom
     /// <summary>
     /// Delete命令生成树
     /// 李凯 Apple_Li
+    /// 最后修改时间：2023/02/17 20:14
     /// </summary>
     public class DeleteTree : CommandTree
     {
@@ -26,27 +27,19 @@ namespace CloudEntity.CommandTrees.Commom
         private IBuilderCollection _whereCollection;
 
         /// <summary>
+        /// 临时表名
+        /// </summary>
+        protected string TableAlias
+        {
+            get { return _tableAlias; }
+        }
+
+        /// <summary>
         /// where语句生成器
         /// </summary>
         public IBuilderCollection Where
         {
-            get
-            {
-                Start:
-                //若whereCollection不为空,直接返回
-                if (this._whereCollection != null)
-                    return this._whereCollection;
-                //创建whereCollection
-                this._whereCollection = new BuilderCollection()
-                {
-                    TitleLeftSpace = " WHERE ",
-                    BodyLeftSpace = "   AND ",
-                    BodyRightSpace = "\n",
-                    LastRightSpace = string.Empty
-                };
-                //回到Start
-                goto Start;
-            }
+            get { return _whereCollection; }
         }
 
         /// <summary>
@@ -56,7 +49,7 @@ namespace CloudEntity.CommandTrees.Commom
         protected virtual void AppendDelete(StringBuilder commandText)
         {
             //拼接DELETE
-            commandText.AppendLine($"DELETE {_tableAlias}");
+            commandText.AppendFormat("DELETE {0}", _tableAlias);
         }
         /// <summary>
         /// 拼接FROM表达式
@@ -69,10 +62,10 @@ namespace CloudEntity.CommandTrees.Commom
         {
             //若数据库架构名为空，则直接拼接表名
             if (string.IsNullOrEmpty(schemaName))
-                commandText.AppendLine($"  FROM {tableName} {tableAlias}");
+                commandText.AppendFormat("\n  FROM {0} {1}", tableName, tableAlias);
             //否则则拼接架构名.表名
             else
-                commandText.AppendLine($"  FROM {schemaName}.{tableName} {tableAlias}");
+                commandText.AppendFormat("\n  FROM {0}.{1} {2}", schemaName, tableName, tableAlias);
         }
 
         /// <summary>
@@ -88,6 +81,8 @@ namespace CloudEntity.CommandTrees.Commom
             _schemaName = schemaName;
             _tableName = tableName;
             _tableAlias = tableAlias;
+            // 初始化
+            _whereCollection = new BuilderCollection("\n WHERE ", "   AND ", "\n", string.Empty);
         }
         /// <summary>
         /// 拼接Delete sql
