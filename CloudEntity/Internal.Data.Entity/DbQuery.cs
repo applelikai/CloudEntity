@@ -19,33 +19,18 @@ namespace CloudEntity.Internal.Data.Entity
     /// 最后修改时间：2023/02/15 22:27
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
-    internal class DbQuery<TEntity> : DbSortedQuery<TEntity>, IDbQuery<TEntity>
+    internal class DbQuery<TEntity> : DbEntityBase<TEntity>, IDbQuery<TEntity>
         where TEntity : class
     {
-        /// <summary>
-        /// 对象访问器
-        /// </summary>
-        private ObjectAccessor _objectAccessor;
         /// <summary>
         /// 创建表达式解析器的工厂
         /// </summary>
         private IPredicateParserFactory _predicateParserFactory;
-        /// <summary>
-        /// 当前对象的关联对象属性链接列表
-        /// </summary>
-        private IList<PropertyLinker> _propertyLinkers;
 
         /// <summary>
         /// 创建数据操作对象的工厂
         /// </summary>
         public IDbFactory Factory { get; private set; }
-        /// <summary>
-        /// 当前对象的关联对象属性链接列表
-        /// </summary>
-        public IEnumerable<PropertyLinker> PropertyLinkers 
-        {
-            get { return _propertyLinkers; }
-        }
         
         /// <summary>
         /// 获取sql成员表达式节点
@@ -225,18 +210,6 @@ namespace CloudEntity.Internal.Data.Entity
                     yield return sqlParameter;
             }
         }
-        /// <summary>
-        /// 创建实体对象
-        /// </summary>
-        /// <param name="reader">数据流</param>
-        /// <param name="columnNames">查询的列</param>
-        /// <returns>实体对象</returns>
-        private object CreateEntity(IDataReader reader, string[] columnNames)
-        {
-            ITableMapper tableMapper = base.MapperContainer.GetTableMapper(typeof(TEntity));
-            AccessorLinker[] accessorLinkers = this.PropertyLinkers.Select(l => l.ToAccessorLinker(base.MapperContainer)).ToArray();
-            return _objectAccessor.CreateEntity(tableMapper, reader, columnNames, accessorLinkers);
-        }
 
         /// <summary>
         /// 获取所有的sql表达式节点
@@ -258,29 +231,9 @@ namespace CloudEntity.Internal.Data.Entity
         public DbQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper, IDbFactory dbFactory, IPredicateParserFactory predicateParserFactory)
             : base(mapperContainer, commandTreeFactory, dbHelper)
         {
-            // 初始化
-            _objectAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
-            _propertyLinkers = new List<PropertyLinker>();
             // 赋值
             _predicateParserFactory = predicateParserFactory;
             this.Factory = dbFactory;
-        }
-        /// <summary>
-        /// 添加关联的对象属性链接
-        /// </summary>
-        /// <param name="propertyLinker">关联的对象属性链接</param>
-        public void AddPropertyLinker(PropertyLinker propertyLinker)
-        {
-            _propertyLinkers.Add(propertyLinker);
-        }
-        /// <summary>
-        /// 添加关联的对象属性链接列表
-        /// </summary>
-        /// <param name="propertyLinkers">关联的对象属性链接列表</param>
-        public void AddPropertyLinkers(IEnumerable<PropertyLinker> propertyLinkers)
-        {
-            foreach (PropertyLinker propertyLinker in propertyLinkers)
-                _propertyLinkers.Add(propertyLinker);
         }
         /// <summary>
         /// 获取sql字符串
@@ -328,7 +281,7 @@ namespace CloudEntity.Internal.Data.Entity
             // 添加过滤后不重复的sql参数列表
             base.AddSqlParameters(this.GetFilteredSqlParameters(otherSource.Parameters));
             // 添加关联对象属性链接列表
-            _propertyLinkers.Add(new PropertyLinker(selector.Body.GetProperty(), otherSource.PropertyLinkers.ToArray()));
+            base.AddPropertyLinker(new PropertyLinker(selector.Body.GetProperty(), otherSource.PropertyLinkers.ToArray()));
             // 再次获取下当前查询数据源方面链式操作
             return this;
         }
@@ -354,7 +307,7 @@ namespace CloudEntity.Internal.Data.Entity
             // 添加过滤后不重复的sql参数列表
             base.AddSqlParameters(this.GetFilteredSqlParameters(otherSource.Parameters));
             // 添加关联对象属性链接列表
-            _propertyLinkers.Add(new PropertyLinker(selector.Body.GetProperty(), otherSource.PropertyLinkers.ToArray()));
+            base.AddPropertyLinker(new PropertyLinker(selector.Body.GetProperty(), otherSource.PropertyLinkers.ToArray()));
             // 再次获取下当前查询数据源方面链式操作
             return this;
         }
@@ -489,8 +442,8 @@ namespace CloudEntity.Internal.Data.Entity
         {
             // 获取sql命令
             string commandText = base.CommandTreeFactory.GetQueryTree(this.GetNodeBuilders()).Compile();
-            // 执行查询
-            return base.DbHelper.GetModels<TModel>(commandText, base.Parameters.ToArray());
+            // 执行查询获取映射对象迭代器
+            return base.DbHelper.GetResults(base.GetModels<TModel>, commandText, parameters: base.Parameters.ToArray());
         }
         /// <summary>
         /// 获取枚举器
@@ -500,9 +453,14 @@ namespace CloudEntity.Internal.Data.Entity
         {
             // 获取sql命令
             string commandText = base.CommandTreeFactory.GetQueryTree(this.GetNodeBuilders()).Compile();
-            // 执行查询
-            foreach (TEntity entity in base.DbHelper.GetResults(this.CreateEntity, commandText, parameters: base.Parameters.ToArray()))
+            // 获取创建实体对象的匿名函数
+            Func<IDataReader, string[], TEntity> getEntity = base.GetCreateEntityFunc();
+            // 执行查询获取实体对象列表并遍历
+            foreach (TEntity entity in base.DbHelper.GetResults(getEntity, commandText, parameters: base.Parameters.ToArray()))
+            {
+                // 依次获取实体对象
                 yield return entity;
+            }
         }
         /// <summary>
         /// 获取枚举器

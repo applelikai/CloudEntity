@@ -25,17 +25,15 @@ namespace CloudEntity.Internal.Data.Entity
             foreach (IColumnMapper columnMapper in columnMappers)
             {
                 //获取查询列的列名
-                string selectColumnName = columnMapper.ColumnAlias;
-                if (string.IsNullOrEmpty(selectColumnName))
-                    selectColumnName = columnMapper.ColumnName;
+                string selectColumnName = columnMapper.ColumnAlias ?? columnMapper.ColumnName;
                 //若查询结果列中不包含当前Property映射的列,跳过
                 if (!columnNames.Contains(selectColumnName))
                     continue;
-                //若当前列值为空,则跳过,不赋值
-                if (reader[selectColumnName] is DBNull)
-                    continue;
                 //获取值
                 object value = reader[selectColumnName];
+                //若当前列值为空,则跳过,不赋值
+                if (value is DBNull)
+                    continue;
                 //为entity当前属性赋值
                 objectAccessor.SetValue(columnMapper.Property.Name, entity, value);
             }

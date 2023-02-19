@@ -17,7 +17,7 @@ namespace CloudEntity.Internal.Data.Entity
     /// 最后修改时间：2023/02/15 23:11
     /// </summary>
     /// <typeparam name="TModel">对象类型</typeparam>
-    internal class DbView<TModel> : DbSortedQuery, IDbView<TModel>
+    internal class DbView<TModel> : DbSortBase, IDbView<TModel>
         where TModel : class, new()
     {
         /// <summary>

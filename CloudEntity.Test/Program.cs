@@ -236,7 +236,7 @@ public class Program
     /// <param name="args">控制台参数</param>
     private static void Main(string[] args)
     {
-        // 测试删除
-        _container.List<Role>().RemoveAll(r => r.RoleName.Equals("业务员"));
+        // 测试视图查询
+        Program.ViewQueryTest();
     }
 }

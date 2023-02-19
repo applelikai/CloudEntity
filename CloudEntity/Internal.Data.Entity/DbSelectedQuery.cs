@@ -17,18 +17,9 @@ namespace CloudEntity.Internal.Data.Entity
     /// </summary>
     /// <typeparam name="TElement">元素类型</typeparam>
     /// <typeparam name="TEntity">实体类型</typeparam>
-    internal class DbSelectedQuery<TElement, TEntity> : DbSortedQuery<TEntity>, IDbSelectedQuery<TElement>
+    internal class DbSelectedQuery<TElement, TEntity> : DbEntityBase<TEntity>, IDbSelectedQuery<TElement>
         where TEntity : class
     {
-        /// <summary>
-        /// 实体访问器
-        /// </summary>
-        private ObjectAccessor _entityAccessor;
-        /// <summary>
-        /// 当前对象的关联对象属性链接列表
-        /// </summary>
-        private IList<PropertyLinker> _propertyLinkers;
-
         /// <summary>
         /// 转换实体对象为TElement类型的委托
         /// </summary>
@@ -52,19 +43,6 @@ namespace CloudEntity.Internal.Data.Entity
                 }
             }
         }
-        /// <summary>
-        /// 创建TElement类型的对象
-        /// </summary>
-        /// <param name="reader">数据流</param>
-        /// <param name="columnNames">查询的列</param>
-        /// <returns>实体对象</returns>
-        private TElement CreateElement(IDataReader reader, string[] columnNames)
-        {
-            ITableMapper tableMapper = base.MapperContainer.GetTableMapper(typeof(TEntity));
-            AccessorLinker[] accessorLinkers = _propertyLinkers.Select(l => l.ToAccessorLinker(base.MapperContainer)).ToArray();
-            TEntity entity = _entityAccessor.CreateEntity(tableMapper, reader, columnNames, accessorLinkers) as TEntity;
-            return this.Convert(entity);
-        }
 
         /// <summary>
         /// 创建查询命令生成树
@@ -82,28 +60,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
         public DbSelectedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
-            : base(mapperContainer, commandTreeFactory, dbHelper)
-        {
-            _entityAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
-            _propertyLinkers = new List<PropertyLinker>();
-        }
-        /// <summary>
-        /// 添加关联的对象属性链接
-        /// </summary>
-        /// <param name="propertyLinker">关联的对象属性链接</param>
-        public void AddPropertyLinker(PropertyLinker propertyLinker)
-        {
-            _propertyLinkers.Add(propertyLinker);
-        }
-        /// <summary>
-        /// 添加关联的对象属性链接列表
-        /// </summary>
-        /// <param name="propertyLinkers">关联的对象属性链接列表</param>
-        public void AddPropertyLinkers(IEnumerable<PropertyLinker> propertyLinkers)
-        {
-            foreach (PropertyLinker propertyLinker in propertyLinkers)
-                _propertyLinkers.Add(propertyLinker);
-        }
+            : base(mapperContainer, commandTreeFactory, dbHelper) { }
         /// <summary>
         /// 获取枚举器
         /// </summary>
@@ -112,9 +69,11 @@ namespace CloudEntity.Internal.Data.Entity
         {
             //获取查询命令生成树
             ICommandTree queryTree = this.CreateQueryTree();
+            // 获取创建实体对象的匿名函数
+            Func<IDataReader, string[], TEntity> getEntity = base.GetCreateEntityFunc();
             //执行查询获取TElement类型的枚举器
-            foreach (TElement element in base.DbHelper.GetResults(this.CreateElement, queryTree.Compile(), parameters: base.Parameters.ToArray()))
-                yield return element;
+            foreach (TEntity entity in base.DbHelper.GetResults(getEntity, queryTree.Compile(), parameters: base.Parameters.ToArray()))
+                yield return this.Convert(entity);
         }
         /// <summary>
         /// 获取枚举器

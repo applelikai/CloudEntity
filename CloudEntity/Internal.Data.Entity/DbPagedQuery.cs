@@ -3,6 +3,7 @@ using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
 using CloudEntity.Mapping;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -14,17 +15,13 @@ namespace CloudEntity.Internal.Data.Entity
     /// 分页查询数据源类
     /// </summary>
     /// <typeparam name="TEntity"></typeparam>
-    internal class DbPagedQuery<TEntity> : DbSortedQuery<TEntity>, IDbPagedQuery<TEntity>
+    internal class DbPagedQuery<TEntity> : DbEntityBase<TEntity>, IDbPagedQuery<TEntity>
         where TEntity : class
     {
         /// <summary>
         /// 对象访问器
         /// </summary>
         private ObjectAccessor _entityAccessor;
-        /// <summary>
-        /// 当前对象的关联对象属性链接列表
-        /// </summary>
-        private IList<PropertyLinker> _propertyLinkers;
 
         /// <summary>
         /// 元素总数量
@@ -79,21 +76,6 @@ namespace CloudEntity.Internal.Data.Entity
                 }
             }
         }
-        /// <summary>
-        /// 创建实体对象
-        /// </summary>
-        /// <param name="reader">数据流</param>
-        /// <param name="columnNames">查询的列</param>
-        /// <returns>实体对象</returns>
-        private object CreateEntity(IDataReader reader, string[] columnNames)
-        {
-            //获取实体类型的Mapper对象
-            ITableMapper tableMapper = base.MapperContainer.GetTableMapper(typeof(TEntity));
-            //获取对象访问关联对象数组
-            AccessorLinker[] accessorLinkers = _propertyLinkers.Select(l => l.ToAccessorLinker(base.MapperContainer)).ToArray();
-            //获取创建的实体对象
-            return _entityAccessor.CreateEntity(tableMapper, reader, columnNames, accessorLinkers);
-        }
 
         /// <summary>
         /// 创建分页查询数据源
@@ -105,24 +87,6 @@ namespace CloudEntity.Internal.Data.Entity
             : base(mapperContainer, commandTreeFactory, dbHelper)
         {
             _entityAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
-            _propertyLinkers = new List<PropertyLinker>();
-        }
-        /// <summary>
-        /// 添加关联的对象属性链接
-        /// </summary>
-        /// <param name="propertyLinker">关联的对象属性链接</param>
-        public void AddPropertyLinker(PropertyLinker propertyLinker)
-        {
-            _propertyLinkers.Add(propertyLinker);
-        }
-        /// <summary>
-        /// 添加关联的对象属性链接列表
-        /// </summary>
-        /// <param name="propertyLinkers">关联的对象属性链接列表</param>
-        public void AddPropertyLinkers(IEnumerable<PropertyLinker> propertyLinkers)
-        {
-            foreach (PropertyLinker propertyLinker in propertyLinkers)
-                _propertyLinkers.Add(propertyLinker);
         }
         /// <summary>
         /// 获取sql字符串
@@ -149,8 +113,8 @@ namespace CloudEntity.Internal.Data.Entity
             IList<IDbDataParameter> parameters = base.Parameters.ToList();
             parameters.Add(base.DbHelper.Parameter("SkipCount", this.PageSize * (this.PageIndex - 1)));
             parameters.Add(base.DbHelper.Parameter("NextCount", this.PageSize));
-            //执行查询
-            return base.DbHelper.GetModels<TModel>(commandText, parameters.ToArray());
+            // 执行查询获取映射对象迭代器
+            return base.DbHelper.GetResults(base.GetModels<TModel>, commandText, parameters: parameters.ToArray());
         }
         /// <summary>
         /// 获取枚举器
@@ -165,9 +129,14 @@ namespace CloudEntity.Internal.Data.Entity
             IList<IDbDataParameter> parameters = base.Parameters.ToList();
             parameters.Add(base.DbHelper.Parameter("SkipCount", this.PageSize * (this.PageIndex - 1)));
             parameters.Add(base.DbHelper.Parameter("NextCount", this.PageSize));
-            //执行查询
-            foreach (TEntity entity in base.DbHelper.GetResults(this.CreateEntity, commandText, parameters: parameters.ToArray()))
+            // 获取创建实体对象的匿名函数
+            Func<IDataReader, string[], TEntity> getEntity = base.GetCreateEntityFunc();
+            // 执行查询获取实体对象迭代器
+            foreach (TEntity entity in base.DbHelper.GetResults(getEntity, commandText, parameters: parameters.ToArray()))
+            {
+                // 依次获取实体对象
                 yield return entity;
+            }
         }
         /// <summary>
         /// 获取枚举器
