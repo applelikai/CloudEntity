@@ -49,10 +49,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 实体访问器
         /// </summary>
-        protected ObjectAccessor EntityAccessor
-        {
-            get { return ObjectAccessor.GetAccessor(typeof(TEntity)); }
-        }
+        protected ObjectAccessor EntityAccessor { get; private set; }
         /// <summary>
         /// Table元数据解析器
         /// </summary>
@@ -62,14 +59,14 @@ namespace CloudEntity.Internal.Data.Entity
         /// </summary>
         protected string InsertSql
         {
-            get { return this._insertSql; }
+            get { return _insertSql; }
         }
         /// <summary>
         /// Update Sql
         /// </summary>
         protected string UpdateSql
         {
-            get { return this._updateSql; }
+            get { return _updateSql; }
         }
 
         /// <summary>
@@ -349,12 +346,13 @@ namespace CloudEntity.Internal.Data.Entity
             this.DbHelper = dbHelper;
             this.CommandTreeFactory = commandTreeFactory;
             this.TableMapper = mapperContainer.GetTableMapper(typeof(TEntity));
+            this.EntityAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
             //初始化sql
-            this._insertSql = this.GetInsertSql();
-            this._insertAllSql = this.GetInsertAllSql();
-            this._deleteSql = this.GetDeleteSql();
-            this._updateSql = this.GetUpdateSql();
-            this._updateAllSql = this.GetUpdateAllSql();
+            _insertSql = this.GetInsertSql();
+            _insertAllSql = this.GetInsertAllSql();
+            _deleteSql = this.GetDeleteSql();
+            _updateSql = this.GetUpdateSql();
+            _updateAllSql = this.GetUpdateAllSql();
         }
         /// <summary>
         /// 向数据库插入实体对象指定插入的列的值
@@ -366,9 +364,9 @@ namespace CloudEntity.Internal.Data.Entity
             //非空检查
             Check.ArgumentNull(entity, nameof(entity));
             //获取sql参数数组
-            IDbDataParameter[] parameters = this.GetParameters(this._insertSql, entity).ToArray();
+            IDbDataParameter[] parameters = this.GetParameters(_insertSql, entity).ToArray();
             //执行insert
-            return this.ExecuteUpdate(this._insertSql, parameters);
+            return this.ExecuteUpdate(_insertSql, parameters);
         }
         /// <summary>
         /// (异步)向数据库插入实体对象指定插入的列的值
@@ -389,9 +387,9 @@ namespace CloudEntity.Internal.Data.Entity
             //非空检查
             Check.ArgumentNull(entity, nameof(entity));
             //获取sql参数数组
-            IDbDataParameter[] parameters = this.GetParameters(this._insertAllSql, entity).ToArray();
+            IDbDataParameter[] parameters = this.GetParameters(_insertAllSql, entity).ToArray();
             //执行insert
-            return this.ExecuteUpdate(this._insertAllSql, parameters);
+            return this.ExecuteUpdate(_insertAllSql, parameters);
         }
         /// <summary>
         /// (异步)向数据库插入实体对象所有非自增标识的列的值
@@ -412,9 +410,9 @@ namespace CloudEntity.Internal.Data.Entity
             //非空检查
             Check.ArgumentNull(entity, nameof(entity));
             //获取sql参数数组
-            IDbDataParameter[] parameters = this.GetParameters(this._deleteSql, entity).ToArray();
+            IDbDataParameter[] parameters = this.GetParameters(_deleteSql, entity).ToArray();
             //执行并返回DB受影响行数
-            return this.ExecuteUpdate(this._deleteSql, parameters);
+            return this.ExecuteUpdate(_deleteSql, parameters);
         }
         /// <summary>
         /// (异步)删除数据库中的某个实体对象
@@ -480,9 +478,9 @@ namespace CloudEntity.Internal.Data.Entity
             //非空检查
             Check.ArgumentNull(entity, nameof(entity));
             //获取sql参数数组
-            IDbDataParameter[] parameters = this.GetParameters(this._updateSql, entity).ToArray();
+            IDbDataParameter[] parameters = this.GetParameters(_updateSql, entity).ToArray();
             //执行并返回DB受影响行数
-            return this.ExecuteUpdate(this._updateSql, parameters);
+            return this.ExecuteUpdate(_updateSql, parameters);
         }
         /// <summary>
         /// (异步)保存实体对象中所有指定修改的属性的值至数据库

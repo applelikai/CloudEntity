@@ -107,8 +107,7 @@ namespace CloudEntity.Internal.Data.Entity
             where TModel : class, new()
         {
             //获取查询命令
-            ICommandTree queryTree = base.CommandTreeFactory.GetPagingQueryTree(base.NodeBuilders);
-            string commandText = queryTree.Compile();
+            string commandText = this.ToSqlString();
             //获取sql参数集合
             IList<IDbDataParameter> parameters = base.Parameters.ToList();
             parameters.Add(base.DbHelper.Parameter("SkipCount", this.PageSize * (this.PageIndex - 1)));
@@ -124,15 +123,13 @@ namespace CloudEntity.Internal.Data.Entity
         {
             //获取查询命令
             ICommandTree queryTree = base.CommandTreeFactory.GetPagingQueryTree(base.NodeBuilders);
-            string commandText = queryTree.Compile();
+            string commandText = this.ToSqlString();
             //获取sql参数集合
             IList<IDbDataParameter> parameters = base.Parameters.ToList();
             parameters.Add(base.DbHelper.Parameter("SkipCount", this.PageSize * (this.PageIndex - 1)));
             parameters.Add(base.DbHelper.Parameter("NextCount", this.PageSize));
-            // 获取创建实体对象的匿名函数
-            Func<IDataReader, string[], TEntity> getEntity = base.GetCreateEntityFunc();
             // 执行查询获取实体对象迭代器
-            foreach (TEntity entity in base.DbHelper.GetResults(getEntity, commandText, parameters: parameters.ToArray()))
+            foreach (TEntity entity in base.DbHelper.GetResults(base.GetEntities, commandText, parameters: parameters.ToArray()))
             {
                 // 依次获取实体对象
                 yield return entity;

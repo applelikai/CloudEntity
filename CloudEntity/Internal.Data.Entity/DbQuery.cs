@@ -212,15 +212,6 @@ namespace CloudEntity.Internal.Data.Entity
         }
 
         /// <summary>
-        /// 获取所有的sql表达式节点
-        /// </summary>
-        /// <returns>所有的sql表达式节点</returns>
-        protected virtual IEnumerable<INodeBuilder> GetNodeBuilders()
-        {
-            return base.NodeBuilders;
-        }
-
-        /// <summary>
         /// 初始化
         /// </summary>
         /// <param name="mapperContainer">Mapper容器</param>
@@ -241,8 +232,10 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>sql字符串</returns>
         public string ToSqlString()
         {
-            //获取sql命令
-            return base.CommandTreeFactory.GetQueryTree(this.GetNodeBuilders()).Compile();
+            // 获取查询命令生成树
+            ICommandTree commandTree = base.CommandTreeFactory.GetQueryTree(base.NodeBuilders);
+            // 获取sql命令
+            return commandTree.Compile();
         }
         /// <summary>
         /// 为数据源指定需要查询的项（不指定则查询所有项）
@@ -441,7 +434,7 @@ namespace CloudEntity.Internal.Data.Entity
             where TModel : class, new()
         {
             // 获取sql命令
-            string commandText = base.CommandTreeFactory.GetQueryTree(this.GetNodeBuilders()).Compile();
+            string commandText = this.ToSqlString();
             // 执行查询获取映射对象迭代器
             return base.DbHelper.GetResults(base.GetModels<TModel>, commandText, parameters: base.Parameters.ToArray());
         }
@@ -452,11 +445,9 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TEntity> GetEnumerator()
         {
             // 获取sql命令
-            string commandText = base.CommandTreeFactory.GetQueryTree(this.GetNodeBuilders()).Compile();
-            // 获取创建实体对象的匿名函数
-            Func<IDataReader, string[], TEntity> getEntity = base.GetCreateEntityFunc();
+            string commandText = this.ToSqlString();
             // 执行查询获取实体对象列表并遍历
-            foreach (TEntity entity in base.DbHelper.GetResults(getEntity, commandText, parameters: base.Parameters.ToArray()))
+            foreach (TEntity entity in base.DbHelper.GetResults(base.GetEntities, commandText, parameters: base.Parameters.ToArray()))
             {
                 // 依次获取实体对象
                 yield return entity;

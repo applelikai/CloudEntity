@@ -7,7 +7,7 @@ namespace CloudEntity.Data.Entity
     /// Apple_Li 李凯 15150598493
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
-    public interface IDbSource<TEntity> : IEnumerable<TEntity>, IDbBase
+    public interface IDbSource<TEntity> : IDbBase, IEnumerable<TEntity>
         where TEntity : class
     {
         /// <summary>

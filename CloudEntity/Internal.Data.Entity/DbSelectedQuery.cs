@@ -1,11 +1,11 @@
 ﻿using CloudEntity.CommandTrees;
+using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
 using CloudEntity.Mapping;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 
 namespace CloudEntity.Internal.Data.Entity
@@ -62,28 +62,6 @@ namespace CloudEntity.Internal.Data.Entity
         public DbSelectedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
             : base(mapperContainer, commandTreeFactory, dbHelper) { }
         /// <summary>
-        /// 获取枚举器
-        /// </summary>
-        /// <returns>枚举器</returns>
-        public IEnumerator<TElement> GetEnumerator()
-        {
-            //获取查询命令生成树
-            ICommandTree queryTree = this.CreateQueryTree();
-            // 获取创建实体对象的匿名函数
-            Func<IDataReader, string[], TEntity> getEntity = base.GetCreateEntityFunc();
-            //执行查询获取TElement类型的枚举器
-            foreach (TEntity entity in base.DbHelper.GetResults(getEntity, queryTree.Compile(), parameters: base.Parameters.ToArray()))
-                yield return this.Convert(entity);
-        }
-        /// <summary>
-        /// 获取枚举器
-        /// </summary>
-        /// <returns>枚举器</returns>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator();
-        }
-        /// <summary>
         /// 获取查询Sql字符串
         /// </summary>
         /// <returns>查询Sql字符串</returns>
@@ -93,6 +71,44 @@ namespace CloudEntity.Internal.Data.Entity
             ICommandTree queryTree = this.CreateQueryTree();
             // 获取生成的sql
             return queryTree.Compile();
+        }
+        /// <summary>
+        /// 获取的查询列名列表
+        /// </summary>
+        /// <returns>查询列名列表</returns>
+        public IEnumerable<string> GetSelectNames()
+        {
+            // 遍历所有的sql表达式节点
+            foreach (INodeBuilder nodeBuilder in base.NodeBuilders)
+            {
+                // 若不是Column节点则跳过
+                if (nodeBuilder.BuilderType != BuilderType.Column)
+                    continue;
+                // 获取Column节点
+                ColumnBuilder columnBuilder = nodeBuilder as ColumnBuilder;
+                // 获取查询列名
+                yield return columnBuilder.ColumnName;
+            }
+        }
+        /// <summary>
+        /// 获取枚举器
+        /// </summary>
+        /// <returns>枚举器</returns>
+        public IEnumerator<TElement> GetEnumerator()
+        {
+            //获取查询命令生成树
+            ICommandTree queryTree = this.CreateQueryTree();
+            //执行查询获取TElement类型的枚举器
+            foreach (TEntity entity in base.DbHelper.GetResults(base.GetEntities, queryTree.Compile(), parameters: base.Parameters.ToArray()))
+                yield return this.Convert(entity);
+        }
+        /// <summary>
+        /// 获取枚举器
+        /// </summary>
+        /// <returns>枚举器</returns>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
         }
     }
 }

@@ -125,12 +125,12 @@ namespace CloudEntity.Core.Data.Entity
         }
         #region 获取数据源操作对象
         /// <summary>
-        /// 复制来源数据源信息到分页查询数据源
+        /// 复制来源数据源信息到新的实体查询数据源
         /// </summary>
         /// <param name="source">来源数据源</param>
-        /// <param name="cloned">分页查询数据源</param>
+        /// <param name="cloned">新的实体查询数据源</param>
         /// <typeparam name="TEntity">实体类型</typeparam>
-        private void Clone<TEntity>(IDbQuery<TEntity> source, DbPagedQuery<TEntity> cloned)
+        private void Clone<TEntity>(IDbQuery<TEntity> source, DbEntityBase<TEntity> cloned)
             where TEntity : class
         {
             // 复制sql表达式节点列表
@@ -139,41 +139,6 @@ namespace CloudEntity.Core.Data.Entity
             cloned.AddSqlParameters(source.Parameters);
             // 复制关联的对象链接列表
             cloned.AddPropertyLinkers(source.PropertyLinkers);
-        }
-        /// <summary>
-        /// 复制来源数据源信息到选定项数据源
-        /// </summary>
-        /// <param name="source">来源数据源</param>
-        /// <param name="cloned">选定项数据源</param>
-        /// <typeparam name="TElement">包含选定项的类型</typeparam>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        private void Clone<TElement, TEntity>(IDbQuery<TEntity> source, DbSelectedQuery<TElement, TEntity> cloned)
-            where TEntity : class
-        {
-            // 复制sql表达式节点列表
-            cloned.AddNodeBuilders(source.NodeBuilders);
-            // 复制sql参数列表
-            cloned.AddSqlParameters(source.Parameters);
-            // 复制关联的对象链接列表
-            cloned.AddPropertyLinkers(source.PropertyLinkers);
-        }
-        /// <summary>
-        /// 获取复制的查询数据源
-        /// </summary>
-        /// <param name="source">基础数据源</param>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <returns>查询数据源</returns>
-        private DbQuery<TEntity> CloneToQuery<TEntity>(IDbSource<TEntity> source)
-            where TEntity : class
-        {
-            // 创建查询数据源
-            DbQuery<TEntity> cloned = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
-            // 复制sql表达式节点列表
-            cloned.AddNodeBuilders(source.NodeBuilders);
-            // 复制sql参数列表
-            cloned.AddSqlParameters(source.Parameters);
-            // 获取查询数据源
-            return cloned;
         }
         #endregion
 
@@ -437,7 +402,7 @@ namespace CloudEntity.Core.Data.Entity
             // 获取当前实体对象的唯一数据源
             IDbSource<TEntity> source = this.List<TEntity>();
             // 从唯一数据源中复制获取查询数据源
-            return this.CloneToQuery(source);
+            return this.CreateQuery(source);
         }
         /// <summary>
         /// 复制新的查询数据源
@@ -448,9 +413,13 @@ namespace CloudEntity.Core.Data.Entity
         public IDbQuery<TEntity> CreateQuery<TEntity>(IDbSource<TEntity> source)
             where TEntity : class
         {
-            // 复制新的查询数据源
-            DbQuery<TEntity> cloned = this.CloneToQuery(source);
-            // 获取新的查询数据源
+            // 创建查询数据源
+            DbQuery<TEntity> cloned = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
+            // 复制sql表达式节点列表
+            cloned.AddNodeBuilders(source.NodeBuilders);
+            // 复制sql参数列表
+            cloned.AddSqlParameters(source.Parameters);
+            // 获取查询数据源
             return cloned;
         }
         /// <summary>
@@ -464,13 +433,26 @@ namespace CloudEntity.Core.Data.Entity
         {
             // 创建查询数据源
             DbQuery<TEntity> cloned = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
-            // 复制sql表达式节点列表
-            cloned.AddNodeBuilders(source.NodeBuilders);
-            // 复制sql参数列表
-            cloned.AddSqlParameters(source.Parameters);
-            // 复制关联的对象链接列表
-            cloned.AddPropertyLinkers(source.PropertyLinkers);
+            // 复制来源数据源信息到新的实体查询数据源
+            this.Clone(source, cloned);
             // 获取查询数据源
+            return cloned;
+        }
+        /// <summary>
+        /// 创建TOP实体查询数据源
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="topCount">查询的前几条的元素数量</param>
+        /// <returns>TOP实体查询数据源</returns>
+        public IDbTopQuery<TEntity> CreateTopQuery<TEntity>(IDbQuery<TEntity> source, int topCount)
+            where TEntity : class
+        {
+            // 创建新的查询数据源
+            DbTopQuery<TEntity> cloned = new DbTopQuery<TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper, topCount);
+            // 复制来源数据源信息到TOP实体查询数据源
+            this.Clone(source, cloned);
+            // 最后获取复制的数据源
             return cloned;
         }
         #endregion
@@ -566,25 +548,6 @@ namespace CloudEntity.Core.Data.Entity
             cloned.SetSelectBy(selector);
             // 指定转换实体对象为TElement类型的委托
             cloned.Convert = selector.Compile();
-            // 最后获取复制的数据源
-            return cloned;
-        }
-        /// <summary>
-        /// 创建TOP选定项查询数据源
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <param name="source">数据源</param>
-        /// <param name="topCount">查询的前几条的元素数量</param>
-        /// <returns>TOP选定项查询数据源</returns>
-        public IDbSelectedQuery<TEntity> CreateTopSelectedQuery<TEntity>(IDbQuery<TEntity> source, int topCount)
-            where TEntity : class
-        {
-            // 创建新的查询数据源
-            DbTopSelectedQuery<TEntity, TEntity> cloned = new DbTopSelectedQuery<TEntity, TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper, topCount);
-            // 复制来源数据源信息到去除重复项查询数据源
-            this.Clone(source, cloned);
-            // 指定转换实体对象为TElement类型的委托
-            cloned.Convert = e => e;
             // 最后获取复制的数据源
             return cloned;
         }

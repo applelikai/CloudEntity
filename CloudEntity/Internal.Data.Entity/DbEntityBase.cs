@@ -38,14 +38,77 @@ namespace CloudEntity.Internal.Data.Entity
         }
 
         /// <summary>
-        /// 获取映射对象
+        /// 获取获取关联访问链接
+        /// </summary>
+        /// <param name="propertyLinker">属性关联对象链接</param>
+        /// <param name="columnNames">查询的列名数组</param>
+        /// <returns>关联访问链接</returns>
+        private AccessorLinker GetAccessorLinker(PropertyLinker propertyLinker, string[] columnNames)
+        {
+            // 获取子联访问链接集合
+            AccessorLinker[] accessorLinkers = propertyLinker.RelationalLinkers.Select(p => this.GetAccessorLinker(p, columnNames)).ToArray();
+            // 获取查询的列名对应的ColumnMapper对象数组
+            IColumnMapper[] columnMappers = this.GetColumnMappers(propertyLinker.Property.PropertyType, columnNames).ToArray();
+            // 创建并获取关联访问链接
+            return new AccessorLinker(propertyLinker.Property, columnMappers, accessorLinkers);
+        }
+        /// <summary>
+        /// 为实体对象属性赋值
+        /// </summary>
+        /// <param name="entityAccessor">实体对象创建访问对象</param>
+        /// <param name="reader">数据流</param>
+        /// <param name="columnMappers">记录对象属性和查询列映射的ColumnMapper对象数组</param>
+        /// <param name="entity">实体对象</param>
+        private void FillEntity(ObjectAccessor entityAccessor, IDataReader reader, IColumnMapper[] columnMappers, object entity)
+        {
+            // 遍历属性与列名映射对象数组
+            foreach (IColumnMapper columnMapper in columnMappers)
+            {
+                // 获取查询列的列名
+                string selectColumnName = columnMapper.ColumnAlias ?? columnMapper.ColumnName;
+                // 获取值
+                object value = reader[selectColumnName];
+                // 若当前列值为空,则跳过,不赋值
+                if (value is DBNull)
+                    continue;
+                // 为entity当前属性赋值
+                entityAccessor.SetValue(columnMapper.Property.Name, entity, value);
+            }
+        }
+        /// <summary>
+        /// 创建实体对象并读取DataReader对其填值
+        /// </summary>
+        /// <param name="entityAccessor">实体对象创建访问对象</param>
+        /// <param name="reader">数据流</param>
+        /// <param name="columnMappers">记录对象属性和查询列映射的ColumnMapper对象数组</param>
+        /// <param name="accessorLinkers">对象访问关联对象数组</param>
+        /// <returns>实体对象</returns>
+        private object CreateEntity(ObjectAccessor entityAccessor, IDataReader reader, IColumnMapper[] columnMappers, AccessorLinker[] accessorLinkers)
+        {
+            // 创建当前实体对象
+            object entity = entityAccessor.CreateInstance();
+            // 为实体对象基本属性赋值
+            this.FillEntity(entityAccessor, reader, columnMappers, entity);
+            // 遍历对象访问关联对象数组并为关联对象属性赋值
+            foreach (AccessorLinker accessorLinker in accessorLinkers)
+            {
+                // 创建关联实体对象
+                object linkEntity = this.CreateEntity(accessorLinker.EntityAccessor, reader, accessorLinker.ColumnMappers, accessorLinker.AccessorLinkers);
+                // 为当前实体对象的关联对象属性赋值
+                entityAccessor.SetValue(accessorLinker.PropertyName, entity, linkEntity);
+            }
+            // 获取当前实体对象
+            return entity;
+        }
+        /// <summary>
+        /// 创建获取映射对象并读取DataReader对其填值
         /// </summary>
         /// <param name="modelAccessor">映射对象属性访问器</param>
         /// <param name="reader">数据流</param>
         /// <param name="columnMappers">记录查询对象属性名和查询列名的ColumnMapper数组</param>
         /// <typeparam name="TModel">映射的模型对象类型</typeparam>
         /// <returns>映射的模型对象</returns>
-        private TModel GetModel<TModel>(ObjectAccessor modelAccessor, IDataReader reader, IColumnMapper[] columnMappers)
+        private TModel CreateModel<TModel>(ObjectAccessor modelAccessor, IDataReader reader, IColumnMapper[] columnMappers)
             where TModel : class, new()
         {
             // 创建对象
@@ -200,6 +263,31 @@ namespace CloudEntity.Internal.Data.Entity
             return base.CommandTreeFactory.GetOrderByChildBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, isDesc);
         }
         /// <summary>
+        /// 读取DataReader获取实体对象列表
+        /// </summary>
+        /// <param name="reader">数据流</param>
+        /// <param name="columnNames">查询的列名数组</param>
+        /// <returns>实体对象列表</returns>
+        protected IEnumerable<TEntity> GetEntities(IDataReader reader, string[] columnNames)
+        {
+            // 获取实体类型
+            Type entityType = typeof(TEntity);
+            // 获取对象访问器
+            ObjectAccessor entityAccessor = ObjectAccessor.GetAccessor(entityType);
+            // 获取当前对象的查询列对应的ColumnMapper数组
+            IColumnMapper[] columnMappers = this.GetColumnMappers(entityType, columnNames).ToArray();
+            // 获取对象访问关联对象数组
+            AccessorLinker[] accessorLinkers = this.PropertyLinkers.Select(l => this.GetAccessorLinker(l, columnNames)).ToArray();
+            // 读取DataReader
+            while (reader.Read())
+            {
+                // 创建实体对象并填值
+                TEntity entity = this.CreateEntity(entityAccessor, reader, columnMappers, accessorLinkers) as TEntity;
+                // 依次获取实体对象
+                yield return entity;
+            }
+        }
+        /// <summary>
         /// 读取DataReader获取映射的模型对象列表
         /// </summary>
         /// <param name="reader">数据流</param>
@@ -217,29 +305,10 @@ namespace CloudEntity.Internal.Data.Entity
             while (reader.Read())
             {
                 // 依次获取对象
-                yield return this.GetModel<TModel>(modelAccessor, reader, columnMappers);
+                yield return this.CreateModel<TModel>(modelAccessor, reader, columnMappers);
             }
         }
-        /// <summary>
-        /// 获取读取DataReader创建实体对象的委托
-        /// </summary>
-        /// <returns>读取DataReader创建实体对象的委托</returns>
-        protected Func<IDataReader, string[], TEntity> GetCreateEntityFunc()
-        {
-            // 获取实体类型的Mapper对象
-            ITableMapper tableMapper = this.MapperContainer.GetTableMapper(typeof(TEntity));
-            // 获取对象访问关联对象数组
-            AccessorLinker[] accessorLinkers = this.PropertyLinkers.Select(l => l.ToAccessorLinker(this.MapperContainer)).ToArray();
-            // 获取对象访问器
-            ObjectAccessor entityAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
-            // 获取创建实体的委托
-            return delegate(IDataReader reader, string[] columnNames)
-            {
-                // 获取创建的实体对象
-                return entityAccessor.CreateEntity(tableMapper, reader, columnNames, accessorLinkers) as TEntity;
-            };
-        }
-
+        
         /// <summary>
         /// 初始化
         /// </summary>

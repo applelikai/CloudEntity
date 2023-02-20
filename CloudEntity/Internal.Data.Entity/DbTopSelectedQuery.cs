@@ -16,7 +16,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 查询的前几条的元素数量
         /// </summary>
-        private int topCount;
+        private int _topCount;
 
         /// <summary>
         /// 创建查询命令生成树
@@ -24,11 +24,11 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>查询命令生成树</returns>
         protected override ICommandTree CreateQueryTree()
         {
-            return base.CommandTreeFactory.GetTopQueryTree(base.NodeBuilders, this.topCount);
+            return base.CommandTreeFactory.GetTopQueryTree(base.NodeBuilders, _topCount);
         }
 
         /// <summary>
-        /// 创建去除TOP选定项查询数据源对象
+        /// 初始化
         /// </summary>
         /// <param name="mapperContainer">Mapper容器</param>
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
@@ -37,7 +37,7 @@ namespace CloudEntity.Internal.Data.Entity
         public DbTopSelectedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper, int topCount)
             : base(mapperContainer, commandTreeFactory, dbHelper)
         {
-            this.topCount = topCount;
+            _topCount = topCount;
         }
     }
 }

@@ -4,7 +4,7 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 属性链接
-    /// 李凯 Apple_Li
+    /// Apple_Li 李凯 15150598493
     /// </summary>
     public class PropertyLinker
     {

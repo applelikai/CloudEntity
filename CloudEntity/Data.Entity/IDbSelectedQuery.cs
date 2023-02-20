@@ -15,5 +15,10 @@ namespace CloudEntity.Data.Entity
         /// </summary>
         /// <returns>查询Sql字符串</returns>
         string ToSqlString();
+        /// <summary>
+        /// 获取的查询列名列表
+        /// </summary>
+        /// <returns>查询列名列表</returns>
+        IEnumerable<string> GetSelectNames();
     }
 }

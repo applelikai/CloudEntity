@@ -4,6 +4,7 @@ namespace CloudEntity.CommandTrees.Commom
 {
     /// <summary>
     /// sql Column节点生成类
+    /// Apple_Li 李凯 15150598493
     /// </summary>
     public class ColumnBuilder : INodeBuilder
     {

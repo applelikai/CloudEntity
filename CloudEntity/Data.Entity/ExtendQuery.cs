@@ -916,23 +916,23 @@ namespace CloudEntity.Data.Entity
         }
 
         /// <summary>
-        /// Extendable method: 查询前几条的元素
+        /// Extendable method: 复制来源数据源 到TOP查询数据源 并为TOP查询数据源指定查询前几条数据
         /// </summary>
         /// <typeparam name="TEntity">object's type</typeparam>
         /// <param name="source">数据源</param>
         /// <param name="topCount">查询的前几条的元素数量</param>
         /// <returns>TOP查询数据源</returns>
-        public static IDbSelectedQuery<TEntity> Top<TEntity>(this IDbQuery<TEntity> source, int topCount)
+        public static IDbTopQuery<TEntity> Top<TEntity>(this IDbQuery<TEntity> source, int topCount)
             where TEntity : class
         {
             //非空检查
             Check.ArgumentNull(source, nameof(source));
             Check.ArgumentNull(topCount, nameof(topCount));
             //获取TOP查询数据源
-            return source.Factory.CreateTopSelectedQuery(source, topCount);
+            return source.Factory.CreateTopQuery(source, topCount);
         }
         /// <summary>
-        /// Extendable method: 查询前几条选定项
+        /// Extendable method: 复制来源数据源 到TOP选定项查询数据源 并为新数据源指定查询项和查询前几条数据
         /// </summary>
         /// <typeparam name="TEntity">object's type</typeparam>
         /// <typeparam name="TResult">result's type</typeparam>
@@ -951,7 +951,7 @@ namespace CloudEntity.Data.Entity
             return source.Factory.CreateTopSelectedQuery(source, topCount, selector);
         }
         /// <summary>
-        /// Extendable method: 转换数据源中所有的元素获取TResult类型迭代器
+        /// Extendable method: 复制来源数据源 到选定项查询数据源 并为新数据源指定查询项
         /// </summary>
         /// <typeparam name="TEntity">object's type</typeparam>
         /// <typeparam name="TResult">result's type</typeparam>
@@ -968,13 +968,13 @@ namespace CloudEntity.Data.Entity
             return source.Factory.CreateSelectedQuery(source, selector);
         }
         /// <summary>
-        /// Extendable method: 转换数据源中所有的元素获取TResult类型迭代器并去除重复
+        /// Extendable method: 复制来源数据源 到去除重复选定项查询数据源 并为新数据源指定去除重复的查询项
         /// </summary>
         /// <typeparam name="TEntity">object's type</typeparam>
         /// <typeparam name="TResult">result's type</typeparam>
         /// <param name="source">数据源</param>
         /// <param name="selector">转换匿名函数</param>
-        /// <returns>去除重复的TResult类型迭代器</returns>
+        /// <returns>去除重复选定项查询数据源</returns>
         public static IDbSelectedQuery<TResult> Distinct<TEntity, TResult>(this IDbQuery<TEntity> source, Expression<Func<TEntity, TResult>> selector)
             where TEntity : class
         {

@@ -3,6 +3,7 @@ using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
 using CloudEntity.Mapping;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -121,14 +122,29 @@ namespace CloudEntity.Internal.Data.Entity
             yield return base.CommandTreeFactory.GetEqualsBuilder(tableAlias, keyColumnMapper.ColumnName, keyColumnMapper.Property.Name);
         }
         /// <summary>
-        /// 创建实体对象
+        /// 创建实体对象并读取DataReader数据填充对象属性
         /// </summary>
         /// <param name="reader">数据流</param>
-        /// <param name="columnNames">查询的列</param>
         /// <returns>实体对象</returns>
-        private TEntity CreateEntity(IDataReader reader, string[] columnNames)
+        private TEntity CreateEntity(IDataReader reader)
         {
-            return EntityAccessor.CreateEntity(base.TableMapper, reader, columnNames) as TEntity;
+            // 创建实体对象
+            object entity = base.EntityAccessor.CreateInstance();
+            // 遍历ColumnMapper列表
+            foreach (IColumnMapper columnMapper in base.TableMapper.GetColumnMappers())
+            {
+                // 获取查询列的列名
+                string selectColumnName = columnMapper.ColumnAlias ?? columnMapper.ColumnName;
+                //获取值
+                object value = reader[selectColumnName];
+                //若当前列值为空,则跳过,不赋值
+                if (value is DBNull)
+                    continue;
+                //为entity当前属性赋值
+                base.EntityAccessor.SetValue(columnMapper.Property.Name, entity, value);
+            }
+            // 获取实体对象
+            return entity as TEntity;
         }
 
         /// <summary>

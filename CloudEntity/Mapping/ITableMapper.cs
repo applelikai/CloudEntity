@@ -5,6 +5,7 @@ namespace CloudEntity.Mapping
 {
     /// <summary>
     /// 实体和表的映射接口
+    /// Apple_Li 李凯 15150598493
     /// </summary>
     public interface ITableMapper
     {

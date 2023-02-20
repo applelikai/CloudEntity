@@ -107,7 +107,7 @@ public class Program
         // 遍历用户并打印
         foreach (WechatUser user in users)
         {
-            Console.WriteLine("{0} {1}", user.RoleName, user.UserName);
+            Console.WriteLine("{0} {1} {2:yyyy/MM/dd HH:mm:ss}", user.RoleName, user.UserName, user.CreatedTime);
         }
     }
     /// <summary>
@@ -121,7 +121,7 @@ public class Program
         // 获取用户数据源
         IDbQuery<User> users = _container.CreateQuery<User>()
             .SetIncludeBy(u => new { u.UserName, u.CreatedTime})
-            .SetLeftJoin(roles, u => u.Role, (u, r) => u.RoleId == r.RoleId)
+            .SetJoin(roles, u => u.Role, (u, r) => u.RoleId == r.RoleId)
             .SetLike(u => u.UserName, "ap%")
             .SetSort(u => u.Role.RoleName);
         // 第一次打印用户列表
@@ -134,6 +134,27 @@ public class Program
         Program.PrintUsers(pagedUsers);
         // 第四次映射为微信用户列表并打印
         // Program.PrintUsers(pagedUsers.Cast<WechatUser>());
+    }
+    /// <summary>
+    /// TOP查询测试
+    /// </summary>
+    private static void TestTopQuery()
+    {
+        // 获取角色数据源
+        IDbQuery<Role> roles = _container.CreateQuery<Role>()
+            .SetIncludeBy(r => r.RoleName);
+        // 获取用户数据源
+        IDbTopQuery<User> users = _container.CreateQuery<User>()
+            .SetIncludeBy(u => new { u.UserName, u.CreatedTime})
+            .SetJoin(roles, u => u.Role, (u, r) => u.RoleId == r.RoleId)
+            .Top(10);
+        // 打印用户列表
+        Program.PrintUsers(users);
+        // 获取微信用户列表
+        IEnumerable<WechatUser> wechatUsers = users.Cast<WechatUser>();
+        // 打印微信用户列表
+        Program.PrintUsers(wechatUsers);
+
     }
     /// <summary>
     /// 测试IN语句查询
@@ -236,7 +257,7 @@ public class Program
     /// <param name="args">控制台参数</param>
     private static void Main(string[] args)
     {
-        // 测试视图查询
-        Program.ViewQueryTest();
+        // 查询测试
+        Program.TestTopQuery();
     }
 }
