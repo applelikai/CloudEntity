@@ -252,12 +252,30 @@ public class Program
         Program.PrintUsers(wechatUsers);
     }
     /// <summary>
+    /// 测试事务执行
+    /// </summary>
+    private static void TestTransaction()
+    {
+        // 创建事务处理对象
+        using (IDbExecutor executor = _container.CreateExecutor())
+        {
+            // 获取角色id
+            string roleId = "000";
+            // 删除角色
+            executor.Operator<Role>().RemoveAll(r => r.RoleId.Equals(roleId));
+            // 删除角色下的所有用户
+            executor.Operator<User>().RemoveAll(u => u.RoleId.Equals(roleId));
+            // 提交修改
+            executor.Commit();
+        }
+    }
+    /// <summary>
     /// 开始执行
     /// </summary>
     /// <param name="args">控制台参数</param>
     private static void Main(string[] args)
     {
-        // 查询测试
-        Program.TestTopQuery();
+        // 测试事务执行
+        Program.TestTransaction();
     }
 }

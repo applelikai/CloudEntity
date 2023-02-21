@@ -18,21 +18,9 @@ namespace CloudEntity.Internal.Data.Entity
         where TEntity : class
     {
         /// <summary>
-        /// Insert sql
-        /// </summary>
-        private string _insertSql;
-        /// <summary>
         /// insert所有非自增列的sql
         /// </summary>
         private string _insertAllSql;
-        /// <summary>
-        /// delete sql
-        /// </summary>
-        private string _deleteSql;
-        /// <summary>
-        /// update sql
-        /// </summary>
-        private string _updateSql;
         /// <summary>
         /// update所有非主键列的sql
         /// </summary>
@@ -54,21 +42,19 @@ namespace CloudEntity.Internal.Data.Entity
         /// Table元数据解析器
         /// </summary>
         protected ITableMapper TableMapper { get; private set; }
-        /// <summary>
-        /// Insert sql
-        /// </summary>
-        protected string InsertSql
-        {
-            get { return _insertSql; }
-        }
-        /// <summary>
-        /// Update Sql
-        /// </summary>
-        protected string UpdateSql
-        {
-            get { return _updateSql; }
-        }
 
+        /// <summary>
+        /// 插入元素的Sql命令
+        /// </summary>
+        public string InsertSql { get; private set; }
+        /// <summary>
+        /// 更新元素的Sql命令
+        /// </summary>
+        public string UpdateSql { get; private set; }
+        /// <summary>
+        /// 删除元素的Sql命令
+        /// </summary>
+        public string DeleteSql { get; private set; }
         /// <summary>
         /// 创建查询数据源的工厂
         /// </summary>
@@ -336,22 +322,23 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="mapperContainer">mapper容器</param>
         public DbOperator(IDbFactory factory, DbHelper dbHelper, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
         {
-            //非空检查
+            // 非空检查
             Check.ArgumentNull(factory, nameof(factory));
             Check.ArgumentNull(dbHelper, nameof(dbHelper));
             Check.ArgumentNull(commandTreeFactory, nameof(commandTreeFactory));
             Check.ArgumentNull(mapperContainer, nameof(mapperContainer));
-            //赋值
+            // 赋值
             this.Factory = factory;
             this.DbHelper = dbHelper;
             this.CommandTreeFactory = commandTreeFactory;
+            // 初始化
             this.TableMapper = mapperContainer.GetTableMapper(typeof(TEntity));
             this.EntityAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
-            //初始化sql
-            _insertSql = this.GetInsertSql();
+            // 初始化sql
+            this.InsertSql = this.GetInsertSql();
+            this.DeleteSql = this.GetDeleteSql();
+            this.UpdateSql = this.GetUpdateSql();
             _insertAllSql = this.GetInsertAllSql();
-            _deleteSql = this.GetDeleteSql();
-            _updateSql = this.GetUpdateSql();
             _updateAllSql = this.GetUpdateAllSql();
         }
         /// <summary>
@@ -364,9 +351,9 @@ namespace CloudEntity.Internal.Data.Entity
             //非空检查
             Check.ArgumentNull(entity, nameof(entity));
             //获取sql参数数组
-            IDbDataParameter[] parameters = this.GetParameters(_insertSql, entity).ToArray();
+            IDbDataParameter[] parameters = this.GetParameters(this.InsertSql, entity).ToArray();
             //执行insert
-            return this.ExecuteUpdate(_insertSql, parameters);
+            return this.ExecuteUpdate(this.InsertSql, parameters);
         }
         /// <summary>
         /// (异步)向数据库插入实体对象指定插入的列的值
@@ -410,9 +397,9 @@ namespace CloudEntity.Internal.Data.Entity
             //非空检查
             Check.ArgumentNull(entity, nameof(entity));
             //获取sql参数数组
-            IDbDataParameter[] parameters = this.GetParameters(_deleteSql, entity).ToArray();
+            IDbDataParameter[] parameters = this.GetParameters(this.DeleteSql, entity).ToArray();
             //执行并返回DB受影响行数
-            return this.ExecuteUpdate(_deleteSql, parameters);
+            return this.ExecuteUpdate(this.DeleteSql, parameters);
         }
         /// <summary>
         /// (异步)删除数据库中的某个实体对象
@@ -478,9 +465,9 @@ namespace CloudEntity.Internal.Data.Entity
             //非空检查
             Check.ArgumentNull(entity, nameof(entity));
             //获取sql参数数组
-            IDbDataParameter[] parameters = this.GetParameters(_updateSql, entity).ToArray();
+            IDbDataParameter[] parameters = this.GetParameters(this.UpdateSql, entity).ToArray();
             //执行并返回DB受影响行数
-            return this.ExecuteUpdate(_updateSql, parameters);
+            return this.ExecuteUpdate(this.UpdateSql, parameters);
         }
         /// <summary>
         /// (异步)保存实体对象中所有指定修改的属性的值至数据库

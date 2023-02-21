@@ -13,6 +13,18 @@ namespace CloudEntity.Data.Entity
         where TEntity : class
     {
         /// <summary>
+        /// 插入元素的Sql命令
+        /// </summary>
+        string InsertSql { get; }
+        /// <summary>
+        /// 更新元素的Sql命令
+        /// </summary>
+        string UpdateSql { get; }
+        /// <summary>
+        /// 删除元素的Sql命令
+        /// </summary>
+        string DeleteSql { get; }
+        /// <summary>
         /// 创建查询数据源的工厂
         /// </summary>
         IDbFactory Factory { get; }

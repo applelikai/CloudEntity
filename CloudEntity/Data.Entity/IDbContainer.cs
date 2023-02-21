@@ -37,14 +37,6 @@ namespace CloudEntity.Data.Entity
         /// <returns>事故执行器</returns>
         IDbExecutor CreateExecutor();
         /// <summary>
-        /// 创建实体操作器
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <param name="transaction">事物出来对象</param>
-        /// <returns>实体操作器</returns>
-        IDbOperator<TEntity> CreateOperator<TEntity>(IDbTransaction transaction)
-            where TEntity : class;
-        /// <summary>
         /// 创建新的查询数据源
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>

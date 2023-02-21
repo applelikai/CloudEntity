@@ -34,5 +34,10 @@ namespace CloudEntity.Data.Entity
         /// <param name="entities">实体对象集合</param>
         /// <returns>保存的实体数量</returns>
         int SaveAll(IEnumerable<TEntity> entities);
+        /// <summary>
+        /// 获取查询sql字符串
+        /// </summary>
+        /// <returns>查询sql字符串</returns>
+        string ToSqlString();
     }
 }

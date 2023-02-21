@@ -11,6 +11,14 @@ namespace CloudEntity.Test.PostgreSqlClient;
 public class PostgreSqlHelper : DbHelper
 {
     /// <summary>
+    /// 记录执行后的命令
+    /// </summary>
+    /// <param name="commandText">sql命令</param>
+    protected override void RecordCommand(string commandText)
+    {
+        Console.WriteLine(commandText);
+    }
+    /// <summary>
     /// 创建数据库连接
     /// </summary>
     /// <param name="connectionString">连接字符串</param>
@@ -20,12 +28,12 @@ public class PostgreSqlHelper : DbHelper
         return new NpgsqlConnection(connectionString);
     }
     /// <summary>
-    /// 记录执行后的命令
+    /// 创建数据适配器
     /// </summary>
-    /// <param name="commandText">sql命令</param>
-    protected override void RecordCommand(string commandText)
+    /// <returns>数据适配器</returns>
+    protected override IDbDataAdapter CreateDataAdapter()
     {
-        Console.WriteLine(commandText);
+        return new NpgsqlDataAdapter();
     }
 
     /// <summary>

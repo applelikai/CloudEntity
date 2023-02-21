@@ -6,6 +6,7 @@ namespace CloudEntity.Data
 {
     /// <summary>
     /// 操作数据库的DbHelper
+    /// Apple_Li 李凯 15150598493
     /// </summary>
     public abstract class DbHelper
     {
@@ -58,6 +59,11 @@ namespace CloudEntity.Data
         {
             return connection.CreateCommand();
         }
+        /// <summary>
+        /// 创建数据适配器
+        /// </summary>
+        /// <returns>数据适配器</returns>
+        protected abstract IDbDataAdapter CreateDataAdapter();
 
         /// <summary>
         /// 初始化DbHelper
@@ -197,13 +203,13 @@ namespace CloudEntity.Data
         }
 
         /// <summary>
-        /// Execute and get result
-        /// 执行并获取单个结果
+        /// Execute and get scaler result
+        /// 执行并获取第一行第一列的值
         /// </summary>
         /// <param name="commandText">sql命令</param>
         /// <param name="commandType">命令类型</param>
         /// <param name="parameters">sql参数数组</param>
-        /// <returns>单个结果</returns>
+        /// <returns>第一行第一列的值</returns>
         public object GetScalar(string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
         {
             using (IDbConnection connection = this.Connect(_connectionString))
@@ -232,33 +238,43 @@ namespace CloudEntity.Data
             }
         }
         /// <summary>
-        /// Execute and get result
-        /// 执行并获取单个结果
+        /// Execute and get dataset
+        /// 执行并获取DataSet
         /// </summary>
         /// <param name="commandText">sql命令</param>
-        /// <param name="transaction">事故处理对象</param>
         /// <param name="commandType">命令类型</param>
         /// <param name="parameters">sql参数数组</param>
-        /// <returns>单个结果</returns>
-        public object GetScalar(string commandText, IDbTransaction transaction, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
+        /// <returns>DataSet对象</returns>
+        public DataSet GetDataSet(string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
         {
-            //创建Command对象
-            using (IDbCommand command = this.CreateCommand(transaction.Connection))
+            // 创建数据库连接
+            using (IDbConnection connection = this.Connect(_connectionString))
             {
-                //指定并记录sql命令
-                command.CommandText = commandText;
-                this.RecordCommand(command.CommandText);
-                //添加参数
-                foreach (IDbDataParameter parameter in parameters)
-                    command.Parameters.Add(parameter);
-                //获取命令类型
-                command.CommandType = commandType;
-                //获取结果
-                object result = command.ExecuteScalar();
-                //清空sql参数
-                command.Parameters.Clear();
-                //返回执行结果
-                return result;
+                // 打开连接
+                if (connection.State != ConnectionState.Open)
+                    connection.Open();
+                // 创建Command对象
+                using (IDbCommand command = this.CreateCommand(connection))
+                {
+                    // 指定并记录sql命令
+                    command.CommandText = commandText;
+                    this.RecordCommand(command.CommandText);
+                    // 添加参数
+                    foreach (IDbDataParameter parameter in parameters)
+                        command.Parameters.Add(parameter);
+                    // 指定命令类型
+                    command.CommandType = commandType;
+                    // 创建数据适配器
+                    IDbDataAdapter dataAdapter = this.CreateDataAdapter();
+                    // 为数据适配器指定查询Command
+                    dataAdapter.SelectCommand = command;
+                    // 创建DataSet对象
+                    DataSet dataSet = new DataSet();
+                    // 填充DataSet对象
+                    dataAdapter.Fill(dataSet);
+                    // 最终获取DataSet对象
+                    return dataSet;
+                }
             }
         }
         /// <summary>

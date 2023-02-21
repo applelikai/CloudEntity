@@ -73,6 +73,22 @@ namespace CloudEntity.Core.Data.Entity
         }
         
         /// <summary>
+        /// 复制来源数据源信息到新的实体查询数据源
+        /// </summary>
+        /// <param name="source">来源数据源</param>
+        /// <param name="cloned">新的实体查询数据源</param>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        private void Clone<TEntity>(IDbQuery<TEntity> source, DbEntityBase<TEntity> cloned)
+            where TEntity : class
+        {
+            // 复制sql表达式节点列表
+            cloned.AddNodeBuilders(source.NodeBuilders);
+            // 复制sql参数列表
+            cloned.AddSqlParameters(source.Parameters);
+            // 复制关联的对象链接列表
+            cloned.AddPropertyLinkers(source.PropertyLinkers);
+        }
+        /// <summary>
         /// 过滤获取统计查询Sql表达式节点集合
         /// </summary>
         /// <param name="nodeBuilders">源Sql表达式节点集合</param>
@@ -123,24 +139,6 @@ namespace CloudEntity.Core.Data.Entity
                 }
             }
         }
-        #region 获取数据源操作对象
-        /// <summary>
-        /// 复制来源数据源信息到新的实体查询数据源
-        /// </summary>
-        /// <param name="source">来源数据源</param>
-        /// <param name="cloned">新的实体查询数据源</param>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        private void Clone<TEntity>(IDbQuery<TEntity> source, DbEntityBase<TEntity> cloned)
-            where TEntity : class
-        {
-            // 复制sql表达式节点列表
-            cloned.AddNodeBuilders(source.NodeBuilders);
-            // 复制sql参数列表
-            cloned.AddSqlParameters(source.Parameters);
-            // 复制关联的对象链接列表
-            cloned.AddPropertyLinkers(source.PropertyLinkers);
-        }
-        #endregion
 
         /// <summary>
         /// 静态初始化
@@ -311,18 +309,7 @@ namespace CloudEntity.Core.Data.Entity
         /// <returns>事故执行器</returns>
         public IDbExecutor CreateExecutor()
         {
-            return new DbExecutor(this);
-        }
-        /// <summary>
-        /// 创建实体操作器
-        /// </summary>
-        /// <typeparam name="TEntity">实体类型</typeparam>
-        /// <param name="transaction">事物出来对象</param>
-        /// <returns>实体操作器</returns>
-        public IDbOperator<TEntity> CreateOperator<TEntity>(IDbTransaction transaction)
-            where TEntity : class
-        {
-            return new DbTransactionOperator<TEntity>(this, this.DbHelper, _commandTreeFactory, _mapperContainer, transaction);
+            return new DbExecutor(this, this.DbHelper, _commandTreeFactory, _mapperContainer);
         }
         /// <summary>
         /// 创建自动连接Table的增删改集合

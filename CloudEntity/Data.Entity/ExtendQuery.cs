@@ -174,7 +174,23 @@ namespace CloudEntity.Data.Entity
             // 最后获取当前数据源方面链式操作
             return source;
         }
-
+        
+        /// <summary>
+        /// Extendable method: 复制来源数据源 到新建的查询数据源
+        /// </summary>
+        /// <param name="source">来源数据源</param>
+        /// <typeparam name="TEntity">对象类型</typeparam>
+        /// <returns>新的查询数据源</returns>
+        public static IDbQuery<TEntity> ToQuery<TEntity>(this IDbSource<TEntity> source)
+            where TEntity : class
+        {
+            // 非空验证
+            Check.ArgumentNull(source, nameof(source));
+            // 复制来源数据源获取新的查询数据源
+            IDbQuery<TEntity> cloned = source.Factory.CreateQuery(source);
+            // 最后获取复制的查询数据源
+            return cloned;
+        }
         /// <summary>
         /// Extendable method: 复制来源数据源 并为新数据源添加 数据对象某属性值包含（或不包含）对象属性值数组中 的检索条件
         /// </summary>
@@ -523,7 +539,7 @@ namespace CloudEntity.Data.Entity
             return cloned;
         }
         /// <summary>
-        /// Extendable method: 获取左关联查询数据源
+        /// Extendable method: 复制来源数据源 并为新数据源左连接关联其他实体查询数据源
         /// </summary>
         /// <typeparam name="TEntity">实体类型</typeparam>
         /// <typeparam name="TOther">关联的实体类型</typeparam>
@@ -536,7 +552,7 @@ namespace CloudEntity.Data.Entity
             where TEntity : class
             where TOther : class
         {
-            //非空检查
+            // 非空检查
             Check.ArgumentNull(source, nameof(source));
             // 复制来源数据源到新的查询数据源
             IDbQuery<TEntity> cloned = source.Factory.CreateQuery(source);

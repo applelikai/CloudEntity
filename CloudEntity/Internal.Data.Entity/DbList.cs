@@ -236,15 +236,26 @@ namespace CloudEntity.Internal.Data.Entity
             return result;
         }
         /// <summary>
+        /// 获取查询sql字符串
+        /// </summary>
+        /// <returns>查询sql字符串</returns>
+        public string ToSqlString()
+        {
+            // 获取查询命令生成树
+            ICommandTree queryTree = base.CommandTreeFactory.GetQueryTree(this.NodeBuilders);
+            // 获取生成的查询sql字符串
+            return queryTree.Compile();
+        }
+        /// <summary>
         /// 获取TEntity类型的枚举器
         /// </summary>
         /// <returns>TEntity类型的枚举器</returns>
         public IEnumerator<TEntity> GetEnumerator()
         {
-            //获取查询命令生成树
-            ICommandTree queryTree = base.CommandTreeFactory.GetQueryTree(this.NodeBuilders);
-            //执行查询获取结果
-            foreach (TEntity entity in base.DbHelper.GetResults(this.CreateEntity, queryTree.Compile()))
+            // 获取查询sql命令
+            string commandText = this.ToSqlString();
+            // 执行查询获取结果
+            foreach (TEntity entity in base.DbHelper.GetResults(this.CreateEntity, commandText))
                 yield return entity;
         }
         /// <summary>
