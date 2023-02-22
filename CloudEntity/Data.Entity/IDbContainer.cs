@@ -13,7 +13,7 @@ namespace CloudEntity.Data.Entity
         /// <summary>
         /// 操作数据库的DbHelper
         /// </summary>
-        DbHelper DbHelper { get; }
+        IDbHelper DbHelper { get; }
 
         /// <summary>
         /// 初始化某实体类所Mapping的Table

@@ -88,7 +88,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="dbHelper">操作数据库的对象</param>
         /// <param name="predicateParserFactory">创建表达式解析器的工厂</param>
         /// <param name="innerQuerySql">查询sql</param>
-        public DbView(IDbFactory dbFactory, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper, IPredicateParserFactory predicateParserFactory, string innerQuerySql)
+        public DbView(IDbFactory dbFactory, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper, IPredicateParserFactory predicateParserFactory, string innerQuerySql)
             : base(commandTreeFactory, dbHelper)
         {
             //非空检查

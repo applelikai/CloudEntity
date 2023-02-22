@@ -17,7 +17,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="mapperContainer">Mapper容器</param>
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbScalar(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
+        public DbScalar(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper)
             : base(commandTreeFactory, dbHelper){ }
         /// <summary>
         /// 执行查询获取第一行第一列的值

@@ -47,14 +47,14 @@ namespace CloudEntity.Core.Data.Entity
         /// <param name="dbHelper">操作数据库的Helper</param>
         /// <param name="tableHeader">Table基本信息</param>
         /// <returns>当前table是否存在</returns>
-        public abstract bool IsExist(DbHelper dbHelper, ITableHeader tableHeader);
+        public abstract bool IsExist(IDbHelper dbHelper, ITableHeader tableHeader);
         /// <summary>
         /// 创建表
         /// </summary>
         /// <param name="dbHelper">操作数据库的Helper</param>
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="tableMapper">Table元数据解析器</param>
-        public int CreateTable(DbHelper dbHelper, ICommandTreeFactory commandTreeFactory, ITableMapper tableMapper)
+        public int CreateTable(IDbHelper dbHelper, ICommandTreeFactory commandTreeFactory, ITableMapper tableMapper)
         {
             //获取数据库架构名
             string schemaName = tableMapper.Header.SchemaName ?? dbHelper.DefaultSchemaName;
@@ -70,7 +70,7 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         /// <param name="dbHelper">操作数据库的Helper</param>
         /// <param name="tableHeader">Table头信息</param>
-        public int DropTable(DbHelper dbHelper, ITableHeader tableHeader)
+        public int DropTable(IDbHelper dbHelper, ITableHeader tableHeader)
         {
             // 获取删除表的sql命令
             string schemaName = tableHeader.SchemaName ?? dbHelper.DefaultSchemaName;
@@ -85,7 +85,7 @@ namespace CloudEntity.Core.Data.Entity
         /// <param name="tableHeader">Table头信息</param>
         /// <param name="oldTableName">旧的表名</param>
         /// <returns>受影响的行数</returns>
-        public int RenameTable(DbHelper dbHelper, ITableHeader tableHeader, string oldTableName)
+        public int RenameTable(IDbHelper dbHelper, ITableHeader tableHeader, string oldTableName)
         {
             // 获取变更表名的sql命令
             string schemaName = tableHeader.SchemaName ?? dbHelper.DefaultSchemaName;

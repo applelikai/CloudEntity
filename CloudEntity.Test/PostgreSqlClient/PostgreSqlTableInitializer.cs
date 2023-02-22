@@ -49,12 +49,12 @@ public class PostgreSqlTableInitializer : TableInitializer
     /// <param name="dbHelper">操作数据库的Helper</param>
     /// <param name="tableHeader">Table头</param>
     /// <returns>当前table是否存在</returns>
-    public override bool IsExist(DbHelper dbHelper, ITableHeader tableHeader)
+    public override bool IsExist(IDbHelper dbHelper, ITableHeader tableHeader)
     {
         //获取sql参数数组
         IList<IDbDataParameter> parameters = new List<IDbDataParameter>
         {
-            dbHelper.Parameter("TableName", tableHeader.TableName)
+            dbHelper.CreateParameter("TableName", tableHeader.TableName)
         };
         //初始化sql命令
         StringBuilder commandText = new StringBuilder();
@@ -66,7 +66,7 @@ public class PostgreSqlTableInitializer : TableInitializer
         if (!string.IsNullOrEmpty(schemaName))
         {
             commandText.AppendLine("   AND t.table_schema = @SchemaName");
-            parameters.Add(dbHelper.Parameter("SchemaName", schemaName));
+            parameters.Add(dbHelper.CreateParameter("SchemaName", schemaName));
         }
         //执行获取结果
         int result = TypeHelper.ConvertTo<int>(dbHelper.GetScalar(commandText.ToString(), parameters: parameters.ToArray()));

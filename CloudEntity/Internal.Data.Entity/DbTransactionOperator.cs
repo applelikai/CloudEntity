@@ -38,7 +38,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="mapperContainer">mapper容器</param>
         /// <param name="transaction">事务</param>
-        public DbTransactionOperator(IDbFactory factory, DbHelper dbHelper, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer, IDbTransaction transaction)
+        public DbTransactionOperator(IDbFactory factory, IDbHelper dbHelper, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer, IDbTransaction transaction)
             : base(factory, dbHelper, commandTreeFactory, mapperContainer)
         {
             this.transaction = transaction;

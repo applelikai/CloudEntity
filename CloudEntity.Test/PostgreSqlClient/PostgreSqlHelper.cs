@@ -46,7 +46,7 @@ public class PostgreSqlHelper : DbHelper
     /// 创建sql参数
     /// </summary>
     /// <returns>sql参数</returns>
-    public override IDbDataParameter Parameter()
+    public override IDbDataParameter CreateParameter()
     {
         return new NpgsqlParameter();
     }

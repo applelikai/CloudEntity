@@ -29,7 +29,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 操作数据库的Helper
         /// </summary>
-        protected DbHelper DbHelper { get; private set; }
+        protected IDbHelper DbHelper { get; private set; }
         /// <summary>
         /// 创建CommandTree的工厂
         /// </summary>
@@ -198,7 +198,7 @@ namespace CloudEntity.Internal.Data.Entity
                 //添加sql表达式节点
                 nodeBuilders.Add(setBuilder);
                 //添加sql参数
-                sqlParameters.Add(this.DbHelper.Parameter(parameterName, setPair.Value));
+                sqlParameters.Add(this.DbHelper.CreateParameter(parameterName, setPair.Value));
             }
         }
         /// <summary>
@@ -301,7 +301,7 @@ namespace CloudEntity.Internal.Data.Entity
                     //获取参数值
                     object value = this.EntityAccessor.GetValue(columnMapper.Property.Name, entity);
                     //依次获取参数
-                    yield return this.DbHelper.Parameter(columnMapper.Property.Name, value);
+                    yield return this.DbHelper.CreateParameter(columnMapper.Property.Name, value);
                 }
             }
         }
@@ -320,7 +320,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="dbHelper">数据库操作对象</param>
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="mapperContainer">mapper容器</param>
-        public DbOperator(IDbFactory factory, DbHelper dbHelper, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
+        public DbOperator(IDbFactory factory, IDbHelper dbHelper, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
         {
             // 非空检查
             Check.ArgumentNull(factory, nameof(factory));

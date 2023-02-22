@@ -19,12 +19,12 @@ public class PostgreSqlColumnInitializer : ColumnInitializer
     /// <param name="dbHelper">操作数据库的DbHelper</param>
     /// <param name="tableHeader">table头</param>
     /// <returns>当前表中所有的列</returns>
-    protected override IEnumerable<string> GetColumns(DbHelper dbHelper, ITableHeader tableHeader)
+    protected override IEnumerable<string> GetColumns(IDbHelper dbHelper, ITableHeader tableHeader)
     {
         //初始化sql参数数组
         IList<IDbDataParameter> parameters = new List<IDbDataParameter>
         {
-            dbHelper.Parameter("TableName", tableHeader.TableName)
+            dbHelper.CreateParameter("TableName", tableHeader.TableName)
         };
         //初始化sql
         StringBuilder sqlBuilder = new StringBuilder();
@@ -36,7 +36,7 @@ public class PostgreSqlColumnInitializer : ColumnInitializer
         if (!string.IsNullOrEmpty(schemaName))
         {
             sqlBuilder.AppendLine("   AND c.table_schema = @SchemaName");
-            parameters.Add(dbHelper.Parameter("SchemaName", schemaName));
+            parameters.Add(dbHelper.CreateParameter("SchemaName", schemaName));
         }
         //执行查询获取所有列
         return dbHelper.GetResults(reader => reader.GetString(0), sqlBuilder.ToString(), parameters: parameters.ToArray());

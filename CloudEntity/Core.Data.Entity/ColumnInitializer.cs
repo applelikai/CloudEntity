@@ -17,7 +17,7 @@ namespace CloudEntity.Core.Data.Entity
         /// <param name="dbHelper">操作数据库的Helper对象</param>
         /// <param name="tableHeader">Table基本信息</param>
         /// <returns>当前Table下所有的列</returns>
-        protected abstract IEnumerable<string> GetColumns(DbHelper dbHelper, ITableHeader tableHeader);
+        protected abstract IEnumerable<string> GetColumns(IDbHelper dbHelper, ITableHeader tableHeader);
 
         /// <summary>
         /// 为当前实体所Mapping的Table添加没有添加的列
@@ -25,7 +25,7 @@ namespace CloudEntity.Core.Data.Entity
         /// <param name="dbHelper">操作数据库的Helper对象</param>
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="tableMapper">Table元数据解析器</param>
-        public void AlterTableAddColumns(DbHelper dbHelper, ICommandTreeFactory commandTreeFactory, ITableMapper tableMapper)
+        public void AlterTableAddColumns(IDbHelper dbHelper, ICommandTreeFactory commandTreeFactory, ITableMapper tableMapper)
         {
             //获取当前实体元数据解析器中某些属性Mapping的Column未包含在Table中的属性对应的ColumnMapper,并转换获取Column节点
             string[] columnNames = this.GetColumns(dbHelper, tableMapper.Header).ToArray();

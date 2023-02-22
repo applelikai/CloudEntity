@@ -59,7 +59,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="mapperContainer">Mapper容器</param>
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbSelectedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
+        public DbSelectedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper)
             : base(mapperContainer, commandTreeFactory, dbHelper) { }
         /// <summary>
         /// 获取查询Sql字符串

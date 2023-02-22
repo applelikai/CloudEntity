@@ -8,7 +8,7 @@ namespace CloudEntity.Data
     /// 操作数据库的DbHelper
     /// Apple_Li 李凯 15150598493
     /// </summary>
-    public abstract class DbHelper
+    public abstract class DbHelper : IDbHelper
     {
         /// <summary>
         /// 连接字符串
@@ -79,20 +79,21 @@ namespace CloudEntity.Data
             _defaultSchemaName = defaultSchemaName;
         }
 
+        #region 创建sql参数
         /// <summary>
         /// 创建sql参数
         /// </summary>
         /// <returns>sql参数</returns>
-        public abstract IDbDataParameter Parameter();
+        public abstract IDbDataParameter CreateParameter();
         /// <summary>
         /// 创建参数
         /// </summary>
         /// <param name="name">参数名</param>
         /// <param name="value">参数值</param>
         /// <returns>参数</returns>
-        public IDbDataParameter Parameter(string name, object value)
+        public IDbDataParameter CreateParameter(string name, object value)
         {
-            IDbDataParameter parameter = this.Parameter();
+            IDbDataParameter parameter = this.CreateParameter();
             parameter.ParameterName = name;
             parameter.Value = value ?? DBNull.Value;
             return parameter;
@@ -104,9 +105,9 @@ namespace CloudEntity.Data
         /// <param name="dataType">参数值类型</param>
         /// <param name="direction">参数类型(输入输出)</param>
         /// <returns>参数</returns>
-        public IDbDataParameter Parameter(string name, Type dataType, ParameterDirection direction)
+        public IDbDataParameter CreateParameter(string name, Type dataType, ParameterDirection direction)
         {
-            return this.Parameter(name, this.GetDbType(dataType), direction);
+            return this.CreateParameter(name, this.GetDbType(dataType), direction);
         }
         /// <summary>
         /// 创建参数
@@ -115,9 +116,9 @@ namespace CloudEntity.Data
         /// <param name="dataType">参数值类型</param>
         /// <param name="direction">参数类型(输入输出)</param>
         /// <returns>参数</returns>
-        public IDbDataParameter Parameter(string name, DbType dataType, ParameterDirection direction)
+        public IDbDataParameter CreateParameter(string name, DbType dataType, ParameterDirection direction)
         {
-            IDbDataParameter parameter = this.Parameter();
+            IDbDataParameter parameter = this.CreateParameter();
             parameter.ParameterName = name;
             parameter.DbType = dataType;
             parameter.Direction = direction;
@@ -131,9 +132,9 @@ namespace CloudEntity.Data
         /// <param name="size">长度</param>
         /// <param name="direction">参数类型(输入输出)</param>
         /// <returns>参数</returns>
-        public IDbDataParameter Parameter(string name, Type dataType, int size, ParameterDirection direction)
+        public IDbDataParameter CreateParameter(string name, Type dataType, int size, ParameterDirection direction)
         {
-            return this.Parameter(name, this.GetDbType(dataType), size, direction);
+            return this.CreateParameter(name, this.GetDbType(dataType), size, direction);
         }
         /// <summary>
         /// 创建参数
@@ -143,9 +144,9 @@ namespace CloudEntity.Data
         /// <param name="size">长度</param>
         /// <param name="direction">参数类型(输入输出)</param>
         /// <returns>参数</returns>
-        public IDbDataParameter Parameter(string name, DbType dataType, int size, ParameterDirection direction)
+        public IDbDataParameter CreateParameter(string name, DbType dataType, int size, ParameterDirection direction)
         {
-            IDbDataParameter parameter = this.Parameter(name, dataType, direction);
+            IDbDataParameter parameter = this.CreateParameter(name, dataType, direction);
             parameter.Size = size;
             return parameter;
         }
@@ -156,9 +157,9 @@ namespace CloudEntity.Data
         /// <param name="dataType">参数值类型</param>
         /// <param name="value">参数值</param>
         /// <returns>参数</returns>
-        public IDbDataParameter Parameter(string name, Type dataType, object value)
+        public IDbDataParameter CreateParameter(string name, Type dataType, object value)
         {
-            return this.Parameter(name, this.GetDbType(dataType), value);
+            return this.CreateParameter(name, this.GetDbType(dataType), value);
         }
         /// <summary>
         /// 创建参数
@@ -167,9 +168,9 @@ namespace CloudEntity.Data
         /// <param name="dataType">参数值类型</param>
         /// <param name="value">参数值</param>
         /// <returns>参数</returns>
-        public IDbDataParameter Parameter(string name, DbType dataType, object value)
+        public IDbDataParameter CreateParameter(string name, DbType dataType, object value)
         {
-            IDbDataParameter parameter = this.Parameter();
+            IDbDataParameter parameter = this.CreateParameter();
             parameter.ParameterName = name;
             parameter.DbType = dataType;
             parameter.Value = value ?? DBNull.Value;
@@ -183,9 +184,9 @@ namespace CloudEntity.Data
         /// <param name="direction">参数类型(输入输出)</param>
         /// <param name="value">参数值</param>
         /// <returns>参数</returns>
-        public IDbDataParameter Parameter(string name, Type dataType, ParameterDirection direction, object value)
+        public IDbDataParameter CreateParameter(string name, Type dataType, ParameterDirection direction, object value)
         {
-            return this.Parameter(name, this.GetDbType(dataType), direction, value);
+            return this.CreateParameter(name, this.GetDbType(dataType), direction, value);
         }
         /// <summary>
         /// 创建参数
@@ -195,13 +196,15 @@ namespace CloudEntity.Data
         /// <param name="direction">参数类型(输入输出)</param>
         /// <param name="value">参数值</param>
         /// <returns>参数</returns>
-        public IDbDataParameter Parameter(string name, DbType dataType, ParameterDirection direction, object value)
+        public IDbDataParameter CreateParameter(string name, DbType dataType, ParameterDirection direction, object value)
         {
-            IDbDataParameter parameter = this.Parameter(name, dataType, direction);
+            IDbDataParameter parameter = this.CreateParameter(name, dataType, direction);
             parameter.Value = value ?? DBNull.Value;
             return parameter;
         }
+        #endregion
 
+        #region 执行查询
         /// <summary>
         /// Execute and get scaler result
         /// 执行并获取第一行第一列的值
@@ -403,27 +406,29 @@ namespace CloudEntity.Data
                 }
             }
         }
+        #endregion
 
+        #region 执行带事务和不带事务的修改和删除
         /// <summary>
-        /// 开始事故
+        /// 开始事务
         /// </summary>
         /// <param name="connection">数据库连接</param>
-        /// <param name="transaction">事故</param>
+        /// <param name="transaction">事务</param>
         public void BeginTransaction(out IDbConnection connection, out IDbTransaction transaction)
         {
             connection = this.Connect(_connectionString);   //创建数据库连接对象
             if (connection.State != ConnectionState.Open)       //若连接没有打开
                 connection.Open();                                  //打开连接
-            transaction = connection.BeginTransaction();        //获取事故
+            transaction = connection.BeginTransaction();        //获取事务
         }
         /// <summary>
-        /// 结束事故处理
+        /// 结束事务处理
         /// </summary>
         /// <param name="connection">数据库连接</param>
-        /// <param name="transaction">事故</param>
+        /// <param name="transaction">事务</param>
         public void EndTransaction(IDbConnection connection, IDbTransaction transaction)
         {
-            transaction.Dispose();  //释放事故
+            transaction.Dispose();  //释放事务
             connection.Dispose();   //释放连接
         }
         /// <summary>
@@ -466,7 +471,7 @@ namespace CloudEntity.Data
         /// 执行并获取DB受影响行数
         /// </summary>
         /// <param name="commandText">sql命令</param>
-        /// <param name="transaction">事故处理对象</param>
+        /// <param name="transaction">事务处理对象</param>
         /// <param name="commandType">命令类型</param>
         /// <param name="parameters">sql参数数组</param>
         /// <returns>DB受影响行数</returns>
@@ -475,7 +480,7 @@ namespace CloudEntity.Data
             //开始执行命令
             using (IDbCommand command = this.CreateCommand(transaction.Connection))
             {
-                //指定处理事故
+                //指定处理事务
                 command.Transaction = transaction;
                 //指定并记录sql命令
                 command.CommandText = commandText;
@@ -493,5 +498,6 @@ namespace CloudEntity.Data
                 return result;
             }
         }
+        #endregion
     }
 }

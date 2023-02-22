@@ -1,10 +1,7 @@
 using CloudEntity.CommandTrees;
 using CloudEntity.Data;
-using CloudEntity.Data.Entity;
-using CloudEntity.Mapping;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -79,7 +76,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// </summary>
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbSortBase(ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
+        public DbSortBase(ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper)
          : base(commandTreeFactory, dbHelper) { }
     }
 }

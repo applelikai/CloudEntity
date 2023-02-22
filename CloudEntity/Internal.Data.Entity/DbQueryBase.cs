@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Linq.Expressions;
 
 namespace CloudEntity.Internal.Data.Entity
 {
@@ -32,7 +31,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 操作数据库的DbHelper
         /// </summary>
-        protected DbHelper DbHelper { get; private set; }
+        protected IDbHelper DbHelper { get; private set; }
 
         /// <summary>
         /// sql表达式节点集合
@@ -72,7 +71,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// </summary>
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbQueryBase(ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
+        public DbQueryBase(ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper)
         {
             // 初始化
             _nodebuilders = new List<INodeBuilder>();
@@ -127,7 +126,7 @@ namespace CloudEntity.Internal.Data.Entity
         public void AddSqlParameter(string name, object value)
         {
             // 创建sql参数
-            IDbDataParameter sqlParameter = this.DbHelper.Parameter(name, value);
+            IDbDataParameter sqlParameter = this.DbHelper.CreateParameter(name, value);
             // 添加sql参数
             _sqlParameters.Add(sqlParameter);
         }

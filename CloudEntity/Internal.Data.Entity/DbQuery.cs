@@ -219,7 +219,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="dbHelper">操作数据库的DbHelper</param>
         /// <param name="dbFactory">创建数据操作对象的工厂</param>
         /// <param name="predicateParserFactory">创建表达式解析器的工厂</param>
-        public DbQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper, IDbFactory dbFactory, IPredicateParserFactory predicateParserFactory)
+        public DbQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper, IDbFactory dbFactory, IPredicateParserFactory predicateParserFactory)
             : base(mapperContainer, commandTreeFactory, dbHelper)
         {
             // 赋值

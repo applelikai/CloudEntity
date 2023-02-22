@@ -24,7 +24,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 数据库操作对象
         /// </summary>
-        private DbHelper _dbHelper;
+        private IDbHelper _dbHelper;
         /// <summary>
         /// 创建Sql命令生成树的工厂
         /// </summary>
@@ -61,7 +61,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="dbHelper">数据库操作对象</param>
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="mapperContainer">mapper容器</param>
-        internal DbExecutor(IDbFactory factory, DbHelper dbHelper, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
+        internal DbExecutor(IDbFactory factory, IDbHelper dbHelper, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
         {
             // 赋值
             _factory = factory;

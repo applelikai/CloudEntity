@@ -26,7 +26,7 @@ namespace CloudEntity.Core.Data.Entity
         /// <summary>
         /// 操作数据库的DbHelper
         /// </summary>
-        private DbHelper _dbHelper;
+        private IDbHelper _dbHelper;
         /// <summary>
         /// Table初始化器
         /// </summary>
@@ -67,7 +67,7 @@ namespace CloudEntity.Core.Data.Entity
         /// <summary>
         /// 操作数据库的DbHelper
         /// </summary>
-        public DbHelper DbHelper
+        public IDbHelper DbHelper
         {
             get { return _dbHelper; }
         }
@@ -202,28 +202,16 @@ namespace CloudEntity.Core.Data.Entity
         /// 获取(若不存在则创建)数据容器
         /// </summary>
         /// <param name="connectionString">连接字符串</param>
-        /// <param name="initializer">初始化器(第一次获取创建数据容器时需要)</param>
         /// <returns>数据容器</returns>
-        public static IDbContainer Get(string connectionString, DbInitializer initializer = null)
+        public static IDbContainer Get(string connectionString)
         {
-            //非空检查
+            // 非空检查
             Check.ArgumentNull(connectionString, nameof(connectionString));
-            //开始
-            Start:
-            //若字典中包含当前连接字符串的数据容器则直接获取
+            // 若字典中包含当前连接字符串的数据容器则直接获取
             if (_containers.ContainsKey(connectionString))
                 return _containers[connectionString];
-            //若需要创建数据容器,则检查初始化器是否为空
-            Check.ArgumentNull(initializer, nameof(initializer));
-            //进入临界区(单线程模式)
-            lock (_containersLocker)
-            {
-                //若当前数据容器不存在，则创建并添加至字典中
-                if (!_containers.ContainsKey(connectionString))
-                    _containers.Add(connectionString, new DbContainer(connectionString, initializer));
-            }
-            //回到Start
-            goto Start;
+            // 若字典中不包含当前连接字符串的数据容器，则扔出异常
+            throw new Exception($"没有找到{connectionString}下的数据容器");
         }
 
         /// <summary>

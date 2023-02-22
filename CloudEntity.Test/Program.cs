@@ -275,7 +275,7 @@ public class Program
     /// <param name="args">控制台参数</param>
     private static void Main(string[] args)
     {
-        // 测试事务执行
-        Program.TestTransaction();
+        // 查询测试
+        Program.QueryTest();
     }
 }

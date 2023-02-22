@@ -44,7 +44,7 @@ namespace CloudEntity.Data
             //遍历所有的属性并创建返回sql参数
             foreach (PropertyInfo property in parameterModel.GetType().GetRuntimeProperties())
             {
-                yield return dbHelper.Parameter(property.Name, property.GetValue(parameterModel));
+                yield return dbHelper.CreateParameter(property.Name, property.GetValue(parameterModel));
             }
         }
         /// <summary>
@@ -62,7 +62,7 @@ namespace CloudEntity.Data
             {
                 //若sql命令中包含此sql参数名，则创建参数并返回
                 if (commandText.Contains(string.Concat(marker, property.Name)))
-                    yield return dbHelper.Parameter(property.Name, property.GetValue(parameterModel));
+                    yield return dbHelper.CreateParameter(property.Name, property.GetValue(parameterModel));
             }
         }
 

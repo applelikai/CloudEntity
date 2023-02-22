@@ -46,7 +46,7 @@ namespace CloudEntity.Internal.Data.Entity
                 //获取查询命令生成树
                 ICommandTree queryTree = base.CommandTreeFactory.GetQueryTree(this.GetQueryByIdChildBuilders());
                 //获取Sql参数数组
-                IDbDataParameter[] parameters = { base.DbHelper.Parameter(base.TableMapper.KeyMapper.Property.Name, id) };
+                IDbDataParameter[] parameters = { base.DbHelper.CreateParameter(base.TableMapper.KeyMapper.Property.Name, id) };
                 //执行查询
                 return base.DbHelper.GetResults(this.CreateEntity, queryTree.Compile(), parameters: parameters).SingleOrDefault();
             }
@@ -168,7 +168,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="dbHelper">DbHelper</param>
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="mapperContainer">mapper容器</param>
-        public DbList(IDbFactory factory, DbHelper dbHelper, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
+        public DbList(IDbFactory factory, IDbHelper dbHelper, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
             : base(factory, dbHelper, commandTreeFactory, mapperContainer)
         {
             _modifyLocker = new object();
@@ -187,7 +187,7 @@ namespace CloudEntity.Internal.Data.Entity
             //获取CommandTree
             ICommandTree queryTree = this.CommandTreeFactory.GetQueryTree(this.GetQueryCountByIdChildBuilders());
             //获取Sql参数数组
-            IDbDataParameter[] parameters = { base.DbHelper.Parameter(base.TableMapper.KeyMapper.Property.Name, id) };
+            IDbDataParameter[] parameters = { base.DbHelper.CreateParameter(base.TableMapper.KeyMapper.Property.Name, id) };
             //执行查询获取第一行第一列的数据
             return TypeHelper.ConvertTo<int>(base.DbHelper.GetScalar(queryTree.Compile(), parameters: parameters));
         }

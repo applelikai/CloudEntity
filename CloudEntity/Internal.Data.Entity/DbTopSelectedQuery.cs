@@ -34,7 +34,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
         /// <param name="topCount">查询的前几条的元素数量</param>
-        public DbTopSelectedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper, int topCount)
+        public DbTopSelectedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper, int topCount)
             : base(mapperContainer, commandTreeFactory, dbHelper)
         {
             _topCount = topCount;

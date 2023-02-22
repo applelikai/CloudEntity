@@ -83,7 +83,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="mapperContainer">Mapper容器</param>
         /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbPagedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, DbHelper dbHelper)
+        public DbPagedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper)
             : base(mapperContainer, commandTreeFactory, dbHelper)
         {
             _entityAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
@@ -110,8 +110,8 @@ namespace CloudEntity.Internal.Data.Entity
             string commandText = this.ToSqlString();
             //获取sql参数集合
             IList<IDbDataParameter> parameters = base.Parameters.ToList();
-            parameters.Add(base.DbHelper.Parameter("SkipCount", this.PageSize * (this.PageIndex - 1)));
-            parameters.Add(base.DbHelper.Parameter("NextCount", this.PageSize));
+            parameters.Add(base.DbHelper.CreateParameter("SkipCount", this.PageSize * (this.PageIndex - 1)));
+            parameters.Add(base.DbHelper.CreateParameter("NextCount", this.PageSize));
             // 执行查询获取映射对象迭代器
             return base.DbHelper.GetResults(base.GetModels<TModel>, commandText, parameters: parameters.ToArray());
         }
@@ -126,8 +126,8 @@ namespace CloudEntity.Internal.Data.Entity
             string commandText = this.ToSqlString();
             //获取sql参数集合
             IList<IDbDataParameter> parameters = base.Parameters.ToList();
-            parameters.Add(base.DbHelper.Parameter("SkipCount", this.PageSize * (this.PageIndex - 1)));
-            parameters.Add(base.DbHelper.Parameter("NextCount", this.PageSize));
+            parameters.Add(base.DbHelper.CreateParameter("SkipCount", this.PageSize * (this.PageIndex - 1)));
+            parameters.Add(base.DbHelper.CreateParameter("NextCount", this.PageSize));
             // 执行查询获取实体对象迭代器
             foreach (TEntity entity in base.DbHelper.GetResults(base.GetEntities, commandText, parameters: parameters.ToArray()))
             {
