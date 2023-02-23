@@ -4,8 +4,7 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// TOP实体查询数据源接口(查询前几条实体的数据)
-    /// Apple_Li 李凯 15150598493
-    /// 2023/02/19 19:54
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     public interface IDbTopQuery<TEntity> : IDbBase, IEnumerable<TEntity>

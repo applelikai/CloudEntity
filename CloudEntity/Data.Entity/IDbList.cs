@@ -4,6 +4,7 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 可读可写的操作DB的对象数据源
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     public interface IDbList<TEntity> : IDbOperator<TEntity>, IDbSource<TEntity>

@@ -5,8 +5,7 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 创建数据操作对象的工厂
-    /// Apple_Li 李凯 15150598493
-    /// 最后修改时间：2023/02/17 11:06
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public interface IDbFactory
     {
@@ -125,7 +124,7 @@ namespace CloudEntity.Data.Entity
         /// <typeparam name="TModel">视图对象</typeparam>
         /// <param name="source">视图查询数据源</param>
         /// <returns>新的视图查询数据源</returns>
-        IDbView<TModel> CreateView<TModel>(IDbView<TModel> source)
+        IDbAsView<TModel> CreateView<TModel>(IDbAsView<TModel> source)
             where TModel : class, new();
         #endregion
     }

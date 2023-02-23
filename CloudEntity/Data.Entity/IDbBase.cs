@@ -6,6 +6,7 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 数据操作基础接口
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public interface IDbBase
     {

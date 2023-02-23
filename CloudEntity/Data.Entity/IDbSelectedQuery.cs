@@ -4,8 +4,7 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 选定项查询数据源接口
-    /// Apple_Li 李凯 15150598493
-    /// 2017/06/19 最后修改：2023/02/09
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     /// <typeparam name="TElement">元素类型</typeparam>
     public interface IDbSelectedQuery<TElement> : IDbBase, IEnumerable<TElement>

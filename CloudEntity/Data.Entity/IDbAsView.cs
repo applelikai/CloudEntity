@@ -7,11 +7,10 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 视图查询数据源
-    /// Apple_Li 李凯 15150598493
-    /// 最后修改时间：2023/02/15 23:11
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     /// <typeparam name="TModel">对象类型</typeparam>
-    public interface IDbView<TModel> : IDbBase, IEnumerable<TModel>
+    public interface IDbAsView<TModel> : IDbBase, IEnumerable<TModel>
         where TModel : class, new()
     {
         /// <summary>
@@ -28,7 +27,7 @@ namespace CloudEntity.Data.Entity
         /// </summary>
         /// <param name="predicate">检索条件表达式</param>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
-        IDbView<TModel> SetWhere(Expression<Func<TModel, bool>> predicate);
+        IDbAsView<TModel> SetWhere(Expression<Func<TModel, bool>> predicate);
         /// <summary>
         /// 设置数据源数据检索条件
         /// </summary>
@@ -36,7 +35,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="sqlPredicate">sql条件</param>
         /// <typeparam name="TProperty">模型属性类型</typeparam>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
-        IDbView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlPredicate);
+        IDbAsView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlPredicate);
         /// <summary>
         /// 设置数据源数据检索条件
         /// </summary>
@@ -45,7 +44,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="sqlParameters">sql参数数组</param>
         /// <typeparam name="TProperty">模型属性类型</typeparam>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
-        IDbView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] sqlParameters);
+        IDbAsView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] sqlParameters);
         /// <summary>
         /// 设置数据源数据检索条件
         /// </summary>
@@ -54,7 +53,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="values">sql参数值数组</param>
         /// <typeparam name="TProperty">模型属性类型</typeparam>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
-        IDbView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlFormat, params TProperty[] values);
+        IDbAsView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlFormat, params TProperty[] values);
         /// <summary>
         /// 为数据源设置排序条件
         /// </summary>
@@ -62,7 +61,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="isDesc">是否为降序</param>
         /// <typeparam name="TKey">排序项类型</typeparam>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
-        IDbView<TModel> SetSort<TKey>(Expression<Func<TModel, TKey>> keySelector, bool isDesc = false);
+        IDbAsView<TModel> SetSort<TKey>(Expression<Func<TModel, TKey>> keySelector, bool isDesc = false);
         /// <summary>
         /// 为数据源重新设置排序条件（之前的排序条件会被清空）
         /// </summary>
@@ -70,6 +69,6 @@ namespace CloudEntity.Data.Entity
         /// <param name="isDesc">是否为降序</param>
         /// <typeparam name="TKey">排序项类型</typeparam>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
-        IDbView<TModel> SetSortBy<TKey>(Expression<Func<TModel, TKey>> keySelector, bool isDesc = false);
+        IDbAsView<TModel> SetSortBy<TKey>(Expression<Func<TModel, TKey>> keySelector, bool isDesc = false);
     }
 }

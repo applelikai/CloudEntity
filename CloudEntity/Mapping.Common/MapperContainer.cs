@@ -5,7 +5,7 @@ namespace CloudEntity.Mapping.Common
 {
     /// <summary>
     /// Mapper容器
-    /// 李凯 Apple_Li
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public class MapperContainer : MapperContainerBase
     {

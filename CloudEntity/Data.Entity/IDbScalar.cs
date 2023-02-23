@@ -2,6 +2,7 @@
 {
     /// <summary>
     /// 查询第一行第一列的值的接口
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public interface IDbScalar : IDbBase
     {

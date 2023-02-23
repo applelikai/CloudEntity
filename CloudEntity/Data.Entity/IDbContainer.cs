@@ -5,8 +5,7 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 数据容器接口
-    /// Apple_Li 李凯
-    /// 最后修改日期：2023/02/05
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public interface IDbContainer
     {
@@ -50,7 +49,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="querySql">查询sql</param>
         /// <param name="parameters">sql参数数组</param>
         /// <returns>视图查询数据源</returns>
-        IDbView<TModel> CreateView<TModel>(string querySql, params IDbDataParameter[] parameters)
+        IDbAsView<TModel> CreateView<TModel>(string querySql, params IDbDataParameter[] parameters)
             where TModel : class, new();
         /// <summary>
         /// 获取数据列表

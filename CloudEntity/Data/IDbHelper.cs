@@ -6,8 +6,7 @@ namespace CloudEntity.Data
 {
     /// <summary>
     /// 操作数据库的接口
-    /// Apple_Li 李凯 15150598493
-    /// 2023/02/21 22：39
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public interface IDbHelper
     {
@@ -20,8 +19,6 @@ namespace CloudEntity.Data
         /// <summary>
         /// 创建参数
         /// </summary>
-        /// <param name="name">参数名</param>
-        /// <param name="value">参数值</param>
         /// <returns>参数</returns>
         IDbDataParameter CreateParameter();
         /// <summary>

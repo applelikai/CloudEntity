@@ -572,7 +572,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="values">属性值数组</param>
         /// <param name="isIn">IN 或 NOT IN</param>
         /// <returns>新的视图查询数据源</returns>
-        public static IDbView<TModel> SetIn<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, TProperty[] values, bool isIn = true)
+        public static IDbAsView<TModel> SetIn<TModel, TProperty>(this IDbAsView<TModel> source, Expression<Func<TModel, TProperty>> selector, TProperty[] values, bool isIn = true)
             where TModel : class, new()
         {
             //非空验证
@@ -608,7 +608,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="selectorSource">子查询数据源</param>
         /// <param name="isIn">IN 或 NOT IN</param>
         /// <returns>当前数据源（并未复制）</returns>
-        public static IDbView<TModel> SetIn<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, IDbSelectedQuery<TProperty> selectorSource, bool isIn = true)
+        public static IDbAsView<TModel> SetIn<TModel, TProperty>(this IDbAsView<TModel> source, Expression<Func<TModel, TProperty>> selector, IDbSelectedQuery<TProperty> selectorSource, bool isIn = true)
             where TModel : class, new()
         {
             // 非空验证
@@ -637,7 +637,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="left">最小值</param>
         /// <param name="right">最大值</param>
         /// <returns>视图查询数据源</returns>
-        public static IDbView<TModel> SetBetween<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, TProperty left, TProperty right)
+        public static IDbAsView<TModel> SetBetween<TModel, TProperty>(this IDbAsView<TModel> source, Expression<Func<TModel, TProperty>> selector, TProperty left, TProperty right)
             where TModel : class, new()
             where TProperty : struct
         {
@@ -663,7 +663,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="left">最小值</param>
         /// <param name="right">最大值</param>
         /// <returns>视图查询数据源</returns>
-        public static IDbView<TModel> SetBetween<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty?>> selector, TProperty left, TProperty right)
+        public static IDbAsView<TModel> SetBetween<TModel, TProperty>(this IDbAsView<TModel> source, Expression<Func<TModel, TProperty?>> selector, TProperty left, TProperty right)
             where TModel : class, new()
             where TProperty : struct
         {
@@ -688,7 +688,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="value">某正则表达式</param>
         /// <param name="isLike">LIKE 或 NOT LIKE</param>
         /// <returns>模糊筛选后的视图查询数据源</returns>
-        public static IDbView<TModel> SetLike<TModel>(this IDbView<TModel> source, Expression<Func<TModel, string>> selector, string value, bool isLike = true)
+        public static IDbAsView<TModel> SetLike<TModel>(this IDbAsView<TModel> source, Expression<Func<TModel, string>> selector, string value, bool isLike = true)
             where TModel : class, new()
         {
             // 非空验证
@@ -711,7 +711,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="selector">指定对象某属性的表达式</param>
         /// <param name="isNull">IS NULL 或 IS NOT NULL</param>
         /// <returns>当前数据源（并未复制）</returns>
-        public static IDbView<TModel> SetIsNull<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, bool isNull = true)
+        public static IDbAsView<TModel> SetIsNull<TModel, TProperty>(this IDbAsView<TModel> source, Expression<Func<TModel, TProperty>> selector, bool isNull = true)
             where TModel : class, new()
         {
             // 非空验证
@@ -735,13 +735,13 @@ namespace CloudEntity.Data.Entity
         /// <param name="values">属性值数组</param>
         /// <param name="isIn">IN 或 NOT IN</param>
         /// <returns>新的视图查询数据源</returns>
-        public static IDbView<TModel> In<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, TProperty[] values, bool isIn = true)
+        public static IDbAsView<TModel> In<TModel, TProperty>(this IDbAsView<TModel> source, Expression<Func<TModel, TProperty>> selector, TProperty[] values, bool isIn = true)
             where TModel : class, new()
         {
             //非空验证
             Check.ArgumentNull(source, nameof(source));
             // 复制来源数据源获取新的查询数据源
-            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            IDbAsView<TModel> cloned = source.Factory.CreateView(source);
             // 为复制的数据源添加模型对象某属性值包含（或不包含）在属性值数组中 的检索条件
             cloned.SetIn(selector, values, isIn);
             // 最后获取复制的查询数据源
@@ -757,13 +757,13 @@ namespace CloudEntity.Data.Entity
         /// <param name="selectorSource">子查询数据源</param>
         /// <param name="isIn">IN 或 NOT IN</param>
         /// <returns>新的视图查询数据源</returns>
-        public static IDbView<TModel> In<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, IDbSelectedQuery<TProperty> selectorSource, bool isIn = true)
+        public static IDbAsView<TModel> In<TModel, TProperty>(this IDbAsView<TModel> source, Expression<Func<TModel, TProperty>> selector, IDbSelectedQuery<TProperty> selectorSource, bool isIn = true)
             where TModel : class, new()
         {
             // 非空验证
             Check.ArgumentNull(source, nameof(source));
             // 复制来源数据源获取新的查询数据源
-            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            IDbAsView<TModel> cloned = source.Factory.CreateView(source);
             // 为复制的数据源添加数据对象某属性值包含（或不包含）在子查询数据源中 的检索条件
             cloned.SetIn(selector, selectorSource, isIn);
             // 最后获取复制的查询数据源
@@ -779,14 +779,14 @@ namespace CloudEntity.Data.Entity
         /// <param name="left">最小值</param>
         /// <param name="right">最大值</param>
         /// <returns>视图查询数据源</returns>
-        public static IDbView<TModel> Between<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, TProperty left, TProperty right)
+        public static IDbAsView<TModel> Between<TModel, TProperty>(this IDbAsView<TModel> source, Expression<Func<TModel, TProperty>> selector, TProperty left, TProperty right)
             where TModel : class, new()
             where TProperty : struct
         {
             // 非空验证
             Check.ArgumentNull(source, nameof(source));
             // 复制来源数据源获取新的查询数据源
-            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            IDbAsView<TModel> cloned = source.Factory.CreateView(source);
             // 为复制的数据源添加 实体某属性值在某个范围内 的检索条件
             cloned.SetBetween(selector, left, right);
             // 最后获取复制的查询数据源
@@ -802,14 +802,14 @@ namespace CloudEntity.Data.Entity
         /// <param name="left">最小值</param>
         /// <param name="right">最大值</param>
         /// <returns>视图查询数据源</returns>
-        public static IDbView<TModel> Between<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty?>> selector, TProperty left, TProperty right)
+        public static IDbAsView<TModel> Between<TModel, TProperty>(this IDbAsView<TModel> source, Expression<Func<TModel, TProperty?>> selector, TProperty left, TProperty right)
             where TModel : class, new()
             where TProperty : struct
         {
             // 非空验证
             Check.ArgumentNull(source, nameof(source));
             // 复制来源数据源获取新的查询数据源
-            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            IDbAsView<TModel> cloned = source.Factory.CreateView(source);
             // 为复制的数据源添加 实体某属性值在某个范围内 的检索条件
             cloned.SetBetween(selector, left, right);
             // 最后获取复制的视图查询数据源
@@ -824,7 +824,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="value">参数值</param>
         /// <param name="isLike">LIKE 或 NOT LIKE</param>
         /// <returns>视图查询数据源</returns>
-        public static IDbView<TModel> Like<TModel>(this IDbView<TModel> source, Expression<Func<TModel, string>> selector, string value, bool isLike = true)
+        public static IDbAsView<TModel> Like<TModel>(this IDbAsView<TModel> source, Expression<Func<TModel, string>> selector, string value, bool isLike = true)
             where TModel : class, new()
         {
             // 非空验证
@@ -832,7 +832,7 @@ namespace CloudEntity.Data.Entity
             Check.ArgumentNull(selector, nameof(selector));
             Check.ArgumentNull(value, nameof(value));
             // 复制来源数据源获取新的查询数据源
-            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            IDbAsView<TModel> cloned = source.Factory.CreateView(source);
             // 为复制的数据源添加 模型对象某属性值LIKE（或 NOT LIKE）某正则表达式 的检索条件
             cloned.SetLike(selector, value, isLike);
             // 最后获取复制的视图查询数据源
@@ -847,13 +847,13 @@ namespace CloudEntity.Data.Entity
         /// <param name="selector">指定对象某属性的表达式</param>
         /// <param name="isNull">IS NULL 或 IS NOT NULL</param>
         /// <returns>视图查询数据源</returns>
-        public static IDbView<TModel> IsNull<TModel, TProperty>(this IDbView<TModel> source, Expression<Func<TModel, TProperty>> selector, bool isNull = true)
+        public static IDbAsView<TModel> IsNull<TModel, TProperty>(this IDbAsView<TModel> source, Expression<Func<TModel, TProperty>> selector, bool isNull = true)
             where TModel : class, new()
         {
             // 非空验证
             Check.ArgumentNull(source, nameof(source));
             // 复制来源数据源获取新的查询数据源
-            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            IDbAsView<TModel> cloned = source.Factory.CreateView(source);
             // 为复制的数据源添加模型对象某属性是否为空（或不为空）的数据检索条件
             cloned.SetIsNull(selector, isNull);
             // 最后获取复制的查询数据源
@@ -866,14 +866,14 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">视图查询数据源</param>
         /// <param name="predicate">筛选表达式</param>
         /// <returns>视图查询数据源</returns>
-        public static IDbView<TModel> Where<TModel>(this IDbView<TModel> source, Expression<Func<TModel, bool>> predicate)
+        public static IDbAsView<TModel> Where<TModel>(this IDbAsView<TModel> source, Expression<Func<TModel, bool>> predicate)
             where TModel : class, new()
         {
             // 非空验证
             Check.ArgumentNull(source, nameof(source));
             Check.ArgumentNull(predicate, nameof(predicate));
             // 复制来源数据源到新的查询数据源
-            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            IDbAsView<TModel> cloned = source.Factory.CreateView(source);
             // 为复制的数据源添加数据检索条件
             cloned.SetWhere(predicate);
             // 获取复制的查询数据源

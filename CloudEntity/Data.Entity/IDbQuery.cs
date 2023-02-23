@@ -7,7 +7,7 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 查询数据源
-    /// Apple_Li 李凯 15150598493
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     public interface IDbQuery<TEntity> : IDbSource<TEntity>

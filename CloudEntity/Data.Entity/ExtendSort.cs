@@ -99,13 +99,13 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">视图查询数据源</param>
         /// <param name="keySelector">指定对象某属性的表达式(根据此属性排序)</param>
         /// <returns>排好序的视图查询数据源</returns>
-        public static IDbView<TModel> OrderBy<TModel, TKey>(this IDbView<TModel> source, Expression<Func<TModel, TKey>> keySelector)
+        public static IDbAsView<TModel> OrderBy<TModel, TKey>(this IDbAsView<TModel> source, Expression<Func<TModel, TKey>> keySelector)
             where TModel : class, new()
         {
             // 非空验证
             Check.ArgumentNull(source, nameof(source));
             // 复制来源数据源获取新的视图查询数据源
-            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            IDbAsView<TModel> cloned = source.Factory.CreateView(source);
             // 为复制的数据源重新设置排序条件
             cloned.SetSortBy(keySelector);
             // 最后获取复制的视图查询数据源
@@ -119,13 +119,13 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">视图查询数据源</param>
         /// <param name="keySelector">指定对象某属性的表达式(根据此属性排序)</param>
         /// <returns>排好序的视图查询数据源</returns>
-        public static IDbView<TModel> OrderByDescending<TModel, TKey>(this IDbView<TModel> source, Expression<Func<TModel, TKey>> keySelector)
+        public static IDbAsView<TModel> OrderByDescending<TModel, TKey>(this IDbAsView<TModel> source, Expression<Func<TModel, TKey>> keySelector)
             where TModel : class, new()
         {
             //非空验证
             Check.ArgumentNull(source, nameof(source));
             // 复制来源数据源获取新的视图查询数据源
-            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            IDbAsView<TModel> cloned = source.Factory.CreateView(source);
             // 为复制的数据源重新设置降序排序条件
             cloned.SetSortBy(keySelector, true);
             // 最后获取复制的视图查询数据源
@@ -139,13 +139,13 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">视图查询数据源</param>
         /// <param name="keySelector">指定对象某属性的表达式(根据此属性排序)</param>
         /// <returns>排好序的视图查询数据源</returns>
-        public static IDbView<TModel> ThenBy<TModel, TKey>(this IDbView<TModel> source, Expression<Func<TModel, TKey>> keySelector)
+        public static IDbAsView<TModel> ThenBy<TModel, TKey>(this IDbAsView<TModel> source, Expression<Func<TModel, TKey>> keySelector)
             where TModel : class, new()
         {
             // 非空验证
             Check.ArgumentNull(source, nameof(source));
             // 复制来源数据源获取新的视图查询数据源
-            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            IDbAsView<TModel> cloned = source.Factory.CreateView(source);
             // 为复制的数据源设置排序条件
             cloned.SetSort(keySelector);
             // 最后获取复制的视图查询数据源
@@ -159,13 +159,13 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">视图查询数据源</param>
         /// <param name="keySelector">指定对象某属性的表达式(根据此属性排序)</param>
         /// <returns>排好序的视图查询数据源</returns>
-        public static IDbView<TModel> ThenByDescending<TModel, TKey>(this IDbView<TModel> source, Expression<Func<TModel, TKey>> keySelector)
+        public static IDbAsView<TModel> ThenByDescending<TModel, TKey>(this IDbAsView<TModel> source, Expression<Func<TModel, TKey>> keySelector)
             where TModel : class, new()
         {
             //非空验证
             Check.ArgumentNull(source, nameof(source));
             // 复制来源数据源获取新的视图查询数据源
-            IDbView<TModel> cloned = source.Factory.CreateView(source);
+            IDbAsView<TModel> cloned = source.Factory.CreateView(source);
             // 为复制的数据源设置降序排序条件
             cloned.SetSort(keySelector, true);
             // 最后获取复制的视图查询数据源

@@ -5,7 +5,7 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 事物执行器
-    /// 李凯 Apple_Li
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public interface IDbExecutor : IDisposable
     {

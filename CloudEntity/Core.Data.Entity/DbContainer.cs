@@ -14,8 +14,7 @@ namespace CloudEntity.Core.Data.Entity
 {
     /// <summary>
     /// 数据容器类
-    /// 李凯 Apple_Li 15150598493
-    /// 最后修改时间：2023/02/15 23:12
+    /// [Apple_Li 李凯 15150598493]
     /// </summary>
     public sealed class DbContainer : IDbContainer, IDbFactory
     {
@@ -558,11 +557,11 @@ namespace CloudEntity.Core.Data.Entity
         /// <param name="querySql">查询sql</param>
         /// <param name="parameters">sql参数数组</param>
         /// <returns>视图查询数据源</returns>
-        public IDbView<TModel> CreateView<TModel>(string querySql, params IDbDataParameter[] parameters)
+        public IDbAsView<TModel> CreateView<TModel>(string querySql, params IDbDataParameter[] parameters)
             where TModel : class, new()
         {
             // 创建数据源
-            DbView<TModel> source = new DbView<TModel>(this, _commandTreeFactory, this.DbHelper, _predicateParserFactory, querySql);
+            DbAsView<TModel> source = new DbAsView<TModel>(this, _commandTreeFactory, this.DbHelper, _predicateParserFactory, querySql);
             // 添加sql参数
             source.AddSqlParameters(parameters);
             // 获取数据源
@@ -574,11 +573,11 @@ namespace CloudEntity.Core.Data.Entity
         /// <typeparam name="TModel">视图对象</typeparam>
         /// <param name="source">视图查询数据源</param>
         /// <returns>新的视图查询数据源</returns>
-        public IDbView<TModel> CreateView<TModel>(IDbView<TModel> source)
+        public IDbAsView<TModel> CreateView<TModel>(IDbAsView<TModel> source)
             where TModel : class, new()
         {
             // 创建新的视图数据源
-            DbView<TModel> cloned = new DbView<TModel>(this, _commandTreeFactory, this.DbHelper, _predicateParserFactory, source.InnerQuerySql);
+            DbAsView<TModel> cloned = new DbAsView<TModel>(this, _commandTreeFactory, this.DbHelper, _predicateParserFactory, source.InnerQuerySql);
             // 复制sql表达式节点列表
             cloned.AddNodeBuilders(source.NodeBuilders);
             // 复制sql参数列表

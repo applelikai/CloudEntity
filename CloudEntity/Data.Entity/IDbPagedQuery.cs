@@ -4,6 +4,7 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 分页查询数据源接口
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public interface IDbPagedQuery<TEntity> : IEnumerable<TEntity>
         where TEntity : class

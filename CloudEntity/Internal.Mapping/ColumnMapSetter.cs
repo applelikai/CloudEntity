@@ -15,17 +15,9 @@ namespace CloudEntity.Internal.Mapping
         where TEntity : class
     {
         /// <summary>
-        /// 表的别名
-        /// </summary>
-        private string _tableAlias;
-        /// <summary>
         /// 实体类型
         /// </summary>
         private Type _entityType;
-        /// <summary>
-        /// 列名获取对象
-        /// </summary>
-        private IColumnNameGetter _columnNameGetter;
         /// <summary>
         /// 列和属性的映射对象字典
         /// </summary>
@@ -74,14 +66,10 @@ namespace CloudEntity.Internal.Mapping
         /// <summary>
         /// 创建设置列与属性映射关系的对象
         /// </summary>
-        /// <param name="tableAlias">表的别名</param>
-        /// <param name="columnNameGetter">列名获取对象</param>
-        public ColumnMapSetter(string tableAlias, IColumnNameGetter columnNameGetter)
+        public ColumnMapSetter()
         {
             //初始化值
-            _tableAlias = tableAlias;
             _entityType = typeof(TEntity);
-            _columnNameGetter = columnNameGetter;
             //初始化ColumnMapper字典
             _columnMappers = this.GetInitColumnMappers();
             
@@ -100,18 +88,15 @@ namespace CloudEntity.Internal.Mapping
             PropertyInfo property = selector.Body.GetProperty();
             if (!Check.IsCanMapping(property))
                 throw new Exception(string.Format("Can not map property {0}", property.Name));
-            //获取列名
-            if (string.IsNullOrEmpty(columnName))
-                columnName = _columnNameGetter.GetColumnName(property.Name);
             //创建ColumnMapper
             ColumnMapper columnMapper = new ColumnMapper(property)
             {
                 ColumnAction = action,
-                ColumnName = columnName,
+                ColumnName = columnName ?? property.Name,
                 AllowNull = allowNull != null ? allowNull.Value : this.GetAllowNull(action)
             };
             //指定columnMapper
-            this._columnMappers[property.Name] = columnMapper;
+            _columnMappers[property.Name] = columnMapper;
             //饭hi列属性设置器
             return new ColumnSetter(columnMapper);
         }
@@ -128,12 +113,10 @@ namespace CloudEntity.Internal.Mapping
             {
                 //获取属性
                 PropertyInfo property = _entityType.GetProperty(key);
-                //获取列名
-                string columnName = _columnNameGetter.GetColumnName(property.Name);
                 //指定列Mapping对象
                 _columnMappers[key] = new ColumnMapper(property)
                 {
-                    ColumnName = columnName
+                    ColumnName = property.Name
                 };
             }
             //获取ColumnMapper字典

@@ -6,7 +6,7 @@ namespace CloudEntity.Data
 {
     /// <summary>
     /// 操作数据库的DbHelper
-    /// Apple_Li 李凯 15150598493
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public abstract class DbHelper : IDbHelper
     {
@@ -91,7 +91,7 @@ namespace CloudEntity.Data
         /// <param name="name">参数名</param>
         /// <param name="value">参数值</param>
         /// <returns>参数</returns>
-        public IDbDataParameter CreateParameter(string name, object value)
+        public virtual IDbDataParameter CreateParameter(string name, object value)
         {
             IDbDataParameter parameter = this.CreateParameter();
             parameter.ParameterName = name;
@@ -105,7 +105,7 @@ namespace CloudEntity.Data
         /// <param name="dataType">参数值类型</param>
         /// <param name="direction">参数类型(输入输出)</param>
         /// <returns>参数</returns>
-        public IDbDataParameter CreateParameter(string name, Type dataType, ParameterDirection direction)
+        public virtual IDbDataParameter CreateParameter(string name, Type dataType, ParameterDirection direction)
         {
             return this.CreateParameter(name, this.GetDbType(dataType), direction);
         }
@@ -116,7 +116,7 @@ namespace CloudEntity.Data
         /// <param name="dataType">参数值类型</param>
         /// <param name="direction">参数类型(输入输出)</param>
         /// <returns>参数</returns>
-        public IDbDataParameter CreateParameter(string name, DbType dataType, ParameterDirection direction)
+        public virtual IDbDataParameter CreateParameter(string name, DbType dataType, ParameterDirection direction)
         {
             IDbDataParameter parameter = this.CreateParameter();
             parameter.ParameterName = name;
@@ -132,7 +132,7 @@ namespace CloudEntity.Data
         /// <param name="size">长度</param>
         /// <param name="direction">参数类型(输入输出)</param>
         /// <returns>参数</returns>
-        public IDbDataParameter CreateParameter(string name, Type dataType, int size, ParameterDirection direction)
+        public virtual IDbDataParameter CreateParameter(string name, Type dataType, int size, ParameterDirection direction)
         {
             return this.CreateParameter(name, this.GetDbType(dataType), size, direction);
         }
@@ -144,7 +144,7 @@ namespace CloudEntity.Data
         /// <param name="size">长度</param>
         /// <param name="direction">参数类型(输入输出)</param>
         /// <returns>参数</returns>
-        public IDbDataParameter CreateParameter(string name, DbType dataType, int size, ParameterDirection direction)
+        public virtual IDbDataParameter CreateParameter(string name, DbType dataType, int size, ParameterDirection direction)
         {
             IDbDataParameter parameter = this.CreateParameter(name, dataType, direction);
             parameter.Size = size;
@@ -157,7 +157,7 @@ namespace CloudEntity.Data
         /// <param name="dataType">参数值类型</param>
         /// <param name="value">参数值</param>
         /// <returns>参数</returns>
-        public IDbDataParameter CreateParameter(string name, Type dataType, object value)
+        public virtual IDbDataParameter CreateParameter(string name, Type dataType, object value)
         {
             return this.CreateParameter(name, this.GetDbType(dataType), value);
         }
@@ -168,7 +168,7 @@ namespace CloudEntity.Data
         /// <param name="dataType">参数值类型</param>
         /// <param name="value">参数值</param>
         /// <returns>参数</returns>
-        public IDbDataParameter CreateParameter(string name, DbType dataType, object value)
+        public virtual IDbDataParameter CreateParameter(string name, DbType dataType, object value)
         {
             IDbDataParameter parameter = this.CreateParameter();
             parameter.ParameterName = name;
@@ -184,7 +184,7 @@ namespace CloudEntity.Data
         /// <param name="direction">参数类型(输入输出)</param>
         /// <param name="value">参数值</param>
         /// <returns>参数</returns>
-        public IDbDataParameter CreateParameter(string name, Type dataType, ParameterDirection direction, object value)
+        public virtual IDbDataParameter CreateParameter(string name, Type dataType, ParameterDirection direction, object value)
         {
             return this.CreateParameter(name, this.GetDbType(dataType), direction, value);
         }
@@ -196,7 +196,7 @@ namespace CloudEntity.Data
         /// <param name="direction">参数类型(输入输出)</param>
         /// <param name="value">参数值</param>
         /// <returns>参数</returns>
-        public IDbDataParameter CreateParameter(string name, DbType dataType, ParameterDirection direction, object value)
+        public virtual IDbDataParameter CreateParameter(string name, DbType dataType, ParameterDirection direction, object value)
         {
             IDbDataParameter parameter = this.CreateParameter(name, dataType, direction);
             parameter.Value = value ?? DBNull.Value;
@@ -248,7 +248,7 @@ namespace CloudEntity.Data
         /// <param name="commandType">命令类型</param>
         /// <param name="parameters">sql参数数组</param>
         /// <returns>DataSet对象</returns>
-        public DataSet GetDataSet(string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
+        public virtual DataSet GetDataSet(string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
         {
             // 创建数据库连接
             using (IDbConnection connection = this.Connect(_connectionString))

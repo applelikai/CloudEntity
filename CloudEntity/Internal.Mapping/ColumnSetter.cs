@@ -18,7 +18,7 @@ namespace CloudEntity.Internal.Mapping
         /// <param name="columnMapper">列与属性的映射对象</param>
         public ColumnSetter(ColumnMapper columnMapper)
         {
-            this._columnMapper = columnMapper;
+            _columnMapper = columnMapper;
         }
         /// <summary>
         /// 设置当前列的别名
@@ -27,7 +27,7 @@ namespace CloudEntity.Internal.Mapping
         /// <returns>列信息设置器</returns>
         public IColumnSetter As(string columnAlias = null)
         {
-            this._columnMapper.ColumnAlias = columnAlias ?? this._columnMapper.Property.Name;
+            _columnMapper.ColumnAlias = columnAlias ?? this._columnMapper.Property.Name;
             return this;
         }
         /// <summary>

@@ -180,7 +180,7 @@ namespace CloudEntity.Mapping.Common
     /// <summary>
     /// 实体和表的映射基类
     /// </summary>
-    public abstract class TableMapper<TEntity> : TableMapper, IColumnNameGetter
+    public abstract class TableMapper<TEntity> : TableMapper
         where TEntity : class
     {
         /// <summary>
@@ -189,11 +189,11 @@ namespace CloudEntity.Mapping.Common
         /// <returns>列与属性的映射对象字典</returns>
         protected override IDictionary<string, IColumnMapper> GetColumnMapperDictionary()
         {
-            //获取Column映射设置对象
-            ColumnMapSetter<TEntity> columnMapSetter = new ColumnMapSetter<TEntity>(base.Header.TableAlias, this);
-            //设置列与属性的映射关系
+            // 获取Column映射设置对象
+            ColumnMapSetter<TEntity> columnMapSetter = new ColumnMapSetter<TEntity>();
+            // 设置列与属性的映射关系
             this.SetColumnMappers(columnMapSetter);
-            //列与属性的映射对象字典
+            // 列与属性的映射对象字典
             return columnMapSetter.GetColumnMappers();
         }
         /// <summary>
@@ -207,14 +207,5 @@ namespace CloudEntity.Mapping.Common
         /// </summary>
         public TableMapper()
             : base(typeof(TEntity)) { }
-        /// <summary>
-        /// 获取列名
-        /// </summary>
-        /// <param name="propertyName">属性名</param>
-        /// <returns>列名</returns>
-        public virtual string GetColumnName(string propertyName)
-        {
-            return propertyName;
-        }
     }
 }

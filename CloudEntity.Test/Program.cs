@@ -39,7 +39,7 @@ public class Program
     /// 获取微信用户视图查询数据源
     /// </summary>
     /// <returns>微信用户视图查询数据源</returns>
-    private static IDbView<WechatUser> GetWechatUsers()
+    private static IDbAsView<WechatUser> GetWechatUsers()
     {
         // 构建角色查询数据源
         IDbQuery<Role> roles = _container.CreateQuery<Role>()
@@ -194,7 +194,7 @@ public class Program
     /// BETWEEN查询测试
     /// </summary>
     /// <param name="users">用户数据源</param>
-    private static void TestBetween(IDbView<WechatUser> users)
+    private static void TestBetween(IDbAsView<WechatUser> users)
     {
         // 获取开始时间
         DateTime start = DateTime.Parse("2023/02/05 00:00:00");
@@ -208,7 +208,7 @@ public class Program
     /// 测试IN查询
     /// </summary>
     /// <param name="users">用户数据源</param>
-    private static void TestIn(IDbView<WechatUser> users)
+    private static void TestIn(IDbAsView<WechatUser> users)
     {
         // 获取用户名数组
         string[] names = new string[] { "admin", "apple", "bob" };
@@ -221,7 +221,7 @@ public class Program
     /// 测试LIKE查询
     /// </summary>
     /// <param name="users">用户数据源</param>
-    private static void TestLike(IDbView<WechatUser> users)
+    private static void TestLike(IDbAsView<WechatUser> users)
     {
         // 添加数据源检索条件
         users.SetLike(u => u.UserName, "ap%", false);
@@ -244,7 +244,7 @@ public class Program
         string querySql = users.ToSqlString();
         IDbDataParameter[] sqlParameters = users.Parameters.ToArray();
         // 获取查询视图
-        IDbView<WechatUser> wechatUsers = _container.CreateView<WechatUser>(querySql, sqlParameters)
+        IDbAsView<WechatUser> wechatUsers = _container.CreateView<WechatUser>(querySql, sqlParameters)
             .SetIsNull(u => u.UserName, false)
             .OrderByDescending(u => u.CreatedTime)
             .ThenBy(u => u.UserName);

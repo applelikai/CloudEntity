@@ -6,7 +6,7 @@ namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 实体操作接口
-    /// Apple_Li 李凯 15150598493
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     public interface IDbOperator<TEntity>

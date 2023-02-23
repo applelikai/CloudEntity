@@ -17,7 +17,7 @@ namespace CloudEntity.Internal.Data.Entity
     /// 最后修改时间：2023/02/15 23:11
     /// </summary>
     /// <typeparam name="TModel">对象类型</typeparam>
-    internal class DbView<TModel> : DbSortBase, IDbView<TModel>
+    internal class DbAsView<TModel> : DbSortBase, IDbAsView<TModel>
         where TModel : class, new()
     {
         /// <summary>
@@ -88,7 +88,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="dbHelper">操作数据库的对象</param>
         /// <param name="predicateParserFactory">创建表达式解析器的工厂</param>
         /// <param name="innerQuerySql">查询sql</param>
-        public DbView(IDbFactory dbFactory, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper, IPredicateParserFactory predicateParserFactory, string innerQuerySql)
+        public DbAsView(IDbFactory dbFactory, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper, IPredicateParserFactory predicateParserFactory, string innerQuerySql)
             : base(commandTreeFactory, dbHelper)
         {
             //非空检查
@@ -107,7 +107,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// </summary>
         /// <param name="predicate">检索条件表达式</param>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
-        public IDbView<TModel> SetWhere(Expression<Func<TModel, bool>> predicate)
+        public IDbAsView<TModel> SetWhere(Expression<Func<TModel, bool>> predicate)
         {
             // 解析Lambda表达式，获取并添加Sql表达式节点，并添加附带的sql参数
             foreach (INodeBuilder sqlBuilder in _predicateParserFactory.GetWhereChildBuilders(this, predicate.Parameters[0], predicate.Body))
@@ -125,7 +125,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="sqlPredicate">sql条件</param>
         /// <typeparam name="TProperty">模型属性类型</typeparam>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
-        public IDbView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlPredicate)
+        public IDbAsView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlPredicate)
         {
             // 获取视图查询临时表名
             string tableAlias = typeof(TModel).Name.ToLower();
@@ -146,7 +146,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="sqlParameters">sql参数数组</param>
         /// <typeparam name="TProperty">模型属性类型</typeparam>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
-        public IDbView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] sqlParameters)
+        public IDbAsView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlPredicate, params IDbDataParameter[] sqlParameters)
         {
             // 获取视图查询临时表名
             string tableAlias = typeof(TModel).Name.ToLower();
@@ -169,7 +169,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="values">sql参数值数组</param>
         /// <typeparam name="TProperty">模型属性类型</typeparam>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
-        public IDbView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlFormat, params TProperty[] values)
+        public IDbAsView<TModel> SetWhere<TProperty>(Expression<Func<TModel, TProperty>> selector, string sqlFormat, params TProperty[] values)
         {
             // 获取成员表达式
             MemberExpression memberExpression = selector.Body.GetMemberExpression();
@@ -204,7 +204,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="isDesc">是否为降序</param>
         /// <typeparam name="TKey">排序项类型</typeparam>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
-        public IDbView<TModel> SetSort<TKey>(Expression<Func<TModel, TKey>> keySelector, bool isDesc = false)
+        public IDbAsView<TModel> SetSort<TKey>(Expression<Func<TModel, TKey>> keySelector, bool isDesc = false)
         {
             // 非空检查
             Check.ArgumentNull(keySelector, nameof(keySelector));
@@ -222,7 +222,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="isDesc">是否为降序</param>
         /// <typeparam name="TKey">排序项类型</typeparam>
         /// <returns>视图查询数据源（还是原来的数据源并未复制）</returns>
-        public IDbView<TModel> SetSortBy<TKey>(Expression<Func<TModel, TKey>> keySelector, bool isDesc = false)
+        public IDbAsView<TModel> SetSortBy<TKey>(Expression<Func<TModel, TKey>> keySelector, bool isDesc = false)
         {
             // 非空检查
             Check.ArgumentNull(keySelector, nameof(keySelector));
