@@ -4,8 +4,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
 {
     /// <summary>
     /// 创建用于PostgreSql的CommandTree的工厂
-    /// 李凯 Apple_Li 15150598493 2021/09/19
-    /// 最后修改时间：2023/02/05
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public class PostgreSqlCommandTreeFactory : CommandTreeFactory
     {
@@ -68,6 +67,16 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         protected override DeleteTree CreateDeleteTree(string schemaName, string tableName, string tableAlias)
         {
             return new PostgreSqlDeleteTree(schemaName, tableName, tableAlias, base.ParameterMarker);
+        }
+        /// <summary>
+        /// 创建With As 查询命令生成树
+        /// </summary>
+        /// <param name="innerQuerySql">查询sql</param>
+        /// <param name="tableAlias">临时表名</param>
+        /// <returns>With As 查询命令生成树</returns>
+        protected override WithAsQueryTree CreateWithAsQueryTree(string innerQuerySql, string tableAlias)
+        {
+            return new PostgreSqlWithAsQueryTree(this.ParameterMarker, innerQuerySql, tableAlias);
         }
 
         /// <summary>
@@ -198,22 +207,6 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
             base.LoadQueryTree(queryTree, queryChildBuilders);
             // 返回PostgreSql分页查询命令生成树
             return queryTree;
-        }
-        /// <summary>
-        /// 获取With As 查询命令生成树
-        /// </summary>
-        /// <param name="innerQuerySql">查询sql</param>
-        /// <param name="tableAlias">临时表名</param>
-        /// <param name="queryChildBuilders">查询条件表达式节点集合</param>
-        /// <returns>With As 查询命令生成树</returns>
-        public override ICommandTree GetWithAsQueryTree(string innerQuerySql, string tableAlias, IEnumerable<INodeBuilder> queryChildBuilders)
-        {
-            //创建with as查询命令生成树
-            PostgreSqlWithAsQueryTree withAsQueryTree = new PostgreSqlWithAsQueryTree(this.ParameterMarker, innerQuerySql, tableAlias);
-            //加载查询条件节点
-            base.LoadQueryTree(withAsQueryTree, queryChildBuilders);
-            //返回with as查询命令生成树
-            return withAsQueryTree;
         }
     }
 }

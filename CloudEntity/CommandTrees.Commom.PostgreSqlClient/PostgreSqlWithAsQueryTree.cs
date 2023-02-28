@@ -4,10 +4,29 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
 {
     /// <summary>
     /// 用于 Postgresql 的 With As 查询命令生成树
-    /// 李凯 Apple_Li 15150598493
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     internal class PostgreSqlWithAsQueryTree : WithAsQueryTree
     {
+        /// <summary>
+        /// 拼接WITH AS语句
+        /// </summary>
+        /// <param name="commandText">待拼接的sql</param>
+        /// <param name="tableAlias">临时表名</param>
+        protected override void AppendWithAs(StringBuilder commandText, string tableAlias)
+        {
+            commandText.AppendFormat("WITH \"{0}\" AS", tableAlias);
+        }
+        /// <summary>
+        /// 拼接FROM语句
+        /// </summary>
+        /// <param name="commandText">待拼接的sql</param>
+        /// <param name="tableAlias">临时表名</param>
+        protected override void AppendFrom(StringBuilder commandText, string tableAlias)
+        {
+            commandText.AppendFormat("    FROM \"{0}\"", tableAlias);
+        }
+
         /// <summary>
         /// 初始化
         /// </summary>
@@ -16,20 +35,5 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         /// <param name="tableAlias">临时表名</param>
         public PostgreSqlWithAsQueryTree(char parameterMarker, string innerQuerySql, string tableAlias)
          : base(parameterMarker, innerQuerySql, tableAlias) { }
-        /// <summary>
-        /// 构建sql命令
-        /// </summary>
-        /// <param name="commandText">待构建的sql</param>
-        public override void Build(StringBuilder commandText)
-        {
-            commandText.AppendFormat("WITH \"{0}\" AS\n", base.TableAlias);
-            commandText.AppendLine("(");
-            commandText.AppendLine(base.InnerQuerySql);
-            commandText.AppendLine(")");
-            commandText.AppendLine("  SELECT *");
-            commandText.AppendFormat("    FROM \"{0}\"", base.TableAlias);
-            this.Where.Build(commandText);
-            this.OrderBy.Build(commandText);
-        }
     }
 }

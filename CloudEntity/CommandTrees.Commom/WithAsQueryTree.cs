@@ -9,15 +9,6 @@ namespace CloudEntity.CommandTrees.Commom
     public class WithAsQueryTree : CommandTree
     {
         /// <summary>
-        /// 查询命令生成树的Where节点
-        /// </summary>
-        private IBuilderCollection whereBuilder;
-        /// <summary>
-        /// 查询命令生成树的Order By节点
-        /// </summary>
-        private IBuilderCollection orderByBuilder;
-
-        /// <summary>
         /// 查询sql
         /// </summary>
         protected string InnerQuerySql { get; private set; }
@@ -29,48 +20,29 @@ namespace CloudEntity.CommandTrees.Commom
         /// <summary>
         /// Where节点
         /// </summary>
-        public IBuilderCollection Where
-        {
-            get
-            {
-            Start:
-                //若whereBuilder不为空,直接返回
-                if (this.whereBuilder != null)
-                    return this.whereBuilder;
-                //创建whereBuilder
-                this.whereBuilder = new BuilderCollection()
-                {
-                    TitleLeftSpace = "\n   WHERE ",
-                    BodyLeftSpace = "     AND ",
-                    BodyRightSpace = "\n",
-                    LastRightSpace = string.Empty
-                };
-                //回到Start
-                goto Start;
-            }
-        }
+        public IBuilderCollection Where { get; private set; }
         /// <summary>
         /// Order by nodes
         /// </summary>
-        public IBuilderCollection OrderBy
+        public IBuilderCollection OrderBy { get; private set; }
+
+        /// <summary>
+        /// 拼接WITH AS语句
+        /// </summary>
+        /// <param name="commandText">待拼接的sql</param>
+        /// <param name="tableAlias">临时表名</param>
+        protected virtual void AppendWithAs(StringBuilder commandText, string tableAlias)
         {
-            get
-            {
-            Start:
-                //若orderByBuilder不为空,直接返回
-                if (this.orderByBuilder != null)
-                    return this.orderByBuilder;
-                //创建orderByBuilder
-                this.orderByBuilder = new BuilderCollection()
-                {
-                    TitleLeftSpace = "\nORDER BY ",
-                    BodyLeftSpace = "         ",
-                    BodyRightSpace = ",\n",
-                    LastRightSpace = string.Empty
-                };
-                //回到Start
-                goto Start;
-            }
+            commandText.AppendFormat("WITH {0} AS", tableAlias);
+        }
+        /// <summary>
+        /// 拼接FROM语句
+        /// </summary>
+        /// <param name="commandText">待拼接的sql</param>
+        /// <param name="tableAlias">临时表名</param>
+        protected virtual void AppendFrom(StringBuilder commandText, string tableAlias)
+        {
+            commandText.AppendFormat("    FROM {0}", tableAlias);
         }
 
         /// <summary>
@@ -84,6 +56,8 @@ namespace CloudEntity.CommandTrees.Commom
         {
             this.InnerQuerySql = innerQuerySql;
             this.TableAlias = tableAlias;
+            this.Where = new BuilderCollection("\n   WHERE ", "     AND ", "\n", string.Empty);
+            this.OrderBy = new BuilderCollection("\nORDER BY ", "         ", ",\n", string.Empty);
         }
         /// <summary>
         /// 构建sql命令
@@ -91,12 +65,12 @@ namespace CloudEntity.CommandTrees.Commom
         /// <param name="commandText">待构建的sql</param>
         public override void Build(StringBuilder commandText)
         {
-            commandText.AppendFormat("WITH {0} AS\n", this.TableAlias);
-            commandText.AppendLine("(");
+            this.AppendWithAs(commandText, this.TableAlias);
+            commandText.AppendLine("\n(");
             commandText.AppendLine(this.InnerQuerySql);
             commandText.AppendLine(")");
             commandText.AppendLine("  SELECT *");
-            commandText.AppendFormat("    FROM {0}", this.TableAlias);
+            this.AppendFrom(commandText, this.TableAlias);
             this.Where.Build(commandText);
             this.OrderBy.Build(commandText);
         }

@@ -8,8 +8,14 @@ namespace CloudEntity.CommandTrees.Commom
     /// </summary>
     public class BinaryBuilder : INodeBuilder
     {
-        private SqlType parentNodeType = SqlType.Where; //父节点类型
-        private string sqlOperator;                     //sql操作符
+        /// <summary>
+        /// 父节点类型
+        /// </summary>
+        private SqlType parentNodeType = SqlType.Where;
+        /// <summary>
+        /// sql操作符
+        /// </summary>
+        private string sqlOperator;
 
         /// <summary>
         /// 父节点的sql节点类型

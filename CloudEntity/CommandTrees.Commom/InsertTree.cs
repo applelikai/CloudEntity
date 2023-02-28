@@ -4,7 +4,7 @@ namespace CloudEntity.CommandTrees.Commom
 {
     /// <summary>
     /// Insert命令生成树
-    /// 李凯 Apple_Li
+    /// [Apple_Li 李凯 15150598493]
     /// </summary>
     public class InsertTree : CommandTree
     {

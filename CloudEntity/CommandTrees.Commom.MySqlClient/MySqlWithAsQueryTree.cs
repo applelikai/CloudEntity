@@ -1,12 +1,12 @@
 using System.Text;
 
-namespace CloudEntity.CommandTrees.Commom.SqlClient
+namespace CloudEntity.CommandTrees.Commom.MySqlClient
 {
     /// <summary>
-    /// 用于 Sql Server 的 With As 查询命令生成树
+    /// 用于 My Sql 的 With As 查询命令生成树
     /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
-    internal class SqlWithAsQueryTree : WithAsQueryTree
+    internal class MySqlWithAsQueryTree : WithAsQueryTree
     {
         /// <summary>
         /// 拼接WITH AS语句
@@ -15,7 +15,7 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
         /// <param name="tableAlias">临时表名</param>
         protected override void AppendWithAs(StringBuilder commandText, string tableAlias)
         {
-            commandText.AppendFormat("WITH [{0}] AS", tableAlias);
+            commandText.AppendFormat("WITH `{0}` AS", tableAlias);
         }
         /// <summary>
         /// 拼接FROM语句
@@ -24,7 +24,7 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
         /// <param name="tableAlias">临时表名</param>
         protected override void AppendFrom(StringBuilder commandText, string tableAlias)
         {
-            commandText.AppendFormat("    FROM [{0}]", tableAlias);
+            commandText.AppendFormat("    FROM `{0}`", tableAlias);
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
         /// <param name="parameterMarker">Sql参数标识符号</param>
         /// <param name="innerQuerySql">查询sql</param>
         /// <param name="tableAlias">临时表名</param>
-        public SqlWithAsQueryTree(char parameterMarker, string innerQuerySql, string tableAlias)
+        public MySqlWithAsQueryTree(char parameterMarker, string innerQuerySql, string tableAlias)
          : base(parameterMarker, innerQuerySql, tableAlias) { }
     }
 }

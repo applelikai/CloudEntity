@@ -4,7 +4,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
 {
     /// <summary>
     /// 用于PostgreSql的为Table添加列的语句生成树
-    /// Apple_Li 李凯 15150598493
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     internal class PostgreSqlAlterTableAddColumnsTree : AlterTableAddColumnsTree
     {

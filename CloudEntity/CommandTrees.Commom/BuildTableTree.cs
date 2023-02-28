@@ -6,6 +6,7 @@ namespace CloudEntity.CommandTrees.Commom
 {
     /// <summary>
     /// 建表语句生成树
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public class BuildTableTree : ICommandTree
     {

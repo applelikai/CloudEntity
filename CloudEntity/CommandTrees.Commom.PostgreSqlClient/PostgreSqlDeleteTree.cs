@@ -4,8 +4,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
 {
     /// <summary>
     /// 用于PostgreSql的Delete命令生成树
-    /// Apple_Li 李凯 15150598493
-    /// 2021/09/21 最后修改时间：2023/02/17 20:17
+    /// [Apple_Li 李凯 15150598493]
     /// </summary>
     internal class PostgreSqlDeleteTree : DeleteTree
     {

@@ -5,8 +5,7 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
 {
     /// <summary>
     /// 创建用于Sql Server的CommandTree的工厂类
-    /// 李凯 Apple_Li 15150598493
-    /// 最后修改日期：2023/02/05
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public class SqlCommandTreeFactory : CommandTreeFactory
     {
@@ -69,6 +68,16 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
         protected override DeleteTree CreateDeleteTree(string schemaName, string tableName, string tableAlias)
         {
             return new SqlDeleteTree(schemaName, tableName, tableAlias, this.ParameterMarker);
+        }
+        /// <summary>
+        /// 创建With As 查询命令生成树
+        /// </summary>
+        /// <param name="innerQuerySql">查询sql</param>
+        /// <param name="tableAlias">临时表名</param>
+        /// <returns>With As 查询命令生成树</returns>
+        protected override WithAsQueryTree CreateWithAsQueryTree(string innerQuerySql, string tableAlias)
+        {
+            return new SqlWithAsQueryTree(this.ParameterMarker, innerQuerySql, tableAlias);
         }
 
         /// <summary>
@@ -187,22 +196,6 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
             base.LoadQueryTree(queryTree, queryChildBuilders);
             //返回分页查询命令生成树
             return queryTree;
-        }
-        /// <summary>
-        /// 获取With As 查询命令生成树
-        /// </summary>
-        /// <param name="innerQuerySql">查询sql</param>
-        /// <param name="tableAlias">临时表名</param>
-        /// <param name="queryChildBuilders">查询条件表达式节点集合</param>
-        /// <returns>With As 查询命令生成树</returns>
-        public override ICommandTree GetWithAsQueryTree(string innerQuerySql, string tableAlias, IEnumerable<INodeBuilder> queryChildBuilders)
-        {
-            //创建with as查询命令生成树
-            SqlWithAsQueryTree withAsQueryTree = new SqlWithAsQueryTree(this.ParameterMarker, innerQuerySql, tableAlias);
-            //加载查询条件节点
-            base.LoadQueryTree(withAsQueryTree, queryChildBuilders);
-            //返回with as查询命令生成树
-            return withAsQueryTree;
         }
     }
 }

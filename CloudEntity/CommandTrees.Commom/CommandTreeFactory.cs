@@ -93,6 +93,16 @@ namespace CloudEntity.CommandTrees.Commom
             return new DeleteTree(schemaName, tableName, tableAlias, this.ParameterMarker);
         }
         /// <summary>
+        /// 创建With As 查询命令生成树
+        /// </summary>
+        /// <param name="innerQuerySql">查询sql</param>
+        /// <param name="tableAlias">临时表名</param>
+        /// <returns>With As 查询命令生成树</returns>
+        protected virtual WithAsQueryTree CreateWithAsQueryTree(string innerQuerySql, string tableAlias)
+        {
+            return new WithAsQueryTree(this.ParameterMarker, innerQuerySql, tableAlias);
+        }
+        /// <summary>
         /// 加载查询命令生成树
         /// </summary>
         /// <param name="queryTree">查询命令生成树</param>
@@ -408,7 +418,7 @@ namespace CloudEntity.CommandTrees.Commom
         public virtual ICommandTree GetWithAsQueryTree(string innerQuerySql, string tableAlias, IEnumerable<INodeBuilder> queryChildBuilders)
         {
             //创建with as查询命令生成树
-            WithAsQueryTree withAsQueryTree = new WithAsQueryTree(this.ParameterMarker, innerQuerySql, tableAlias);
+            WithAsQueryTree withAsQueryTree = this.CreateWithAsQueryTree(innerQuerySql, tableAlias);
             //加载查询条件节点
             this.LoadQueryTree(withAsQueryTree, queryChildBuilders);
             //返回with as查询命令生成树

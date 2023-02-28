@@ -8,9 +8,9 @@
     <Description>基于.net core的类似于Entity Framework的实体框架，只要是支持ado.net访问的数据库，都可以通过自定义配置使用当前实体框架
 CloudEntity集成了基本的linq查询，实现了带有条件的修改(一条update批量修改) 和 带有条件的删除(一条delete批量删除)</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Version>1.2.8</Version>
-    <AssemblyVersion>1.2.8</AssemblyVersion>
-    <FileVersion>1.2.8</FileVersion>
+    <Version>1.2.8.1</Version>
+    <AssemblyVersion>1.2.8.1</AssemblyVersion>
+    <FileVersion>1.2.8.1</FileVersion>
     <RepositoryUrl>https://github.com/applelikai/CloudEntity</RepositoryUrl>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/applelikai/CloudEntity</PackageProjectUrl>
