@@ -1,5 +1,6 @@
 using CloudEntity.Mapping;
 using CloudEntity.Mapping.Common;
+using CloudEntity.Test.Models;
 using System;
 
 namespace CloudEntity.Test.Mappers;
@@ -21,5 +22,13 @@ public class InnerMapperContainer : MapperContainerBase
         string targetMapperTypeName = string.Format("{0}.{1}Mapper", targetNameSpace, entityType.Name);
         //创建Mapper对象
         return Activator.CreateInstance(Type.GetType(targetMapperTypeName)) as ITableMapper;
+    }
+    /// <summary>
+    /// 设置视图与实体的映射关系
+    /// </summary>
+    /// <param name="setter">视图与实体的映射关系的设置器</param>
+    protected override void SetViewMappers(ViewMapSetter setter)
+    {
+        setter.MapView<WechatUser>("Cus_WechatUsers");
     }
 }

@@ -47,6 +47,17 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
             return new MySqlInsertTree(schemaName, tableName, base.ParameterMarker);
         }
         /// <summary>
+        /// 创建Delete命令生成树
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="tableAlias">临时表名</param>
+        /// <returns>Delete命令生成树</returns>
+        protected override DeleteTree CreateDeleteTree(string schemaName, string tableName, string tableAlias)
+        {
+            return new MySqlDeleteTree(schemaName, tableName, tableAlias, base.ParameterMarker);
+        }
+        /// <summary>
         /// 创建Update命令生成树
         /// </summary>
         /// <param name="schemaName">数据库架构名</param>
@@ -58,15 +69,13 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
             return new MySqlUpdateTree(schemaName, tableName, tableAlias, base.ParameterMarker);
         }
         /// <summary>
-        /// 创建Delete命令生成树
+        /// 创建TOP查询命令的生成树
         /// </summary>
-        /// <param name="schemaName">数据库架构名</param>
-        /// <param name="tableName">表名</param>
-        /// <param name="tableAlias">临时表名</param>
-        /// <returns>Delete命令生成树</returns>
-        protected override DeleteTree CreateDeleteTree(string schemaName, string tableName, string tableAlias)
+        /// <param name="topCount">查询的前几条的元素数量</param>
+        /// <returns>TOP查询命令的生成树</returns>
+        protected override QueryTree CreateTopQueryTree(int topCount)
         {
-            return new MySqlDeleteTree(schemaName, tableName, tableAlias, base.ParameterMarker);
+            return new MySqlTopQueryTree(base.ParameterMarker, topCount);
         }
         /// <summary>
         /// 创建With As 查询命令生成树
@@ -178,21 +187,6 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         public override INodeBuilder GetOrderByChildBuilder(string tableAlias, string columnName, bool isDesc)
         {
             return new NodeBuilder(SqlType.OrderBy, "`{0}`.`{1}`{2}", tableAlias, columnName, isDesc ? " DESC" : string.Empty);
-        }
-        /// <summary>
-        /// 获取TOP查询sql的生成树
-        /// </summary>
-        /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
-        /// <param name="topCount">查询的前几条的元素数量</param>
-        /// <returns>TOP查询sql的生成树</returns>
-        public override ICommandTree GetTopQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, int topCount)
-        {
-            //创建top查询命令生成树
-            QueryTree queryTree = new MySqlTopQueryTree(this.ParameterMarker, topCount);
-            //填充查询命令生成树各个节点
-            this.LoadQueryTree(queryTree, queryChildBuilders);
-            //返回查询命令生成树
-            return queryTree;
         }
         /// <summary>
         /// 获取分页查询命令生成树

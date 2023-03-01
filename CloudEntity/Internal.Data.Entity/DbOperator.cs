@@ -192,7 +192,7 @@ namespace CloudEntity.Internal.Data.Entity
                 //获取columnMapper
                 IColumnMapper columnMapper = this.TableMapper.GetColumnMapper(setPair.Key);
                 //获取参数名
-                string parameterName = string.Concat("New", columnMapper.Property.Name);
+                string parameterName = columnMapper.Property.Name;
                 //获取Update Set的子sql表达式节点
                 INodeBuilder setBuilder = this.CommandTreeFactory.GetUpdateSetChildBuilder(tableAlias, columnMapper.ColumnName, parameterName);
                 //添加sql表达式节点

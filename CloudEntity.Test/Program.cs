@@ -276,6 +276,6 @@ public class Program
     private static void Main(string[] args)
     {
         // 查询测试
-        Program.ViewQueryTest();
+        Program.TestTopQuery();
     }
 }

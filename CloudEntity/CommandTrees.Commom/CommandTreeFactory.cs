@@ -71,6 +71,17 @@ namespace CloudEntity.CommandTrees.Commom
             return new InsertTree(schemaName, tableName, this.ParameterMarker);
         }
         /// <summary>
+        /// 创建Delete命令生成树
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="tableAlias">临时表名</param>
+        /// <returns>Delete命令生成树</returns>
+        protected virtual DeleteTree CreateDeleteTree(string schemaName, string tableName, string tableAlias)
+        {
+            return new DeleteTree(schemaName, tableName, tableAlias, this.ParameterMarker);
+        }
+        /// <summary>
         /// 创建Update命令生成树
         /// </summary>
         /// <param name="schemaName">数据库架构名</param>
@@ -82,15 +93,13 @@ namespace CloudEntity.CommandTrees.Commom
             return new UpdateTree(schemaName, tableName, tableAlias, this.ParameterMarker);
         }
         /// <summary>
-        /// 创建Delete命令生成树
+        /// 创建TOP查询命令的生成树
         /// </summary>
-        /// <param name="schemaName">数据库架构名</param>
-        /// <param name="tableName">表名</param>
-        /// <param name="tableAlias">临时表名</param>
-        /// <returns>Delete命令生成树</returns>
-        protected virtual DeleteTree CreateDeleteTree(string schemaName, string tableName, string tableAlias)
+        /// <param name="topCount">查询的前几条的元素数量</param>
+        /// <returns>TOP查询命令的生成树</returns>
+        protected virtual QueryTree CreateTopQueryTree(int topCount)
         {
-            return new DeleteTree(schemaName, tableName, tableAlias, this.ParameterMarker);
+            return new TopQueryTree(this.ParameterMarker, topCount);
         }
         /// <summary>
         /// 创建With As 查询命令生成树
@@ -379,10 +388,10 @@ namespace CloudEntity.CommandTrees.Commom
         /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
         /// <param name="topCount">查询的前几条的元素数量</param>
         /// <returns>TOP查询sql的生成树</returns>
-        public virtual ICommandTree GetTopQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, int topCount)
+        public ICommandTree GetTopQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, int topCount)
         {
             //创建top查询命令生成树
-            QueryTree queryTree = new TopQueryTree(this.ParameterMarker, topCount);
+            QueryTree queryTree = this.CreateTopQueryTree(topCount);
             //填充查询命令生成树各个节点
             this.LoadQueryTree(queryTree, queryChildBuilders);
             //返回查询命令生成树
@@ -415,7 +424,7 @@ namespace CloudEntity.CommandTrees.Commom
         /// <param name="tableAlias">临时表名</param>
         /// <param name="queryChildBuilders">查询条件表达式节点集合</param>
         /// <returns>With As 查询命令生成树</returns>
-        public virtual ICommandTree GetWithAsQueryTree(string innerQuerySql, string tableAlias, IEnumerable<INodeBuilder> queryChildBuilders)
+        public ICommandTree GetWithAsQueryTree(string innerQuerySql, string tableAlias, IEnumerable<INodeBuilder> queryChildBuilders)
         {
             //创建with as查询命令生成树
             WithAsQueryTree withAsQueryTree = this.CreateWithAsQueryTree(innerQuerySql, tableAlias);
