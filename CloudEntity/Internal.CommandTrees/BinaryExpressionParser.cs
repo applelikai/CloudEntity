@@ -8,8 +8,7 @@ namespace CloudEntity.Internal.CommandTrees
 {
     /// <summary>
     /// 二叉树表达式解析类
-    /// 李凯 Apple_Li 15150598493
-    /// 最后修改时间：2023/02/10 23:14
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     internal class BinaryExpressionParser : PredicateParser
     {
@@ -21,11 +20,11 @@ namespace CloudEntity.Internal.CommandTrees
         /// <summary>
         /// 创建二叉树表达式解析对象
         /// </summary>
-        /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
+        /// <param name="commandFactory">Sql命令工厂</param>
         /// <param name="mapperContainer">Mapper容器</param>
         /// <param name="factory">创建表达式解析器的工厂</param>
-        public BinaryExpressionParser(ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer, IPredicateParserFactory factory)
-            : base(commandTreeFactory, mapperContainer)
+        public BinaryExpressionParser(ICommandFactory commandFactory, IMapperContainer mapperContainer, IPredicateParserFactory factory)
+            : base(commandFactory, mapperContainer)
         {
             _factory = factory;
         }

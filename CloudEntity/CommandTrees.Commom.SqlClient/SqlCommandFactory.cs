@@ -1,12 +1,14 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
-namespace CloudEntity.CommandTrees.Commom.MySqlClient
+namespace CloudEntity.CommandTrees.Commom.SqlClient
 {
     /// <summary>
-    /// 创建用于MySql的CommandTree的工厂
+    /// Sql Server命令工厂类
     /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
-    public class MySqlCommandTreeFactory : CommandTreeFactory
+    public class SqlCommandFactory : CommandFactory
     {
         /// <summary>
         /// 创建读取节点信息的Helper
@@ -14,7 +16,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>读取节点信息的Helper</returns>
         protected override ColumnNodeHelper CreateColumnNodeHelper()
         {
-            return new MySqlColumnNodeHelper();
+            return new SqlColumnNodeHelper();
         }
         /// <summary>
         /// 创建建表语句生成树
@@ -24,7 +26,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>建表语句生成树</returns>
         protected override BuildTableTree CreateBuildTableTree(string schemaName, string tableName)
         {
-            return base.CreateBuildTableTree(schemaName, tableName);
+            return new SqlBuildTableTree(this.ColumnNodeHelper, tableName, schemaName);
         }
         /// <summary>
         /// 创建为Table添加列的语句生成树
@@ -34,7 +36,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>为Table添加列的语句生成树</returns>
         protected override AlterTableAddColumnsTree CreateAlterTableAddColumnsTree(string schemaName, string tableName)
         {
-            return new MySqlAlterTableAddColumnsTree(base.ColumnNodeHelper, tableName, schemaName);
+            return new SqlAlterTableAddColumnsTree(this.ColumnNodeHelper, tableName, schemaName);
         }
         /// <summary>
         /// 创建Insert命令生成树
@@ -44,18 +46,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>Insert命令生成树</returns>
         protected override InsertTree CreateInsertTree(string schemaName, string tableName)
         {
-            return new MySqlInsertTree(schemaName, tableName, base.ParameterMarker);
-        }
-        /// <summary>
-        /// 创建Delete命令生成树
-        /// </summary>
-        /// <param name="schemaName">数据库架构名</param>
-        /// <param name="tableName">表名</param>
-        /// <param name="tableAlias">临时表名</param>
-        /// <returns>Delete命令生成树</returns>
-        protected override DeleteTree CreateDeleteTree(string schemaName, string tableName, string tableAlias)
-        {
-            return new MySqlDeleteTree(schemaName, tableName, tableAlias, base.ParameterMarker);
+            return new SqlInsertTree(schemaName, tableName, this.ParameterMarker);
         }
         /// <summary>
         /// 创建Update命令生成树
@@ -66,16 +57,18 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>Update命令生成树</returns>
         protected override UpdateTree CreateUpdateTree(string schemaName, string tableName, string tableAlias)
         {
-            return new MySqlUpdateTree(schemaName, tableName, tableAlias, base.ParameterMarker);
+            return new SqlUpdateTree(schemaName, tableName, tableAlias, this.ParameterMarker);
         }
         /// <summary>
-        /// 创建TOP查询命令的生成树
+        /// 创建Delete命令生成树
         /// </summary>
-        /// <param name="topCount">查询的前几条的元素数量</param>
-        /// <returns>TOP查询命令的生成树</returns>
-        protected override QueryTree CreateTopQueryTree(int topCount)
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="tableAlias">临时表名</param>
+        /// <returns>Delete命令生成树</returns>
+        protected override DeleteTree CreateDeleteTree(string schemaName, string tableName, string tableAlias)
         {
-            return new MySqlTopQueryTree(base.ParameterMarker, topCount);
+            return new SqlDeleteTree(schemaName, tableName, tableAlias, this.ParameterMarker);
         }
         /// <summary>
         /// 创建With As 查询命令生成树
@@ -85,13 +78,22 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>With As 查询命令生成树</returns>
         protected override WithAsQueryTree CreateWithAsQueryTree(string innerQuerySql, string tableAlias)
         {
-            return new MySqlWithAsQueryTree(base.ParameterMarker, innerQuerySql, tableAlias);
+            return new SqlWithAsQueryTree(this.ParameterMarker, innerQuerySql, tableAlias);
+        }
+        /// <summary>
+        /// 拼接TABLE
+        /// </summary>
+        /// <param name="commandText">带拼接的sql</param>
+        /// <param name="tableName">表名</param>
+        protected override void AppendTable(StringBuilder commandText, string tableName)
+        {
+            commandText.AppendFormat("[{0}]", tableName);
         }
 
         /// <summary>
-        /// 创建生成MySql的命令生成树的工厂
+        /// 创建针对sql server的sql驱动
         /// </summary>
-        public MySqlCommandTreeFactory()
+        public SqlCommandFactory()
             : base('@') { }
         /// <summary>
         /// 获取基础Column节点
@@ -101,7 +103,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>基础Column节点</returns>
         public override ISqlBuilder GetColumnBuilder(string tableAlias, string columnName)
         {
-            return new SqlBuilder("`{0}`.`{1}`", tableAlias, columnName);
+            return new SqlBuilder("[{0}].[{1}]", tableAlias, columnName);
         }
         /// <summary>
         /// 获取sql column节点生成类
@@ -114,9 +116,9 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         {
             //若列的别名为空，则不使用别名
             if (string.IsNullOrEmpty(columnAlias))
-                return new ColumnBuilder(columnName, $"`{tableAlias}`.`{columnName}`");
+                return new ColumnBuilder(columnName, $"[{tableAlias}].[{columnName}]");
             //若列的别名不为空, 则使用别名
-            return new ColumnBuilder(columnAlias, $"`{tableAlias}`.`{columnName}` `{columnAlias}`");
+            return new ColumnBuilder(columnAlias, $"[{tableAlias}].[{columnName}] [{columnAlias}]");
         }
         /// <summary>
         /// 获取Sql函数表达式节点
@@ -127,7 +129,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>Sql函数表达式节点</returns>
         public override INodeBuilder GetFunctionNodeBuilder(string tableAlias, string columnName, string functionName)
         {
-            return new NodeBuilder(SqlType.Select, "{0}(`{1}`.`{2}`)", functionName, tableAlias, columnName);
+            return new NodeBuilder(SqlType.Select, "{0}([{1}].[{2}])", functionName, tableAlias, columnName);
         }
         /// <summary>
         /// 获取UPDATE SET节点的子sql表达式节点
@@ -138,7 +140,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>UPDATE SET节点的子sql表达式节点</returns>
         public override INodeBuilder GetUpdateSetChildBuilder(string tableAlias, string columnName, string parameterName)
         {
-            return new NodeBuilder(SqlType.UpdateSet, $"`{columnName}` = {this.ParameterMarker}{parameterName}");
+            return new NodeBuilder(SqlType.UpdateSet, $"[{columnName}] = {this.ParameterMarker}{parameterName}");
         }
         /// <summary>
         /// 获取Table表达式节点
@@ -151,9 +153,9 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         {
             //若架构名为空，则获取空架构名的Table节点
             if (string.IsNullOrEmpty(schemaName))
-                return new TableBuilder(tableAlias, $"`{tableName}` `{tableAlias}`");
+                return new TableBuilder(tableAlias, $"[{tableName}] [{tableAlias}]");
             //若架构名不为空，则获取有架构名的Table节点
-            return new TableBuilder(tableAlias, $"{schemaName}.`{tableName}` `{tableAlias}`");
+            return new TableBuilder(tableAlias, $"{schemaName}.[{tableName}] [{tableAlias}]");
         }
         /// <summary>
         /// 获取Where节点的子表达式节点
@@ -164,7 +166,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>Where节点的子表达式节点</returns>
         public override INodeBuilder GetWhereChildBuilder(string tableAlias, string columnName, string rightSqlExpression)
         {
-            return new NodeBuilder(SqlType.Where, $"`{tableAlias}`.`{columnName}` {rightSqlExpression}");
+            return new NodeBuilder(SqlType.Where, $"[{tableAlias}].[{columnName}] {rightSqlExpression}");
         }
         /// <summary>
         /// 获取等于条件表达式节点
@@ -175,7 +177,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>等于条件表达式节点</returns>
         public override INodeBuilder GetEqualsBuilder(string tableAlias, string columnName, string parameterName)
         {
-            return new NodeBuilder(SqlType.Where, $"`{tableAlias}`.`{columnName}` = {this.ParameterMarker}{parameterName}");
+            return new NodeBuilder(SqlType.Where, $"[{tableAlias}].[{columnName}] = {this.ParameterMarker}{parameterName}");
         }
         /// <summary>
         /// 获取OrderBy节点的子节点表达式
@@ -186,7 +188,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>OrderBy节点的子节点表达式</returns>
         public override INodeBuilder GetOrderByChildBuilder(string tableAlias, string columnName, bool isDesc)
         {
-            return new NodeBuilder(SqlType.OrderBy, "`{0}`.`{1}`{2}", tableAlias, columnName, isDesc ? " DESC" : string.Empty);
+            return new NodeBuilder(SqlType.OrderBy, "[{0}].[{1}]{2}", tableAlias, columnName, isDesc ? " DESC" : string.Empty);
         }
         /// <summary>
         /// 获取分页查询命令生成树
@@ -195,11 +197,14 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>分页查询命令生成树</returns>
         public override ICommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders)
         {
-            //创建MySql分页查询命令生成树
-            MySqlPagingQueryTree queryTree = new MySqlPagingQueryTree(base.ParameterMarker);
-            //填充MySql分页查询命令生成树的各个节点
+            //创建分页查询命令生成树
+            SqlOrderByPagingQueryTree queryTree = new SqlOrderByPagingQueryTree(base.ParameterMarker);
+            //添加RowNumber查询列
+            ISqlBuilder rowNumberBuilder = new RowNumberBuilder(queryChildBuilders.Where(n => n.ParentNodeType == SqlType.OrderBy).ToArray());
+            queryTree.Select.Append(rowNumberBuilder);
+            //填充分页查询命令生成树各个节点
             base.LoadQueryTree(queryTree, queryChildBuilders);
-            //返回MySql分页查询命令生成树
+            //返回分页查询命令生成树
             return queryTree;
         }
     }

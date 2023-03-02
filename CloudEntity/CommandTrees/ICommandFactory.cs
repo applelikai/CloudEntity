@@ -3,11 +3,10 @@
 namespace CloudEntity.CommandTrees
 {
     /// <summary>
-    /// 用于获取Command Tree的Factory
-    /// Apple_Li 李凯 15150598493
-    /// 最后修改日期：2023/02/05
+    /// 命令工厂接口
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
-    public interface ICommandTreeFactory
+    public interface ICommandFactory
     {
         /// <summary>
         /// sql 参数标识符
@@ -161,6 +160,23 @@ namespace CloudEntity.CommandTrees
         /// <param name="queryChildBuilders">查询条件表达式节点集合</param>
         /// <returns>With As 查询命令生成树</returns>
         ICommandTree GetWithAsQueryTree(string innerQuerySql, string tableAlias, IEnumerable<INodeBuilder> queryChildBuilders);
+        #endregion
+        #region 获取SQL命令
+        /// <summary>
+        /// 获取删除表的SQL命令
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">完整表名</param>
+        /// <returns>删除表的SQL命令</returns>
+        string GetDropTableCommandText(string schemaName, string tableName);
+        /// <summary>
+        /// 获取重命名Table的SQL命令
+        /// </summary>
+        /// <param name="schemaName">数据库架构名（或用户名 或模式）</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="oldTableName">原来的Table名</param>
+        /// <returns>重命名Table的SQL命令</returns>
+        string GetRenameTableCommandText(string schemaName, string tableName, string oldTableName);
         #endregion
     }
 }

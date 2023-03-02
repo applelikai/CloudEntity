@@ -12,8 +12,7 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// 选定项查询数据源类
-    /// Apple_Li 李凯 15150598493
-    /// 2017/06/19 最后修改：2023/02/09 21:07
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     /// <typeparam name="TElement">元素类型</typeparam>
     /// <typeparam name="TEntity">实体类型</typeparam>
@@ -26,41 +25,22 @@ namespace CloudEntity.Internal.Data.Entity
         internal Func<TEntity, TElement> Convert { private get; set; }
 
         /// <summary>
-        /// 获取条件查询命令生成树的子节点集合
-        /// </summary>
-        /// <returns>条件查询命令生成树的子节点集合</returns>
-        private IEnumerable<INodeBuilder> GetWhereNodeBuilders()
-        {
-            foreach (INodeBuilder nodeBuilder in base.NodeBuilders)
-            {
-                switch (nodeBuilder.ParentNodeType)
-                {
-                    case SqlType.Select:
-                    case SqlType.From:
-                    case SqlType.Where:
-                        yield return nodeBuilder;
-                        break;
-                }
-            }
-        }
-
-        /// <summary>
         /// 创建查询命令生成树
         /// </summary>
         /// <returns>查询命令生成树</returns>
         protected virtual ICommandTree CreateQueryTree()
         {
-            return base.CommandTreeFactory.GetQueryTree(base.NodeBuilders);
+            return base.CommandFactory.GetQueryTree(base.NodeBuilders);
         }
 
         /// <summary>
         /// 创建选定项查询数据源对象
         /// </summary>
         /// <param name="mapperContainer">Mapper容器</param>
-        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
+        /// <param name="commandFactory">SQL命令工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbSelectedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper)
-            : base(mapperContainer, commandTreeFactory, dbHelper) { }
+        public DbSelectedQuery(IMapperContainer mapperContainer, ICommandFactory commandFactory, IDbHelper dbHelper)
+            : base(mapperContainer, commandFactory, dbHelper) { }
         /// <summary>
         /// 获取查询Sql字符串
         /// </summary>

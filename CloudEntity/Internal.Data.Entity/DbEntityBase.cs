@@ -12,8 +12,7 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// 实体查询数据源基类
-    /// Apple_Li 李凯 15150598493
-    /// 2023/02/17 17:16 最后修改时间：2023/02/18 22:07
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     internal class DbEntityBase<TEntity> : DbSortBase
@@ -144,7 +143,7 @@ namespace CloudEntity.Internal.Data.Entity
                 if (propertyNames.Contains(columnMapper.Property.Name))
                 {
                     //依次获取column节点生成器
-                    yield return base.CommandTreeFactory.GetColumnBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, columnMapper.ColumnAlias);
+                    yield return base.CommandFactory.GetColumnBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, columnMapper.ColumnAlias);
                 }
             }
         }
@@ -167,7 +166,7 @@ namespace CloudEntity.Internal.Data.Entity
                     //获取columnMapper
                     IColumnMapper columnMapper = tableMapper.GetColumnMapper(memberExpression.Member.Name);
                     //依次获取column节点生成器
-                    yield return base.CommandTreeFactory.GetColumnBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, columnMapper.ColumnAlias);
+                    yield return base.CommandFactory.GetColumnBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, columnMapper.ColumnAlias);
                     break;
                 //解析MemberInitExpression(e => new { PropertyA = e.Property1, PropertyB = a.Property2})
                 case ExpressionType.MemberInit:
@@ -260,7 +259,7 @@ namespace CloudEntity.Internal.Data.Entity
             //获取columnMapper
             IColumnMapper columnMapper = tableMapper.GetColumnMapper(memberExpression.Member.Name);
             //获取不使用别名的OrderBy节点的子表达式(排序时，禁止使用别名)
-            return base.CommandTreeFactory.GetOrderByChildBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, isDesc);
+            return base.CommandFactory.GetOrderByChildBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, isDesc);
         }
         /// <summary>
         /// 读取DataReader获取实体对象列表
@@ -308,15 +307,15 @@ namespace CloudEntity.Internal.Data.Entity
                 yield return this.CreateModel<TModel>(modelAccessor, reader, columnMappers);
             }
         }
-        
+
         /// <summary>
         /// 初始化
         /// </summary>
         /// <param name="mapperContainer">Mapper容器</param>
-        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
+        /// <param name="commandFactory">SQL命令工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbEntityBase(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper)
-            : base(commandTreeFactory, dbHelper)
+        public DbEntityBase(IMapperContainer mapperContainer, ICommandFactory commandFactory, IDbHelper dbHelper)
+            : base(commandFactory, dbHelper)
         {
             // 初始化
             _propertyLinkers = new List<PropertyLinker>();

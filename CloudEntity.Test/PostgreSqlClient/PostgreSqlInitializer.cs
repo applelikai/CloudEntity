@@ -13,22 +13,6 @@ namespace CloudEntity.Test.PostgreSqlClient;
 public class PostgreSqlInitializer : DbInitializer
 {
     /// <summary>
-    /// 获取Column初始化器(Code First时需要使用)
-    /// </summary>
-    /// <returns>Column初始化器</returns>
-    public override ColumnInitializer CreateColumnInitializer()
-    {
-        return new PostgreSqlColumnInitializer();
-    }
-    /// <summary>
-    /// 创建Table初始化器(Code First时需要使用)
-    /// </summary>
-    /// <returns>Table初始化器</returns>
-    public override TableInitializer CreateTableInitializer()
-    {
-        return new PostgreSqlTableInitializer();
-    }
-    /// <summary>
     /// 创建DbHelper对象
     /// </summary>
     /// <param name="connectionString">连接字符串</param>
@@ -41,9 +25,9 @@ public class PostgreSqlInitializer : DbInitializer
     /// 获取创建sql命令生成树的工厂
     /// </summary>
     /// <returns>sql命令生成树的工厂</returns>
-    public override ICommandTreeFactory CreateCommandTreeFactory()
+    public override ICommandFactory CreateCommandFactory()
     {
-        return new PostgreSqlCommandTreeFactory();
+        return new PostgreSqlCommandFactory();
     }
     /// <summary>
     /// 创建Mapper容器
@@ -52,5 +36,25 @@ public class PostgreSqlInitializer : DbInitializer
     public override IMapperContainer CreateMapperContainer()
     {
         return new InnerMapperContainer();
+    }
+    /// <summary>
+    /// 创建Table初始化器(Code First时需要使用)
+    /// </summary>
+    /// <param name="dbHelper">数据库操作对象</param>
+    /// <param name="commandFactory">SQL命令工厂</param>
+    /// <returns>Table初始化器</returns>
+    public override TableInitializer CreateTableInitializer(IDbHelper dbHelper, ICommandFactory commandFactory)
+    {
+        return new PostgreSqlTableInitializer(dbHelper, commandFactory);
+    }
+    /// <summary>
+    /// 获取Column初始化器(Code First时需要使用)
+    /// </summary>
+    /// <param name="dbHelper">数据库操作对象</param>
+    /// <param name="commandFactory">SQL命令工厂</param>
+    /// <returns>Column初始化器</returns>
+    public override ColumnInitializer CreateColumnInitializer(IDbHelper dbHelper, ICommandFactory commandFactory)
+    {
+        return new PostgreSqlColumnInitializer(dbHelper, commandFactory);
     }
 }

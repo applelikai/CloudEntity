@@ -12,8 +12,7 @@ namespace CloudEntity.Internal.CommandTrees
 {
     /// <summary>
     /// 方法表达式解析类
-    /// 李凯 Apple_Li 15150598493
-    /// 最后修改时间：2023/02/14
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     internal class MethodCallExpressionParser : PredicateParser
     {
@@ -157,10 +156,10 @@ namespace CloudEntity.Internal.CommandTrees
         /// <summary>
         /// 创建Lambda表达式解析对象
         /// </summary>
-        /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
+        /// <param name="commandFactory">Sql命令工厂</param>
         /// <param name="mapperContainer">Mapper对象容器</param>
-        public MethodCallExpressionParser(ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
-            : base(commandTreeFactory, mapperContainer) { }
+        public MethodCallExpressionParser(ICommandFactory commandFactory, IMapperContainer mapperContainer)
+            : base(commandFactory, mapperContainer) { }
         /// <summary>
         /// 解析查询条件表达式，生成并获取sql条件表达式节点列表，附带设置sql参数
         /// </summary>

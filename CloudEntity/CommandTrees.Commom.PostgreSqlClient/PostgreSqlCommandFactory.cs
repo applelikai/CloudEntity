@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 
 namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
 {
     /// <summary>
-    /// 创建用于PostgreSql的CommandTree的工厂
+    /// PostgreSql命令工厂类
     /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
-    public class PostgreSqlCommandTreeFactory : CommandTreeFactory
+    public class PostgreSqlCommandFactory : CommandFactory
     {
         /// <summary>
         /// 创建读取节点信息的Helper
@@ -87,11 +88,20 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         {
             return new PostgreSqlWithAsQueryTree(this.ParameterMarker, innerQuerySql, tableAlias);
         }
+        /// <summary>
+        /// 拼接TABLE
+        /// </summary>
+        /// <param name="commandText">带拼接的sql</param>
+        /// <param name="tableName">表名</param>
+        protected override void AppendTable(StringBuilder commandText, string tableName)
+        {
+            commandText.AppendFormat("\"{0}\"", tableName);
+        }
 
         /// <summary>
         /// 创建生成MySql的命令生成树的工厂
         /// </summary>
-        public PostgreSqlCommandTreeFactory()
+        public PostgreSqlCommandFactory()
             : base('@') { }
         /// <summary>
         /// 获取基础Column节点

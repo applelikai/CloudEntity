@@ -15,8 +15,7 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// 查询数据源
-    /// Apple_Li 李凯 15150598493
-    /// 最后修改时间：2023/02/15 22:27
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     internal class DbQuery<TEntity> : DbEntityBase<TEntity>, IDbQuery<TEntity>
@@ -46,7 +45,7 @@ namespace CloudEntity.Internal.Data.Entity
             //获取columnMapper
             IColumnMapper columnMapper = tableMapper.GetColumnMapper(memberExpression.Member.Name);
             //获取sql列节点生成器
-            return base.CommandTreeFactory.GetColumnBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName);
+            return base.CommandFactory.GetColumnBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName);
         }
         /// <summary>
         /// 获取sql表达式节点
@@ -100,7 +99,7 @@ namespace CloudEntity.Internal.Data.Entity
             // 获取columnMapper
             IColumnMapper columnMapper = tableMapper.GetColumnMapper(memberExpression.Member.Name);
             // 获取查询条件表达式节点
-            return base.CommandTreeFactory.GetWhereChildBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, rightSqlExpression);
+            return base.CommandFactory.GetWhereChildBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, rightSqlExpression);
         }
         /// <summary>
         /// 解析关联表达式获取sql表达式节点迭代器
@@ -215,12 +214,12 @@ namespace CloudEntity.Internal.Data.Entity
         /// 初始化
         /// </summary>
         /// <param name="mapperContainer">Mapper容器</param>
-        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
+        /// <param name="commandFactory">SQL命令工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
         /// <param name="dbFactory">创建数据操作对象的工厂</param>
         /// <param name="predicateParserFactory">创建表达式解析器的工厂</param>
-        public DbQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper, IDbFactory dbFactory, IPredicateParserFactory predicateParserFactory)
-            : base(mapperContainer, commandTreeFactory, dbHelper)
+        public DbQuery(IMapperContainer mapperContainer, ICommandFactory commandFactory, IDbHelper dbHelper, IDbFactory dbFactory, IPredicateParserFactory predicateParserFactory)
+            : base(mapperContainer, commandFactory, dbHelper)
         {
             // 赋值
             _predicateParserFactory = predicateParserFactory;
@@ -233,7 +232,7 @@ namespace CloudEntity.Internal.Data.Entity
         public string ToSqlString()
         {
             // 获取查询命令生成树
-            ICommandTree commandTree = base.CommandTreeFactory.GetQueryTree(base.NodeBuilders);
+            ICommandTree commandTree = base.CommandFactory.GetQueryTree(base.NodeBuilders);
             // 获取sql命令
             return commandTree.Compile();
         }

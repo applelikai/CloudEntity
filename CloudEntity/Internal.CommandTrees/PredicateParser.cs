@@ -1,22 +1,20 @@
 ﻿using CloudEntity.CommandTrees;
 using CloudEntity.Data;
 using CloudEntity.Mapping;
-using System.Collections.Generic;
-using System.Data;
 using System.Linq.Expressions;
 
 namespace CloudEntity.Internal.CommandTrees
 {
     /// <summary>
     /// 查询条件Lambda表达式解析类
-    /// 李凯 Apple_Li 15150598493
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public abstract class PredicateParser
     {
         /// <summary>
-        /// 创建Sql命令生成树的工厂
+        /// Sql命令工厂
         /// </summary>
-        private ICommandTreeFactory _commandTreeFactory;
+        private ICommandFactory _commandFactory;
         /// <summary>
         /// Mapper容器
         /// </summary>
@@ -31,7 +29,7 @@ namespace CloudEntity.Internal.CommandTrees
         protected ISqlBuilder GetParameterBuilder(string parameterName)
         {
             //获取sql参数表达式
-            return _commandTreeFactory.GetParameterBuilder(parameterName);
+            return _commandFactory.GetParameterBuilder(parameterName);
         }
         /// <summary>
         /// 获取基本类型的sql列节点
@@ -48,7 +46,7 @@ namespace CloudEntity.Internal.CommandTrees
                 // 获取成员名称为列名
                 string columnName = memberExpression.Member.Name;
                 // 获取sql列节点生成器
-                return _commandTreeFactory.GetColumnBuilder(tableAlias, columnName);
+                return _commandFactory.GetColumnBuilder(tableAlias, columnName);
             }
             //若不为空,则获取针对表的sql表达式
             // 获取当前实体类型的Table元数据解析器
@@ -56,7 +54,7 @@ namespace CloudEntity.Internal.CommandTrees
             // 获取columnMapper
             IColumnMapper columnMapper = tableMapper.GetColumnMapper(memberExpression.Member.Name);
             // 获取sql列节点生成器
-            return _commandTreeFactory.GetColumnBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName);
+            return _commandFactory.GetColumnBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName);
         }
         /// <summary>
         /// 解析表达式 获取基本类型的sql表达式节点 或 (参数名和参数值)
@@ -104,7 +102,7 @@ namespace CloudEntity.Internal.CommandTrees
                 // 获取成员名称为列名
                 string columnName = memberExpression.Member.Name;
                 // 获取Where节点的子sql表达式节点
-                return _commandTreeFactory.GetWhereChildBuilder(tableAlias, columnName, rightSqlExpression);
+                return _commandFactory.GetWhereChildBuilder(tableAlias, columnName, rightSqlExpression);
             }
             //若不为空,则获取针对实体类对应的表的sql表达式
             // 获取当前实体类型的Table元数据解析器
@@ -112,21 +110,21 @@ namespace CloudEntity.Internal.CommandTrees
             // 获取columnMapper
             IColumnMapper columnMapper = tableMapper.GetColumnMapper(memberExpression.Member.Name);
             // 获取Where节点的子sql表达式节点
-            return _commandTreeFactory.GetWhereChildBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, rightSqlExpression);
+            return _commandFactory.GetWhereChildBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, rightSqlExpression);
         }
         #endregion
 
         /// <summary>
         /// 创建Lambda表达式解析对象
         /// </summary>
-        /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
+        /// <param name="commandFactory">Sql命令工厂</param>
         /// <param name="mapperContainer">Mapper对象容器</param>
-        public PredicateParser(ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
+        public PredicateParser(ICommandFactory commandFactory, IMapperContainer mapperContainer)
         {
             //非空检查
-            Check.ArgumentNull(commandTreeFactory, nameof(commandTreeFactory));
+            Check.ArgumentNull(commandFactory, nameof(commandFactory));
             //赋值
-            _commandTreeFactory = commandTreeFactory;
+            _commandFactory = commandFactory;
             _mapperContainer = mapperContainer;
         }
         /// <summary>

@@ -3,11 +3,10 @@
 namespace CloudEntity.CommandTrees.Commom.OracleClient
 {
     /// <summary>
-    /// 创建CommandTree用于生成查询Oracle的sql
-    /// 李凯 Apple_Li 15150598493
-    /// 最后修改日期：2023/02/05
+    /// Oracle命令工厂类
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
-    public class OracleCommandTreeFactory : CommandTreeFactory
+    public class OracleCommandFactory : CommandFactory
     {
         /// <summary>
         /// 创建读取节点信息的Helper
@@ -32,7 +31,7 @@ namespace CloudEntity.CommandTrees.Commom.OracleClient
         /// <summary>
         /// 创建针对Oracle的sql驱动
         /// </summary>
-        public OracleCommandTreeFactory()
+        public OracleCommandFactory()
             : base(':')
         { }
         /// <summary>

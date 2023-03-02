@@ -2,17 +2,13 @@
 using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
 using CloudEntity.Mapping;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
 using System.Linq.Expressions;
 
 namespace CloudEntity.Internal.CommandTrees
 {
     /// <summary>
     /// 比较类型的Lambda表达式解析类
-    /// 李凯 Apple_Li 15150598493
-    /// 最后修改时间：2023/02/10 23:17
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     internal class CompareExpressionParser : PredicateParser
     {
@@ -82,10 +78,10 @@ namespace CloudEntity.Internal.CommandTrees
         /// <summary>
         /// 创建比较类型表达式解析对象
         /// </summary>
-        /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
+        /// <param name="commandFactory">Sql命令工厂</param>
         /// <param name="mapperContainer">Mapper对象容器</param>
-        public CompareExpressionParser(ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
-            : base(commandTreeFactory, mapperContainer) { }
+        public CompareExpressionParser(ICommandFactory commandFactory, IMapperContainer mapperContainer)
+            : base(commandFactory, mapperContainer) { }
         /// <summary>
         /// 解析查询条件表达式, 生成sql条件表达式节点以及设置sql参数
         /// </summary>

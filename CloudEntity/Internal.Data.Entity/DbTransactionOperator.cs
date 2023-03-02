@@ -8,7 +8,7 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// 带事务执行的实体数据操作类
-    /// 李凯 Apple_Li 15150598493
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     internal class DbTransactionOperator<TEntity> : DbOperator<TEntity>
@@ -35,11 +35,11 @@ namespace CloudEntity.Internal.Data.Entity
         /// </summary>
         /// <param name="factory">数据源创建工厂</param>
         /// <param name="dbHelper">数据库操作对象</param>
-        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
+        /// <param name="commandFactory">SQL命令工厂</param>
         /// <param name="mapperContainer">mapper容器</param>
         /// <param name="transaction">事务</param>
-        public DbTransactionOperator(IDbFactory factory, IDbHelper dbHelper, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer, IDbTransaction transaction)
-            : base(factory, dbHelper, commandTreeFactory, mapperContainer)
+        public DbTransactionOperator(IDbFactory factory, IDbHelper dbHelper, ICommandFactory commandFactory, IMapperContainer mapperContainer, IDbTransaction transaction)
+            : base(factory, dbHelper, commandFactory, mapperContainer)
         {
             this.transaction = transaction;
         }

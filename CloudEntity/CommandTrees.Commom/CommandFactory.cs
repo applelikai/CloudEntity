@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 
 namespace CloudEntity.CommandTrees.Commom
 {
     /// <summary>
-    /// 创建CommandTree的工厂
-    /// Apple_Li 李凯 15150598493
-    /// 最后修改日期：2023/02/05
+    /// 命令工厂基类
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
-    public abstract class CommandTreeFactory : ICommandTreeFactory
+    public abstract class CommandFactory : ICommandFactory
     {
         /// <summary>
         /// 获取列节点信息的Helper
@@ -31,7 +31,7 @@ namespace CloudEntity.CommandTrees.Commom
         /// 创建sql驱动器
         /// </summary>
         /// <param name="marker">sql参数标识符</param>
-        protected CommandTreeFactory(char marker)
+        protected CommandFactory(char marker)
         {
             this.ParameterMarker = marker;
         }
@@ -110,6 +110,15 @@ namespace CloudEntity.CommandTrees.Commom
         protected virtual WithAsQueryTree CreateWithAsQueryTree(string innerQuerySql, string tableAlias)
         {
             return new WithAsQueryTree(this.ParameterMarker, innerQuerySql, tableAlias);
+        }
+        /// <summary>
+        /// 拼接TABLE
+        /// </summary>
+        /// <param name="commandText">带拼接的sql</param>
+        /// <param name="tableName">表名</param>
+        protected virtual void AppendTable(StringBuilder commandText, string tableName)
+        {
+            commandText.Append(tableName);
         }
         /// <summary>
         /// 加载查询命令生成树
@@ -432,6 +441,53 @@ namespace CloudEntity.CommandTrees.Commom
             this.LoadQueryTree(withAsQueryTree, queryChildBuilders);
             //返回with as查询命令生成树
             return withAsQueryTree;
+        }
+        #endregion
+        #region 获取SQL命令
+        /// <summary>
+        /// 获取删除表的SQL命令
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">完整表名</param>
+        /// <returns>删除表的SQL命令</returns>
+        public string GetDropTableCommandText(string schemaName, string tableName)
+        {
+            // 创建sql构建字符串
+            StringBuilder commandText = new StringBuilder();
+            // 拼接DROP TABLE 
+            commandText.Append("DROP TABLE ");
+            // 拼接数据库架构名
+            if (!string.IsNullOrEmpty(schemaName))
+                commandText.AppendFormat("{0}.", schemaName);
+            // 拼接TABLE
+            this.AppendTable(commandText, tableName);
+            // 获取最终的SQL
+            return commandText.ToString();
+        }
+        /// <summary>
+        /// 获取重命名Table的SQL命令
+        /// </summary>
+        /// <param name="schemaName">数据库架构名（或用户名 或模式）</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="oldTableName">原来的Table名</param>
+        /// <returns>重命名Table的SQL命令</returns>
+        public string GetRenameTableCommandText(string schemaName, string tableName, string oldTableName)
+        {
+            // 创建sql构建字符串
+            StringBuilder commandText = new StringBuilder();
+            // 拼接ALTER TABLE
+            commandText.Append("ALTER TABLE ");
+            // 拼接数据库架构名
+            if (!string.IsNullOrEmpty(schemaName))
+                commandText.AppendFormat("{0}.", schemaName);
+            // 拼接TABLE
+            this.AppendTable(commandText, oldTableName);
+            // 拼接RENAME TO
+            commandText.Append(" RENAME TO ");
+            // 拼接TABLE
+            this.AppendTable(commandText, tableName);
+            // 获取最终的SQL
+            return commandText.ToString();
         }
         #endregion
     }

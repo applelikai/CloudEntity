@@ -13,8 +13,7 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// 视图查询数据源
-    /// Apple_Li 李凯 15150598493
-    /// 最后修改时间：2023/02/15 23:11
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     /// <typeparam name="TModel">对象类型</typeparam>
     internal class DbAsView<TModel> : DbSortBase, IDbAsView<TModel>
@@ -77,19 +76,19 @@ namespace CloudEntity.Internal.Data.Entity
             //获取列名
             string columnName = memberExpression.Member.Name;
             //获取不使用别名的OrderBy节点的子表达式(排序时，禁止使用别名)
-            return base.CommandTreeFactory.GetOrderByChildBuilder(_tableAlias, columnName, isDesc);
+            return base.CommandFactory.GetOrderByChildBuilder(_tableAlias, columnName, isDesc);
         }
 
         /// <summary>
         /// 创建视图查询数据源
         /// </summary>
         /// <param name="dbFactory">查询数据源创建工厂</param>
-        /// <param name="commandTreeFactory">命令生成树工厂</param>
+        /// <param name="commandFactory">SQL命令工厂</param>
         /// <param name="dbHelper">操作数据库的对象</param>
         /// <param name="predicateParserFactory">创建表达式解析器的工厂</param>
         /// <param name="innerQuerySql">查询sql</param>
-        public DbAsView(IDbFactory dbFactory, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper, IPredicateParserFactory predicateParserFactory, string innerQuerySql)
-            : base(commandTreeFactory, dbHelper)
+        public DbAsView(IDbFactory dbFactory, ICommandFactory commandFactory, IDbHelper dbHelper, IPredicateParserFactory predicateParserFactory, string innerQuerySql)
+            : base(commandFactory, dbHelper)
         {
             //非空检查
             Check.ArgumentNull(dbFactory, nameof(dbFactory));
@@ -132,7 +131,7 @@ namespace CloudEntity.Internal.Data.Entity
             // 获取指定的对象成员名称为视图查询映射列名
             string columnName = selector.Body.GetMemberExpression().Member.Name;
             // 获取sql查询条件表达式节点
-            INodeBuilder nodeBuilder = base.CommandTreeFactory.GetWhereChildBuilder(tableAlias, columnName, sqlPredicate);
+            INodeBuilder nodeBuilder = base.CommandFactory.GetWhereChildBuilder(tableAlias, columnName, sqlPredicate);
             // 添加sql查询条件表达式节点
             base.AddNodeBuilder(nodeBuilder);
             // 获取当前视图查询数据源
@@ -153,7 +152,7 @@ namespace CloudEntity.Internal.Data.Entity
             // 获取指定的对象成员名称为视图查询映射列名
             string columnName = selector.Body.GetMemberExpression().Member.Name;
             // 获取sql查询条件表达式节点
-            INodeBuilder nodeBuilder = base.CommandTreeFactory.GetWhereChildBuilder(tableAlias, columnName, sqlPredicate);
+            INodeBuilder nodeBuilder = base.CommandFactory.GetWhereChildBuilder(tableAlias, columnName, sqlPredicate);
             // 添加sql查询条件表达式节点
             base.AddNodeBuilder(nodeBuilder);
             // 添加sql参数数组
@@ -187,7 +186,7 @@ namespace CloudEntity.Internal.Data.Entity
             // 获取右边的sql表达式
             string rightSqlExpression = string.Format(sqlFormat, parameterNames);
             // 获取查询条件表达式节点
-            INodeBuilder nodeBuilder = base.CommandTreeFactory.GetWhereChildBuilder(tableAlias, columnName, rightSqlExpression);
+            INodeBuilder nodeBuilder = base.CommandFactory.GetWhereChildBuilder(tableAlias, columnName, rightSqlExpression);
 
             // 添加获取查询条件表达式节点
             base.AddNodeBuilder(nodeBuilder);
@@ -242,7 +241,7 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TModel> GetEnumerator()
         {
             // 创建CommandTree
-            ICommandTree queryTree = base.CommandTreeFactory.GetWithAsQueryTree(this.InnerQuerySql, _tableAlias, this.NodeBuilders);
+            ICommandTree queryTree = base.CommandFactory.GetWithAsQueryTree(this.InnerQuerySql, _tableAlias, this.NodeBuilders);
             // 执行查询
             foreach (TModel model in base.DbHelper.GetResults(this.CreateModel, queryTree.Compile(), parameters: this.Parameters.ToArray()))
                 yield return model;

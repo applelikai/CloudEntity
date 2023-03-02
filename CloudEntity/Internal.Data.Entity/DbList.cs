@@ -13,7 +13,7 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// 数据列表
-    /// 李凯 Apple_Li
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     internal class DbList<TEntity> : DbOperator<TEntity>, IDbList<TEntity>
@@ -44,7 +44,7 @@ namespace CloudEntity.Internal.Data.Entity
                 //非空检查
                 Check.ArgumentNull(id, nameof(id));
                 //获取查询命令生成树
-                ICommandTree queryTree = base.CommandTreeFactory.GetQueryTree(this.GetQueryByIdChildBuilders());
+                ICommandTree queryTree = base.CommandFactory.GetQueryTree(this.GetQueryByIdChildBuilders());
                 //获取Sql参数数组
                 IDbDataParameter[] parameters = { base.DbHelper.CreateParameter(base.TableMapper.KeyMapper.Property.Name, id) };
                 //执行查询
@@ -78,14 +78,14 @@ namespace CloudEntity.Internal.Data.Entity
             foreach (IColumnMapper columnMapper in base.TableMapper.GetColumnMappers())
             {
                 // 依次获取列节点
-                yield return base.CommandTreeFactory.GetColumnBuilder(tableAlias, columnMapper.ColumnName, columnMapper.ColumnAlias);
+                yield return base.CommandFactory.GetColumnBuilder(tableAlias, columnMapper.ColumnName, columnMapper.ColumnAlias);
             }
             // 获取表名
             string tableName = base.TableMapper.Header.TableName;
             // 获取数据库架构名
             string schemaName = base.TableMapper.Header.SchemaName ?? base.DbHelper.DefaultSchemaName;
             // 获取From节点的子Table表达式节点
-            yield return base.CommandTreeFactory.GetTableBuilder(tableName, tableAlias, schemaName);
+            yield return base.CommandFactory.GetTableBuilder(tableName, tableAlias, schemaName);
         }
         /// <summary>
         /// 获取根据ID查询单条记录命令生成树的子节点
@@ -98,7 +98,7 @@ namespace CloudEntity.Internal.Data.Entity
                 yield return nodeBuilder;
             //获取Where节点的子节点集合
             IColumnMapper keyColumnMapper = base.TableMapper.KeyMapper;
-            yield return base.CommandTreeFactory.GetEqualsBuilder(this.TableMapper.Header.TableAlias, keyColumnMapper.ColumnName, keyColumnMapper.Property.Name);
+            yield return base.CommandFactory.GetEqualsBuilder(this.TableMapper.Header.TableAlias, keyColumnMapper.ColumnName, keyColumnMapper.Property.Name);
         }
         /// <summary>
         /// 获取根据ID统计单条记录是否存在命令生成树的子节点
@@ -116,10 +116,10 @@ namespace CloudEntity.Internal.Data.Entity
             string schemaName = base.TableMapper.Header.SchemaName ?? base.DbHelper.DefaultSchemaName;
             //获取From节点的子Table表达式节点
             ITableHeader tableHeader = base.TableMapper.Header;
-            yield return base.CommandTreeFactory.GetTableBuilder(tableName, tableAlias, schemaName);
+            yield return base.CommandFactory.GetTableBuilder(tableName, tableAlias, schemaName);
             //获取Where节点的子节点集合
             IColumnMapper keyColumnMapper = base.TableMapper.KeyMapper;
-            yield return base.CommandTreeFactory.GetEqualsBuilder(tableAlias, keyColumnMapper.ColumnName, keyColumnMapper.Property.Name);
+            yield return base.CommandFactory.GetEqualsBuilder(tableAlias, keyColumnMapper.ColumnName, keyColumnMapper.Property.Name);
         }
         /// <summary>
         /// 创建实体对象并读取DataReader数据填充对象属性
@@ -166,10 +166,10 @@ namespace CloudEntity.Internal.Data.Entity
         /// </summary>
         /// <param name="factory">创建数据源的工厂</param>
         /// <param name="dbHelper">DbHelper</param>
-        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
+        /// <param name="commandFactory">SQL命令工厂</param>
         /// <param name="mapperContainer">mapper容器</param>
-        public DbList(IDbFactory factory, IDbHelper dbHelper, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
-            : base(factory, dbHelper, commandTreeFactory, mapperContainer)
+        public DbList(IDbFactory factory, IDbHelper dbHelper, ICommandFactory commandFactory, IMapperContainer mapperContainer)
+            : base(factory, dbHelper, commandFactory, mapperContainer)
         {
             _modifyLocker = new object();
             _nodebuilders = this.GetQueryNodeBuilders().ToList();
@@ -185,7 +185,7 @@ namespace CloudEntity.Internal.Data.Entity
             //非空检查
             Check.ArgumentNull(id, nameof(id));
             //获取CommandTree
-            ICommandTree queryTree = this.CommandTreeFactory.GetQueryTree(this.GetQueryCountByIdChildBuilders());
+            ICommandTree queryTree = this.CommandFactory.GetQueryTree(this.GetQueryCountByIdChildBuilders());
             //获取Sql参数数组
             IDbDataParameter[] parameters = { base.DbHelper.CreateParameter(base.TableMapper.KeyMapper.Property.Name, id) };
             //执行查询获取第一行第一列的数据
@@ -242,7 +242,7 @@ namespace CloudEntity.Internal.Data.Entity
         public string ToSqlString()
         {
             // 获取查询命令生成树
-            ICommandTree queryTree = base.CommandTreeFactory.GetQueryTree(this.NodeBuilders);
+            ICommandTree queryTree = base.CommandFactory.GetQueryTree(this.NodeBuilders);
             // 获取生成的查询sql字符串
             return queryTree.Compile();
         }

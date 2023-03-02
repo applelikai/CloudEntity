@@ -10,8 +10,7 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// 数据查询基础类
-    /// Apple_Li 李凯 15150598493
-    /// 最后修改：2023/02/09 22:58
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     internal class DbQueryBase : IDbBase, IParameterSetter
     {
@@ -25,9 +24,9 @@ namespace CloudEntity.Internal.Data.Entity
         private IList<IDbDataParameter> _sqlParameters;
 
         /// <summary>
-        /// 创建CommandTree的工厂
+        /// SQL命令工厂
         /// </summary>
-        protected ICommandTreeFactory CommandTreeFactory { get; private set; }
+        protected ICommandFactory CommandFactory { get; private set; }
         /// <summary>
         /// 操作数据库的DbHelper
         /// </summary>
@@ -69,15 +68,15 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 创建操作数据库的基础对象
         /// </summary>
-        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
+        /// <param name="commandFactory">SQL命令工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbQueryBase(ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper)
+        public DbQueryBase(ICommandFactory commandFactory, IDbHelper dbHelper)
         {
             // 初始化
             _nodebuilders = new List<INodeBuilder>();
             _sqlParameters = new List<IDbDataParameter>();
             // 赋值
-            this.CommandTreeFactory = commandTreeFactory;
+            this.CommandFactory = commandFactory;
             this.DbHelper = dbHelper;
         }
         /// <summary>

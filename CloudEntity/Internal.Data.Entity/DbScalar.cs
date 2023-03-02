@@ -15,10 +15,10 @@ namespace CloudEntity.Internal.Data.Entity
         /// 创建统计查询类
         /// </summary>
         /// <param name="mapperContainer">Mapper容器</param>
-        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
+        /// <param name="commandFactory">SQL命令工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbScalar(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper)
-            : base(commandTreeFactory, dbHelper){ }
+        public DbScalar(ICommandFactory commandFactory, IDbHelper dbHelper)
+            : base(commandFactory, dbHelper){ }
         /// <summary>
         /// 执行查询获取第一行第一列的值
         /// </summary>
@@ -26,7 +26,7 @@ namespace CloudEntity.Internal.Data.Entity
         public object Execute()
         {
             //创建CommandTree
-            ICommandTree queryTree = base.CommandTreeFactory.GetQueryTree(base.NodeBuilders);
+            ICommandTree queryTree = base.CommandFactory.GetQueryTree(base.NodeBuilders);
             //执行查询获取第一行，第一列的值
             return base.DbHelper.GetScalar(queryTree.Compile(), parameters: base.Parameters.ToArray());
         }

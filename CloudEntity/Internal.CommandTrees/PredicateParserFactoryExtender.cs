@@ -7,6 +7,7 @@ namespace CloudEntity.Internal.CommandTrees
 {
     /// <summary>
     /// 表达式解析对象工厂扩展类
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public static class PredicateParserFactoryExtender
     {

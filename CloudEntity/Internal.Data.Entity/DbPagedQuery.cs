@@ -31,7 +31,7 @@ namespace CloudEntity.Internal.Data.Entity
             get
             {
                 //获取Count查询命令生成树
-                ICommandTree queryTree = this.CommandTreeFactory.GetQueryTree(this.GetCountNodeBuilders());
+                ICommandTree queryTree = this.CommandFactory.GetQueryTree(this.GetCountNodeBuilders());
                 //执行Count查询获取元素总数量
                 return TypeHelper.ConvertTo<int>(base.DbHelper.GetScalar(queryTree.Compile(), parameters: base.Parameters.ToArray()));
             }
@@ -81,10 +81,10 @@ namespace CloudEntity.Internal.Data.Entity
         /// 创建分页查询数据源
         /// </summary>
         /// <param name="mapperContainer">Mapper容器</param>
-        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
+        /// <param name="commandFactory">SQL命令工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbPagedQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper)
-            : base(mapperContainer, commandTreeFactory, dbHelper)
+        public DbPagedQuery(IMapperContainer mapperContainer, ICommandFactory commandFactory, IDbHelper dbHelper)
+            : base(mapperContainer, commandFactory, dbHelper)
         {
             _entityAccessor = ObjectAccessor.GetAccessor(typeof(TEntity));
         }
@@ -95,7 +95,7 @@ namespace CloudEntity.Internal.Data.Entity
         public string ToSqlString()
         {
             //获取查询命令
-            ICommandTree queryTree = base.CommandTreeFactory.GetPagingQueryTree(base.NodeBuilders);
+            ICommandTree queryTree = base.CommandFactory.GetPagingQueryTree(base.NodeBuilders);
             return queryTree.Compile();
         }
         /// <summary>
@@ -122,7 +122,7 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TEntity> GetEnumerator()
         {
             //获取查询命令
-            ICommandTree queryTree = base.CommandTreeFactory.GetPagingQueryTree(base.NodeBuilders);
+            ICommandTree queryTree = base.CommandFactory.GetPagingQueryTree(base.NodeBuilders);
             string commandText = this.ToSqlString();
             //获取sql参数集合
             IList<IDbDataParameter> parameters = base.Parameters.ToList();

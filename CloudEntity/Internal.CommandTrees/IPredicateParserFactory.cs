@@ -4,8 +4,7 @@ namespace CloudEntity.Internal.CommandTrees
 {
     /// <summary>
     /// 创建表达式解析对象的工厂
-    /// 李凯 Apple_Li 15150598493
-    /// 最后修改时间：2012/02/10 23:22
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public interface IPredicateParserFactory
     {

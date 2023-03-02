@@ -35,9 +35,9 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         private ColumnInitializer _columnInitializer;
         /// <summary>
-        /// 创建Sql命令生成树的工厂
+        /// Sql命令工厂
         /// </summary>
-        private ICommandTreeFactory _commandTreeFactory;
+        private ICommandFactory _commandFactory;
         /// <summary>
         /// Mapper容器
         /// </summary>
@@ -125,7 +125,7 @@ namespace CloudEntity.Core.Data.Entity
             //获取columnMapper
             IColumnMapper columnMapper = tableMapper.GetColumnMapper(memberExpression.Member.Name);
             //获取Sql函数表达式节点
-            yield return _commandTreeFactory.GetFunctionNodeBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, functionName);
+            yield return _commandFactory.GetFunctionNodeBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, functionName);
             //获取其他的sql表达式节点
             foreach (INodeBuilder nodeBuilder in nodeBuilders)
             {
@@ -227,13 +227,13 @@ namespace CloudEntity.Core.Data.Entity
             _dbListsLocker = new object();
             //赋值
             _dbHelper = initializer.CreateDbHelper(connectionString);
-            _commandTreeFactory = initializer.CreateCommandTreeFactory();
+            _commandFactory = initializer.CreateCommandFactory();
             _mapperContainer = initializer.CreateMapperContainer();
-            _tableInitializer = initializer.CreateTableInitializer();  //获取Table初始化器
-            _columnInitializer = initializer.CreateColumnInitializer();//获取列初始化器
+            _tableInitializer = initializer.CreateTableInitializer(_dbHelper, _commandFactory);  //获取Table初始化器
+            _columnInitializer = initializer.CreateColumnInitializer(_dbHelper, _commandFactory);//获取列初始化器
             _dbLists = new Dictionary<Type, object>();                 //初始化DbList字典
-            _predicateParserFactory = new PredicateParserFactory(_commandTreeFactory);
-            _mapperPredicateParserFactory = new PredicateParserFactory(_commandTreeFactory, _mapperContainer);
+            _predicateParserFactory = new PredicateParserFactory(_commandFactory);
+            _mapperPredicateParserFactory = new PredicateParserFactory(_commandFactory, _mapperContainer);
         }
 
         /// <summary>
@@ -248,15 +248,15 @@ namespace CloudEntity.Core.Data.Entity
             //获取TableMapper
             ITableMapper tableMapper = _mapperContainer.GetTableMapper(entityType);
             //若Table不存在,则创建Table
-            if (!_tableInitializer.IsExist(DbHelper, tableMapper.Header))
-                _tableInitializer.CreateTable(DbHelper, _commandTreeFactory, tableMapper);
+            if (!_tableInitializer.IsExist(tableMapper.Header))
+                _tableInitializer.CreateTable(tableMapper);
             //若Table存在，则检查并添加EntityMapper中某些属性未注册到目标Table的列
             else
             {
                 //若列初始化器不为空
                 if (_columnInitializer != null)
                     //检查并添加EntityMapper中某些属性未注册到目标Table的列
-                    _columnInitializer.AlterTableAddColumns(this.DbHelper, _commandTreeFactory, tableMapper);
+                    _columnInitializer.AlterTableAddColumns(tableMapper);
             }
         }
         /// <summary>
@@ -272,8 +272,8 @@ namespace CloudEntity.Core.Data.Entity
             //获取TableMapper
             ITableMapper tableMapper = _mapperContainer.GetTableMapper(entityType);
             //若Table未生成,则从旧表修改
-            if (!_tableInitializer.IsExist(this.DbHelper, tableMapper.Header))
-                _tableInitializer.RenameTable(this.DbHelper, tableMapper.Header, oldTableName);
+            if (!_tableInitializer.IsExist(tableMapper.Header))
+                _tableInitializer.RenameTable(tableMapper.Header, oldTableName);
         }
         /// <summary>
         /// 删除实体类Mapping的表
@@ -287,8 +287,8 @@ namespace CloudEntity.Core.Data.Entity
             //获取TableMapper
             ITableMapper tableMapper = _mapperContainer.GetTableMapper(entityType);
             //若Table存在,则删除Table
-            if (_tableInitializer.IsExist(this.DbHelper, tableMapper.Header))
-                _tableInitializer.DropTable(this.DbHelper, tableMapper.Header);
+            if (_tableInitializer.IsExist(tableMapper.Header))
+                _tableInitializer.DropTable(tableMapper.Header);
         }
         /// <summary>
         /// 创建事故执行器
@@ -296,7 +296,7 @@ namespace CloudEntity.Core.Data.Entity
         /// <returns>事故执行器</returns>
         public IDbExecutor CreateExecutor()
         {
-            return new DbExecutor(this, this.DbHelper, _commandTreeFactory, _mapperContainer);
+            return new DbExecutor(this, this.DbHelper, _commandFactory, _mapperContainer);
         }
         /// <summary>
         /// 创建自动连接Table的增删改集合
@@ -316,7 +316,7 @@ namespace CloudEntity.Core.Data.Entity
                 if (!_dbLists.ContainsKey(typeof(TEntity)))
                 {
                     //注册DbList
-                    IDbList<TEntity> entities = new DbList<TEntity>(this, this.DbHelper, _commandTreeFactory, _mapperContainer);
+                    IDbList<TEntity> entities = new DbList<TEntity>(this, this.DbHelper, _commandFactory, _mapperContainer);
                     _dbLists.Add(typeof(TEntity), entities);
                 }
                 //重新从字典中获取当前类型的集合
@@ -333,7 +333,7 @@ namespace CloudEntity.Core.Data.Entity
         public IDbScalar CreateScalar(IDbBase dbBase, string functionName)
         {
             // 创建DbScaler对象
-            DbScalar dbScalar = new DbScalar(_mapperContainer, _commandTreeFactory, this.DbHelper);
+            DbScalar dbScalar = new DbScalar(_commandFactory, this.DbHelper);
             // 加载sql表达式节点列表
             foreach (INodeBuilder nodeBuilder in this.GetFunctionNodeBuilders(dbBase.NodeBuilders, functionName))
                 dbScalar.AddNodeBuilder(nodeBuilder);
@@ -353,7 +353,7 @@ namespace CloudEntity.Core.Data.Entity
         public IDbScalar CreateScalar(IDbBase dbBase, string functionName, LambdaExpression lambdaExpression)
         {
             // 创建DbScaler对象
-            DbScalar dbScalar = new DbScalar(_mapperContainer, _commandTreeFactory, this.DbHelper);
+            DbScalar dbScalar = new DbScalar(_commandFactory, this.DbHelper);
             // 加载sql表达式节点列表
             foreach (INodeBuilder nodeBuilder in this.GetFunctionNodeBuilders(dbBase.NodeBuilders, functionName, lambdaExpression))
                 dbScalar.AddNodeBuilder(nodeBuilder);
@@ -388,7 +388,7 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             // 创建查询数据源
-            DbQuery<TEntity> cloned = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
+            DbQuery<TEntity> cloned = new DbQuery<TEntity>(_mapperContainer, _commandFactory, _dbHelper, this, _mapperPredicateParserFactory);
             // 复制sql表达式节点列表
             cloned.AddNodeBuilders(source.NodeBuilders);
             // 复制sql参数列表
@@ -406,7 +406,7 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             // 创建查询数据源
-            DbQuery<TEntity> cloned = new DbQuery<TEntity>(_mapperContainer, _commandTreeFactory, _dbHelper, this, _mapperPredicateParserFactory);
+            DbQuery<TEntity> cloned = new DbQuery<TEntity>(_mapperContainer, _commandFactory, _dbHelper, this, _mapperPredicateParserFactory);
             // 复制来源数据源信息到新的实体查询数据源
             this.Clone(source, cloned);
             // 获取查询数据源
@@ -423,7 +423,7 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             // 创建新的查询数据源
-            DbTopQuery<TEntity> cloned = new DbTopQuery<TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper, topCount);
+            DbTopQuery<TEntity> cloned = new DbTopQuery<TEntity>(_mapperContainer, _commandFactory, this.DbHelper, topCount);
             // 复制来源数据源信息到TOP实体查询数据源
             this.Clone(source, cloned);
             // 最后获取复制的数据源
@@ -443,7 +443,7 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             // 构建分页查询数据源
-            DbPagedQuery<TEntity> cloned = new DbPagedQuery<TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper)
+            DbPagedQuery<TEntity> cloned = new DbPagedQuery<TEntity>(_mapperContainer, _commandFactory, this.DbHelper)
             {
                 PageIndex = pageIndex,
                 PageSize = pageSize
@@ -467,7 +467,7 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             // 构建分页查询数据源
-            DbPagedQuery<TEntity> cloned = new DbPagedQuery<TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper)
+            DbPagedQuery<TEntity> cloned = new DbPagedQuery<TEntity>(_mapperContainer, _commandFactory, this.DbHelper)
             {
                 PageIndex = pageIndex,
                 PageSize = pageSize
@@ -493,7 +493,7 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             // 构建选定项查询数据源
-            DbSelectedQuery<TElement, TEntity> cloned = new DbSelectedQuery<TElement, TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper);
+            DbSelectedQuery<TElement, TEntity> cloned = new DbSelectedQuery<TElement, TEntity>(_mapperContainer, _commandFactory, this.DbHelper);
             // 复制来源数据源信息到选定项查询数据源
             this.Clone(source, cloned);
             // 为复制的数据源指定要查询的选定项
@@ -515,7 +515,7 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             // 构建去除重复项查询数据源
-            DbDistinctQuery<TElement, TEntity> cloned = new DbDistinctQuery<TElement, TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper);
+            DbDistinctQuery<TElement, TEntity> cloned = new DbDistinctQuery<TElement, TEntity>(_mapperContainer, _commandFactory, this.DbHelper);
             // 复制来源数据源信息到去除重复项查询数据源
             this.Clone(source, cloned);
             // 为复制的数据源指定要查询的选定项
@@ -538,7 +538,7 @@ namespace CloudEntity.Core.Data.Entity
             where TEntity : class
         {
             // 创建新的查询数据源
-            DbTopSelectedQuery<TElement, TEntity> cloned = new DbTopSelectedQuery<TElement, TEntity>(_mapperContainer, _commandTreeFactory, this.DbHelper, topCount);
+            DbTopSelectedQuery<TElement, TEntity> cloned = new DbTopSelectedQuery<TElement, TEntity>(_mapperContainer, _commandFactory, this.DbHelper, topCount);
             // 复制来源数据源信息到去除重复项查询数据源
             this.Clone(source, cloned);
             // 为复制的数据源指定要查询的选定项
@@ -561,7 +561,7 @@ namespace CloudEntity.Core.Data.Entity
             where TModel : class, new()
         {
             // 创建数据源
-            DbAsView<TModel> source = new DbAsView<TModel>(this, _commandTreeFactory, this.DbHelper, _predicateParserFactory, querySql);
+            DbAsView<TModel> source = new DbAsView<TModel>(this, _commandFactory, this.DbHelper, _predicateParserFactory, querySql);
             // 添加sql参数
             source.AddSqlParameters(parameters);
             // 获取数据源
@@ -577,7 +577,7 @@ namespace CloudEntity.Core.Data.Entity
             where TModel : class, new()
         {
             // 创建新的视图数据源
-            DbAsView<TModel> cloned = new DbAsView<TModel>(this, _commandTreeFactory, this.DbHelper, _predicateParserFactory, source.InnerQuerySql);
+            DbAsView<TModel> cloned = new DbAsView<TModel>(this, _commandFactory, this.DbHelper, _predicateParserFactory, source.InnerQuerySql);
             // 复制sql表达式节点列表
             cloned.AddNodeBuilders(source.NodeBuilders);
             // 复制sql参数列表

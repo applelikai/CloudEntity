@@ -10,8 +10,7 @@ namespace CloudEntity.Internal.CommandTrees
 {
     /// <summary>
     /// 非表达式解析类
-    /// 李凯 Apple_Li 15150598493
-    /// 最后修改时间：2023/01/10 23:20
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     internal class UnaryNotExpressionParser : PredicateParser
     {
@@ -23,11 +22,11 @@ namespace CloudEntity.Internal.CommandTrees
         /// <summary>
         /// 创建非表达式解析对象
         /// </summary>
-        /// <param name="commandTreeFactory">创建Sql命令生成树的工厂</param>
+        /// <param name="commandFactory">Sql命令工厂</param>
         /// <param name="mapperContainer">Mapper对象容器</param>
         /// <param name="factory">创建表达式解析器的工厂</param>
-        public UnaryNotExpressionParser(ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer, IPredicateParserFactory factory)
-            : base(commandTreeFactory, mapperContainer)
+        public UnaryNotExpressionParser(ICommandFactory commandFactory, IMapperContainer mapperContainer, IPredicateParserFactory factory)
+            : base(commandFactory, mapperContainer)
         {
             _factory = factory;
         }

@@ -10,6 +10,7 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// 事务执行器
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     internal class DbExecutor : IDbExecutor
     {
@@ -26,9 +27,9 @@ namespace CloudEntity.Internal.Data.Entity
         /// </summary>
         private IDbHelper _dbHelper;
         /// <summary>
-        /// 创建Sql命令生成树的工厂
+        /// Sql命令工厂
         /// </summary>
-        private ICommandTreeFactory _commandTreeFactory;
+        private ICommandFactory _commandFactory;
         /// <summary>
         /// Mapper容器
         /// </summary>
@@ -53,20 +54,20 @@ namespace CloudEntity.Internal.Data.Entity
         /// 事务执行线程锁
         /// </summary>
         private static object _transactionLocker = new object();
-        
+
         /// <summary>
         /// 创建事务执行器
         /// </summary>
         /// <param name="factory">查询数据源创建工厂</param>
         /// <param name="dbHelper">数据库操作对象</param>
-        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
+        /// <param name="commandFactory">Sql命令工厂</param>
         /// <param name="mapperContainer">mapper容器</param>
-        internal DbExecutor(IDbFactory factory, IDbHelper dbHelper, ICommandTreeFactory commandTreeFactory, IMapperContainer mapperContainer)
+        internal DbExecutor(IDbFactory factory, IDbHelper dbHelper, ICommandFactory commandFactory, IMapperContainer mapperContainer)
         {
             // 赋值
             _factory = factory;
             _dbHelper = dbHelper;
-            _commandTreeFactory = commandTreeFactory;
+            _commandFactory = commandFactory;
             _mapperContainer = mapperContainer;
             // 初始化
             _operators = new Dictionary<Type, dynamic>();
@@ -119,7 +120,7 @@ namespace CloudEntity.Internal.Data.Entity
                 if (!_operators.ContainsKey(entityType))
                 {
                     // 创建操作对象
-                    IDbOperator<TEntity> dbOperator = new DbTransactionOperator<TEntity>(_factory, _dbHelper, _commandTreeFactory, _mapperContainer, _transaction);
+                    IDbOperator<TEntity> dbOperator = new DbTransactionOperator<TEntity>(_factory, _dbHelper, _commandFactory, _mapperContainer, _transaction);
                     // 添加操作对象到字典中
                     _operators.Add(entityType, dbOperator);
                 }

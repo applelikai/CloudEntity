@@ -9,8 +9,7 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// 排序查询数据源基类
-    /// Apple_Li 李凯 15150598493
-    /// 2023/02/17 17:13 最后修改时间：2023/02/18 22:05
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     internal abstract class DbSortBase : DbQueryBase
     {
@@ -74,9 +73,9 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 初始化
         /// </summary>
-        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
+        /// <param name="commandFactory">SQL命令工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
-        public DbSortBase(ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper)
-         : base(commandTreeFactory, dbHelper) { }
+        public DbSortBase(ICommandFactory commandFactory, IDbHelper dbHelper)
+         : base(commandFactory, dbHelper) { }
     }
 }

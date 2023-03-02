@@ -5,7 +5,7 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// 对象访问关联类
-    /// 李凯 Apple_Li 15150598493
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public class AccessorLinker
     {

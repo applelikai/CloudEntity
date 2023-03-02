@@ -10,8 +10,7 @@ namespace CloudEntity.Internal.Data.Entity
 {
     /// <summary>
     /// TOP实体查询数据源类(查询前几条实体的数据)
-    /// Apple_Li 李凯 15150598493
-    /// 2023/02/19 20:04
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     internal class DbTopQuery<TEntity> : DbEntityBase<TEntity>, IDbTopQuery<TEntity>
@@ -26,11 +25,11 @@ namespace CloudEntity.Internal.Data.Entity
         /// 初始化
         /// </summary>
         /// <param name="mapperContainer">Mapper容器</param>
-        /// <param name="commandTreeFactory">创建CommandTree的工厂</param>
+        /// <param name="commandFactory">SQL命令工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
         /// <param name="topCount">查询的前几条的元素数量</param>
-        public DbTopQuery(IMapperContainer mapperContainer, ICommandTreeFactory commandTreeFactory, IDbHelper dbHelper, int topCount)
-         : base(mapperContainer, commandTreeFactory, dbHelper) 
+        public DbTopQuery(IMapperContainer mapperContainer, ICommandFactory commandFactory, IDbHelper dbHelper, int topCount)
+         : base(mapperContainer, commandFactory, dbHelper) 
         {
             this.TopCount = topCount;
         }
@@ -41,7 +40,7 @@ namespace CloudEntity.Internal.Data.Entity
         public string ToSqlString()
         {
             // 获取TOP查询命令生成树
-            ICommandTree commandTree = base.CommandTreeFactory.GetTopQueryTree(base.NodeBuilders, this.TopCount);
+            ICommandTree commandTree = base.CommandFactory.GetTopQueryTree(base.NodeBuilders, this.TopCount);
             // 获取sql命令
             return commandTree.Compile();
         }
