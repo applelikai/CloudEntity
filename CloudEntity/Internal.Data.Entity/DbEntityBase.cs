@@ -262,12 +262,11 @@ namespace CloudEntity.Internal.Data.Entity
             return base.CommandFactory.GetOrderByChildBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, isDesc);
         }
         /// <summary>
-        /// 读取DataReader获取实体对象列表
+        /// 构建读取DataReader，创建填充获取实体对象的匿名函数
         /// </summary>
-        /// <param name="reader">数据流</param>
-        /// <param name="columnNames">查询的列名数组</param>
-        /// <returns>实体对象列表</returns>
-        protected IEnumerable<TEntity> GetEntities(IDataReader reader, string[] columnNames)
+        /// <param name="columnNames">查询列名数组</param>
+        /// <returns>读取DataReader，创建填充获取实体对象的匿名函数</returns>
+        protected Func<IDataReader, TEntity> BuildGetEntityFunc(string[] columnNames)
         {
             // 获取实体类型
             Type entityType = typeof(TEntity);
@@ -277,35 +276,24 @@ namespace CloudEntity.Internal.Data.Entity
             IColumnMapper[] columnMappers = this.GetColumnMappers(entityType, columnNames).ToArray();
             // 获取对象访问关联对象数组
             AccessorLinker[] accessorLinkers = this.PropertyLinkers.Select(l => this.GetAccessorLinker(l, columnNames)).ToArray();
-            // 读取DataReader
-            while (reader.Read())
-            {
-                // 创建实体对象并填值
-                TEntity entity = this.CreateEntity(entityAccessor, reader, columnMappers, accessorLinkers) as TEntity;
-                // 依次获取实体对象
-                yield return entity;
-            }
+            // 获取读取DataReader，创建填充获取实体对象的匿名函数
+            return reader => this.CreateEntity(entityAccessor, reader, columnMappers, accessorLinkers) as TEntity;
         }
         /// <summary>
-        /// 读取DataReader获取映射的模型对象列表
+        /// 构建读取DataReader，创建填充获取TModel对象的匿名函数
         /// </summary>
-        /// <param name="reader">数据流</param>
-        /// <param name="columnNames">查询的列名数组</param>
+        /// <param name="columnNames">查询列名数组</param>
         /// <typeparam name="TModel">映射的模型对象类型</typeparam>
-        /// <returns>映射的模型对象列表</returns>
-        protected IEnumerable<TModel> GetModels<TModel>(IDataReader reader, string[] columnNames)
+        /// <returns>读取DataReader，创建填充获取TModel对象的匿名函数</returns>
+        protected Func<IDataReader, TModel> BuildGetModelFunc<TModel>(string[] columnNames)
             where TModel : class, new()
         {
             // 获取查询的列名对应的所有ColumnMapper对象数组
             IColumnMapper[] columnMappers = this.GetColumnMappers(typeof(TEntity), this.PropertyLinkers, columnNames).ToArray();
             // 获取对象访问器
             ObjectAccessor modelAccessor = ObjectAccessor.GetAccessor(typeof(TModel));
-            // 读取DataReader
-            while (reader.Read())
-            {
-                // 依次获取对象
-                yield return this.CreateModel<TModel>(modelAccessor, reader, columnMappers);
-            }
+            // 获取读取DataReader，创建填充获取TModel对象的匿名函数
+            return reader => this.CreateModel<TModel>(modelAccessor, reader, columnMappers);
         }
 
         /// <summary>

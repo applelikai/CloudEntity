@@ -25,7 +25,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// <returns>建表语句生成树</returns>
         protected override BuildTableTree CreateBuildTableTree(string schemaName, string tableName)
         {
-            return base.CreateBuildTableTree(schemaName, tableName);
+            return new MySqlBuildTableTree(base.ColumnNodeHelper, tableName, schemaName);
         }
         /// <summary>
         /// 创建为Table添加列的语句生成树
@@ -203,7 +203,7 @@ namespace CloudEntity.CommandTrees.Commom.MySqlClient
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
         /// <returns>分页查询命令生成树</returns>
-        public override ICommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders)
+        public override ISelectCommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders)
         {
             //创建MySql分页查询命令生成树
             MySqlPagingQueryTree queryTree = new MySqlPagingQueryTree(base.ParameterMarker);

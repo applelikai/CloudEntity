@@ -131,20 +131,25 @@ namespace CloudEntity.CommandTrees.Commom
             {
                 switch (builder.ParentNodeType)
                 {
+                    // 添加SELECT子节点
                     case SqlType.Select:
-                        queryTree.Select.Append(builder);
+                        queryTree.AppendSelect(builder);
                         break;
+                    // 添加FROM子节点
                     case SqlType.From:
-                        queryTree.From.Append(builder);
+                        queryTree.AppendFrom(builder);
                         break;
+                    // 添加WHERE子节点
                     case SqlType.Where:
-                        queryTree.Where.Append(builder);
+                        queryTree.AppendWhere(builder);
                         break;
+                    // 添加GROUP BY子节点
                     case SqlType.GroupBy:
-                        queryTree.GroupBy.Append(builder);
+                        queryTree.AppendGroupBy(builder);
                         break;
+                    // 添加ORDER BY子节点
                     case SqlType.OrderBy:
-                        queryTree.OrderBy.Append(builder);
+                        queryTree.AppendOrderBy(builder);
                         break;
                 }
             }
@@ -278,23 +283,6 @@ namespace CloudEntity.CommandTrees.Commom
         #endregion
         #region 获取sql命令生成树
         /// <summary>
-        /// 获取建表语句生成树
-        /// </summary>
-        /// <param name="schemaName">数据库架构名</param>
-        /// <param name="tableName">表名</param>
-        /// <param name="columnNodes">列节点迭代器</param>
-        /// <returns>建表语句生成树</returns>
-        public ICommandTree GetBuildTableTree(string schemaName, string tableName, IEnumerable<IColumnNode> columnNodes)
-        {
-            //创建建表语句生成树
-            BuildTableTree buildTableTree = this.CreateBuildTableTree(schemaName, tableName);
-            //为建表语句生成树添加列节点
-            foreach (IColumnNode columnNode in columnNodes)
-                buildTableTree.Add(columnNode);
-            //返回建表语句生成树
-            return buildTableTree;
-        }
-        /// <summary>
         /// 获取为Table添加列的语句生成树
         /// </summary>
         /// <param name="schemaName">数据库架构名</param>
@@ -382,7 +370,7 @@ namespace CloudEntity.CommandTrees.Commom
         /// </summary>
         /// <param name="queryChildBuilders">查询命令生成树的子节点</param>
         /// <returns>sql查询命令生成树</returns>
-        public ICommandTree GetQueryTree(IEnumerable<INodeBuilder> queryChildBuilders)
+        public ISelectCommandTree GetQueryTree(IEnumerable<INodeBuilder> queryChildBuilders)
         {
             //创建查询命令生成树
             QueryTree queryTree = new QueryTree(this.ParameterMarker);
@@ -397,7 +385,7 @@ namespace CloudEntity.CommandTrees.Commom
         /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
         /// <param name="topCount">查询的前几条的元素数量</param>
         /// <returns>TOP查询sql的生成树</returns>
-        public ICommandTree GetTopQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, int topCount)
+        public ISelectCommandTree GetTopQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, int topCount)
         {
             //创建top查询命令生成树
             QueryTree queryTree = this.CreateTopQueryTree(topCount);
@@ -411,7 +399,7 @@ namespace CloudEntity.CommandTrees.Commom
         /// </summary>
         /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
         /// <returns>Distinct查询sql的生成树</returns>
-        public ICommandTree GetDistinctQueryTree(IEnumerable<INodeBuilder> queryChildBuilders)
+        public ISelectCommandTree GetDistinctQueryTree(IEnumerable<INodeBuilder> queryChildBuilders)
         {
             //创建查询命令生成树
             QueryTree queryTree = new DistinctQueryTree(this.ParameterMarker);
@@ -425,7 +413,7 @@ namespace CloudEntity.CommandTrees.Commom
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
         /// <returns>分页查询命令生成树</returns>
-        public abstract ICommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
+        public abstract ISelectCommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
         /// <summary>
         /// 获取With As 查询命令生成树
         /// </summary>
@@ -444,6 +432,23 @@ namespace CloudEntity.CommandTrees.Commom
         }
         #endregion
         #region 获取SQL命令
+        /// <summary>
+        /// 获取建表的SQL语句
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnNodes">列节点列表</param>
+        /// <returns>建表的SQL语句</returns>
+        public string GetCreateTableCommandText(string schemaName, string tableName, IEnumerable<IColumnNode> columnNodes)
+        {
+            // 创建建表语句生成树
+            BuildTableTree buildTableTree = this.CreateBuildTableTree(schemaName, tableName);
+            // 为建表语句生成树添加列节点
+            foreach (IColumnNode columnNode in columnNodes)
+                buildTableTree.Add(columnNode);
+            // 获取最终建表的SQL语句
+            return buildTableTree.Compile();
+        }
         /// <summary>
         /// 获取删除表的SQL命令
         /// </summary>

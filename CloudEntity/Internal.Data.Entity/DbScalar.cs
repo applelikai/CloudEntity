@@ -14,7 +14,6 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 创建统计查询类
         /// </summary>
-        /// <param name="mapperContainer">Mapper容器</param>
         /// <param name="commandFactory">SQL命令工厂</param>
         /// <param name="dbHelper">操作数据库的DbHelper</param>
         public DbScalar(ICommandFactory commandFactory, IDbHelper dbHelper)

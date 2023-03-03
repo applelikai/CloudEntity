@@ -42,14 +42,14 @@ namespace CloudEntity.Core.Data.Entity
         /// <param name="tableMapper">Table元数据解析器</param>
         public int CreateTable(ITableMapper tableMapper)
         {
-            //获取数据库架构名
+            // 获取数据库架构名
             string schemaName = tableMapper.Header.SchemaName ?? this.DbHelper.DefaultSchemaName;
-            //获取ColumnNodes
+            // 获取ColumnNodes
             IEnumerable<IColumnNode> columnNodes = tableMapper.GetColumnMappers().Select(m => m.ToColumnNode());
-            //获取建表语句生成树
-            ICommandTree buildTableTree = this.CommandFactory.GetBuildTableTree(schemaName, tableMapper.Header.TableName, columnNodes);
-            //创建建表语句并执行
-            return this.DbHelper.ExecuteUpdate(buildTableTree.Compile());
+            // 获取建表语句
+            string commandText = this.CommandFactory.GetCreateTableCommandText(schemaName, tableMapper.Header.TableName, columnNodes);
+            // 执行建表
+            return this.DbHelper.ExecuteUpdate(commandText);
         }
         /// <summary>
         /// 删除表

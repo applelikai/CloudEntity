@@ -361,51 +361,6 @@ namespace CloudEntity.Data
                 }
             }
         }
-        /// <summary>
-        /// Execute and get results
-        /// 执行并获取结果
-        /// </summary>
-        /// <param name="getResults">匿名函数: 传入DataReader,及当前所选的列名数组,获取结果列表</param>
-        /// <param name="commandText">sql命令</param>
-        /// <param name="commandType">命令类型</param>
-        /// <param name="parameters">sql参数数组</param>
-        /// <typeparam name="TResult">结果类型</typeparam>
-        /// <returns>TResult类型的迭代器</returns>
-        public IEnumerable<TResult> GetResults<TResult>(Func<IDataReader, string[], IEnumerable<TResult>> getResults, string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters)
-        {
-            using (IDbConnection connection = this.Connect(_connectionString))
-            {
-                //打开连接
-                if (connection.State != ConnectionState.Open)
-                    connection.Open();
-                //创建Command对象
-                using (IDbCommand command = this.CreateCommand(connection))
-                {
-                    //指定并记录sql命令
-                    command.CommandText = commandText;
-                    this.RecordCommand(command.CommandText);
-                    //添加参数
-                    foreach (IDbDataParameter parameter in parameters)
-                        command.Parameters.Add(parameter);
-                    //获取命令类型
-                    command.CommandType = commandType;
-                    //获取DataReader并转换获取结果
-                    using (IDataReader reader = command.ExecuteReader(CommandBehavior.SingleResult))
-                    {
-                        // 获取查询的列名数组
-                        string[] columnNames = reader.GetColumns();
-                        // 读取DataReader，遍历结果列表
-                        foreach (TResult result in getResults(reader, columnNames))
-                        {
-                            // 并依次获取执行结果
-                            yield return result;
-                        }
-                    }
-                    //清空sql参数
-                    command.Parameters.Clear();
-                }
-            }
-        }
         #endregion
 
         #region 执行带事务和不带事务的修改和删除

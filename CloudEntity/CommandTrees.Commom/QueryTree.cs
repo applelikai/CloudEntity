@@ -1,141 +1,46 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Text;
 
 namespace CloudEntity.CommandTrees.Commom
 {
     /// <summary>
     /// 查询命令生成树
-    /// 李凯 Apple_Li 15150598493 2017/05/21
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
-	public class QueryTree : CommandTree
+	public class QueryTree : CommandTree, ISelectCommandTree
     {
         /// <summary>
-        /// 查询命令生成树的Select节点
+        /// 所有的查询的列名
         /// </summary>
-        private IBuilderCollection selectBuilder;
-        /// <summary>
-        /// 查询命令生成树的From节点
-        /// </summary>
-        private IBuilderCollection fromBuilder;
-        /// <summary>
-        /// 查询命令生成树的Where节点
-        /// </summary>
-        private IBuilderCollection whereBuilder;
-        /// <summary>
-        /// 查询命令生成树的Group By节点
-        /// </summary>
-        private IBuilderCollection groupByBuilder;
-        /// <summary>
-        /// 查询命令生成树的Order By节点
-        /// </summary>
-        private IBuilderCollection orderByBuilder;
+        private readonly IList<string> _selectNames;
 
         /// <summary>
         /// Select节点
         /// </summary>
-        public IBuilderCollection Select
-        {
-            get
-            {
-            Start:
-                //若selectBuilder不为空,直接返回
-                if (this.selectBuilder != null)
-                    return this.selectBuilder;
-                //创建selectBuilder并回到Start
-                this.selectBuilder = this.CreateSelectBuilder();
-                goto Start;
-            }
-        }
+        protected IBuilderCollection Select { get; private set; }
         /// <summary>
         /// From节点
         /// </summary>
-        public IBuilderCollection From
-        {
-            get
-            {
-            Start:
-                //若fromBuilder不为空,直接返回
-                if (this.fromBuilder != null)
-                    return this.fromBuilder;
-                //创建fromBuilder
-                this.fromBuilder = new BuilderCollection()
-                {
-                    TitleLeftSpace = "\n      FROM ",
-                    BodyLeftSpace = string.Empty,
-                    BodyRightSpace = "\n",
-                    LastRightSpace = string.Empty
-                };
-                //回到Start
-                goto Start;
-            }
-        }
+        protected IBuilderCollection From { get; private set; }
         /// <summary>
         /// Where节点
         /// </summary>
-        public IBuilderCollection Where
-        {
-            get
-            {
-            Start:
-                //若whereBuilder不为空,直接返回
-                if (this.whereBuilder != null)
-                    return this.whereBuilder;
-                //创建whereBuilder
-                this.whereBuilder = new BuilderCollection()
-                {
-                    TitleLeftSpace = "\n     WHERE ",
-                    BodyLeftSpace = "       AND ",
-                    BodyRightSpace = "\n",
-                    LastRightSpace = string.Empty
-                };
-                //回到Start
-                goto Start;
-            }
-        }
+        protected IBuilderCollection Where { get; private set; }
         /// <summary>
         /// Group by nodes
         /// </summary>
-        public IBuilderCollection GroupBy
-        {
-            get
-            {
-            Start:
-                //若groupByBuilder不为空,直接返回
-                if (this.groupByBuilder != null)
-                    return this.groupByBuilder;
-                //创建groupByBuilder
-                this.groupByBuilder = new BuilderCollection()
-                {
-                    TitleLeftSpace = "\n  GROUP BY",
-                    BodyLeftSpace = "           ",
-                    BodyRightSpace = ",\n",
-                    LastRightSpace = string.Empty
-                };
-                //回到Start
-                goto Start;
-            }
-        }
+        protected IBuilderCollection GroupBy { get; private set; }
         /// <summary>
         /// Order by nodes
         /// </summary>
-        public IBuilderCollection OrderBy
+        protected IBuilderCollection OrderBy { get; private set; }
+
+        /// <summary>
+        /// 查询列名列表
+        /// </summary>
+        public IEnumerable<string> SelectNames
         {
-            get
-            {
-            Start:
-                //若orderByBuilder不为空,直接返回
-                if (this.orderByBuilder != null)
-                    return this.orderByBuilder;
-                //创建orderByBuilder
-                this.orderByBuilder = new BuilderCollection()
-                {
-                    TitleLeftSpace = "\n  ORDER BY ",
-                    BodyLeftSpace = "           ",
-                    BodyRightSpace = ",\n",
-                    LastRightSpace = string.Empty
-                };
-                //回到Start
-                goto Start;
-            }
+            get { return _selectNames; }
         }
 
         /// <summary>
@@ -158,8 +63,76 @@ namespace CloudEntity.CommandTrees.Commom
         /// </summary>
         /// <param name="parameterMarker">Sql参数标识符号</param>
         public QueryTree(char parameterMarker)
-            : base(parameterMarker) { }
+            : base(parameterMarker) 
+        {
+            // 初始化查询列名
+            _selectNames = new List<string>();
+            // 初始化各个子节点
+            this.Select = this.CreateSelectBuilder();
+            this.From = new BuilderCollection("\n      FROM ", string.Empty, "\n", string.Empty);
+            this.Where = new BuilderCollection("\n     WHERE ", "       AND ", "\n", string.Empty);
+            this.GroupBy = new BuilderCollection("\n  GROUP BY", "           ", ",\n", string.Empty);
+            this.OrderBy = new BuilderCollection("\n  ORDER BY ", "           ", ",\n", string.Empty);
+        }
 
+        /// <summary>
+        /// 添加SELECT子节点
+        /// </summary>
+        /// <param name="sqlBuilder">sql子节点</param>
+        public void AppendSelect(INodeBuilder sqlBuilder)
+        {
+            // 若当前节点为Column节点
+            if (sqlBuilder.BuilderType == BuilderType.Column)
+            {
+                // 获取列节点
+                ColumnBuilder columnBuilder = sqlBuilder as ColumnBuilder;
+                // 添加列名
+                _selectNames.Add(columnBuilder.ColumnName);
+            }
+            // 为SELECT节点添加子节点
+            this.Select.Append(sqlBuilder);
+        }
+        /// <summary>
+        /// 添加SELECT子节点
+        /// </summary>
+        /// <param name="sqlBuilder">sql子节点</param>
+        public void AppendSelect(ISqlBuilder sqlBuilder)
+        {
+            // 为SELECT节点添加子节点
+            this.Select.Append(sqlBuilder);
+        }
+        /// <summary>
+        /// 添加FROM子节点
+        /// </summary>
+        /// <param name="sqlBuilder">sql子节点</param>
+        public void AppendFrom(ISqlBuilder sqlBuilder)
+        {
+            this.From.Append(sqlBuilder);
+        }
+        /// <summary>
+        /// 添加WHERE子节点
+        /// </summary>
+        /// <param name="sqlBuilder">sql子节点</param>
+        public void AppendWhere(ISqlBuilder sqlBuilder)
+        {
+            this.Where.Append(sqlBuilder);
+        }
+        /// <summary>
+        /// 添加GROUP BY子节点
+        /// </summary>
+        /// <param name="sqlBuilder">sql子节点</param>
+        public void AppendGroupBy(ISqlBuilder sqlBuilder)
+        {
+            this.GroupBy.Append(sqlBuilder);
+        }
+        /// <summary>
+        /// 添加ORDER BY子节点
+        /// </summary>
+        /// <param name="sqlBuilder">sql子节点</param>
+        public void AppendOrderBy(ISqlBuilder sqlBuilder)
+        {
+            this.OrderBy.Append(sqlBuilder);
+        }
         /// <summary>
         /// 构建sql命令
         /// </summary>

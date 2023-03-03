@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CloudEntity.Data.Entity
+﻿namespace CloudEntity.Data.Entity
 {
     /// <summary>
     /// 初始化类扩展

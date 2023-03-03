@@ -1,7 +1,8 @@
 ﻿namespace CloudEntity.CommandTrees
 {
     /// <summary>
-    /// sql命令及参数的生成器
+    /// SQL命令生成树
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public interface ICommandTree : ISqlBuilder
     {

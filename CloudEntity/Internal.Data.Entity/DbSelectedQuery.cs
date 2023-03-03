@@ -6,6 +6,7 @@ using CloudEntity.Mapping;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 
 namespace CloudEntity.Internal.Data.Entity
@@ -48,9 +49,9 @@ namespace CloudEntity.Internal.Data.Entity
         public string ToSqlString()
         {
             // 获取查询命令生成树
-            ICommandTree queryTree = this.CreateQueryTree();
+            ICommandTree commandTree = base.CommandFactory.GetQueryTree(base.NodeBuilders);
             // 获取生成的sql
-            return queryTree.Compile();
+            return commandTree.Compile();
         }
         /// <summary>
         /// 获取的查询列名列表
@@ -76,10 +77,14 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>枚举器</returns>
         public IEnumerator<TElement> GetEnumerator()
         {
-            //获取查询命令生成树
-            ICommandTree queryTree = this.CreateQueryTree();
+            // 获取SELECT命令生成树
+            ISelectCommandTree selectCommandTree = base.CommandFactory.GetQueryTree(base.NodeBuilders);
+            // 获取sql命令
+            string commandText = selectCommandTree.Compile();
+            // 构建读取DataReader，创建填充获取实体对象的匿名函数
+            Func<IDataReader, TEntity> getEntity = base.BuildGetEntityFunc(selectCommandTree.SelectNames.ToArray());
             //执行查询获取TElement类型的枚举器
-            foreach (TEntity entity in base.DbHelper.GetResults(base.GetEntities, queryTree.Compile(), parameters: base.Parameters.ToArray()))
+            foreach (TEntity entity in base.DbHelper.GetResults(getEntity, commandText, parameters: base.Parameters.ToArray()))
                 yield return this.Convert(entity);
         }
         /// <summary>

@@ -203,7 +203,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
         /// <returns>分页查询命令生成树</returns>
-        public override ICommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders)
+        public override ISelectCommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders)
         {
             // 创建PostgreSql分页查询命令生成树
             PostgreSqlPagingQueryTree queryTree = new PostgreSqlPagingQueryTree(base.ParameterMarker);

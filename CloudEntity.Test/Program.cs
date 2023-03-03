@@ -13,6 +13,10 @@ using System.Linq;
 public class Program
 {
     /// <summary>
+    /// 连接字符串
+    /// </summary>
+    private static string _connectionString;
+    /// <summary>
     /// 数据容器
     /// </summary>
     private static IDbContainer _container;
@@ -29,11 +33,11 @@ public class Program
             .Build();
         //获取连接字符串
         string connectionName = configuration["ConnectionName"];
-        string connectionString = configuration.GetConnectionString(connectionName);
+        _connectionString = configuration.GetConnectionString(connectionName);
         //初始化数据容器
-        DbContainer.Init<PostgreSqlInitializer>(connectionString);
+        DbContainer.Init<PostgreSqlInitializer>(_connectionString);
         //获取数据容器
-        _container = DbContainer.Get(connectionString);
+        _container = DbContainer.Get(_connectionString);
     }
     /// <summary>
     /// 获取微信用户视图查询数据源
@@ -59,8 +63,22 @@ public class Program
     /// </summary>
     private static void InitTables()
     {
-        _container.InitTable<Role>();
-        _container.InitTable<User>();
+        // 获取数据容器
+        IDbContainer container = DbContainer.Get(_connectionString);
+        // 初始化表
+        container.InitTable<Role>();
+        container.InitTable<User>();
+    }
+    /// <summary>
+    /// 删除所有表
+    /// </summary>
+    private static void DropTables()
+    {
+        // 获取数据容器
+        IDbContainer container = DbContainer.Get(_connectionString);
+        // 删除表
+        container.DropTable<Role>();
+        container.DropTable<User>();
     }
     /// <summary>
     /// 初始化数据
@@ -122,7 +140,6 @@ public class Program
         IDbQuery<User> users = _container.CreateQuery<User>()
             .SetIncludeBy(u => new { u.UserName, u.CreatedTime})
             .SetJoin(roles, u => u.Role, (u, r) => u.RoleId == r.RoleId)
-            .SetLike(u => u.UserName, "ap%")
             .SetSort(u => u.Role.RoleName);
         // 第一次打印用户列表
         // Program.PrintUsers(users);

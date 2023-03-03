@@ -195,13 +195,13 @@ namespace CloudEntity.CommandTrees.Commom.SqlClient
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
         /// <returns>分页查询命令生成树</returns>
-        public override ICommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders)
+        public override ISelectCommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders)
         {
             //创建分页查询命令生成树
             SqlOrderByPagingQueryTree queryTree = new SqlOrderByPagingQueryTree(base.ParameterMarker);
             //添加RowNumber查询列
             ISqlBuilder rowNumberBuilder = new RowNumberBuilder(queryChildBuilders.Where(n => n.ParentNodeType == SqlType.OrderBy).ToArray());
-            queryTree.Select.Append(rowNumberBuilder);
+            queryTree.AppendSelect(rowNumberBuilder);
             //填充分页查询命令生成树各个节点
             base.LoadQueryTree(queryTree, queryChildBuilders);
             //返回分页查询命令生成树

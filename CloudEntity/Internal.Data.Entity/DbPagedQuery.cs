@@ -106,14 +106,18 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerable<TModel> Cast<TModel>()
             where TModel : class, new()
         {
+            // 获取SELECT命令生成树
+            ISelectCommandTree selectCommandTree = base.CommandFactory.GetPagingQueryTree(base.NodeBuilders);
             //获取查询命令
-            string commandText = this.ToSqlString();
+            string commandText = selectCommandTree.Compile();
             //获取sql参数集合
             IList<IDbDataParameter> parameters = base.Parameters.ToList();
             parameters.Add(base.DbHelper.CreateParameter("SkipCount", this.PageSize * (this.PageIndex - 1)));
             parameters.Add(base.DbHelper.CreateParameter("NextCount", this.PageSize));
+            // 构建读取DataReader，创建填充获取TModel对象的匿名函数
+            Func<IDataReader, TModel> getModel = this.BuildGetModelFunc<TModel>(selectCommandTree.SelectNames.ToArray());
             // 执行查询获取映射对象迭代器
-            return base.DbHelper.GetResults(base.GetModels<TModel>, commandText, parameters: parameters.ToArray());
+            return base.DbHelper.GetResults(getModel, commandText, parameters: parameters.ToArray());
         }
         /// <summary>
         /// 获取枚举器
@@ -121,15 +125,18 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>枚举器</returns>
         public IEnumerator<TEntity> GetEnumerator()
         {
-            //获取查询命令
-            ICommandTree queryTree = base.CommandFactory.GetPagingQueryTree(base.NodeBuilders);
-            string commandText = this.ToSqlString();
-            //获取sql参数集合
+            // 获取SELECT命令生成树
+            ISelectCommandTree selectCommandTree = base.CommandFactory.GetPagingQueryTree(base.NodeBuilders);
+            // 获取SQL命令
+            string commandText = selectCommandTree.Compile();
+            // 获取sql参数集合
             IList<IDbDataParameter> parameters = base.Parameters.ToList();
             parameters.Add(base.DbHelper.CreateParameter("SkipCount", this.PageSize * (this.PageIndex - 1)));
             parameters.Add(base.DbHelper.CreateParameter("NextCount", this.PageSize));
+            // 构建读取DataReader，创建填充获取实体对象的匿名函数
+            Func<IDataReader, TEntity> getEntity = base.BuildGetEntityFunc(selectCommandTree.SelectNames.ToArray());
             // 执行查询获取实体对象迭代器
-            foreach (TEntity entity in base.DbHelper.GetResults(base.GetEntities, commandText, parameters: parameters.ToArray()))
+            foreach (TEntity entity in base.DbHelper.GetResults(getEntity, commandText, parameters: parameters.ToArray()))
             {
                 // 依次获取实体对象
                 yield return entity;

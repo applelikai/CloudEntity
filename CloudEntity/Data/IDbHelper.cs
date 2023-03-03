@@ -139,17 +139,6 @@ namespace CloudEntity.Data
         /// <typeparam name="TResult">结果类型</typeparam>
         /// <returns>TResult类型的迭代器</returns>
         IEnumerable<TResult> GetResults<TResult>(Func<IDataReader, string[], TResult> getResult, string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters);
-        /// <summary>
-        /// Execute and get results
-        /// 执行并获取结果
-        /// </summary>
-        /// <param name="getResults">匿名函数: 传入DataReader,及当前所选的列名数组,获取结果列表</param>
-        /// <param name="commandText">sql命令</param>
-        /// <param name="commandType">命令类型</param>
-        /// <param name="parameters">sql参数数组</param>
-        /// <typeparam name="TResult">结果类型</typeparam>
-        /// <returns>TResult类型的迭代器</returns>
-        IEnumerable<TResult> GetResults<TResult>(Func<IDataReader, string[], IEnumerable<TResult>> getResults, string commandText, CommandType commandType = CommandType.Text, params IDbDataParameter[] parameters);
         #endregion
 
         #region 执行带事务和不带事务的修改和删除
