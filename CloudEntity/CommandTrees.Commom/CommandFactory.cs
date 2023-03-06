@@ -12,15 +12,7 @@ namespace CloudEntity.CommandTrees.Commom
         /// <summary>
         /// 获取列节点信息的Helper
         /// </summary>
-        private ColumnNodeHelper columnNodeHelper;
-
-        /// <summary>
-        /// 获取列节点信息的Helper
-        /// </summary>
-        protected ColumnNodeHelper ColumnNodeHelper
-        {
-            get { return this.columnNodeHelper ?? (this.columnNodeHelper = this.CreateColumnNodeHelper()); }
-        }
+        protected ColumnNodeHelper ColumnNodeHelper { get; private set; }
 
         /// <summary>
         /// sql参数标识符
@@ -34,6 +26,7 @@ namespace CloudEntity.CommandTrees.Commom
         protected CommandFactory(char marker)
         {
             this.ParameterMarker = marker;
+            this.ColumnNodeHelper = this.CreateColumnNodeHelper();
         }
         /// <summary>
         /// 创建读取节点信息的Helper
@@ -283,88 +276,6 @@ namespace CloudEntity.CommandTrees.Commom
         #endregion
         #region 获取sql命令生成树
         /// <summary>
-        /// 获取为Table添加列的语句生成树
-        /// </summary>
-        /// <param name="schemaName">数据库架构名</param>
-        /// <param name="tableName">表名</param>
-        /// <param name="columnNodes">列节点迭代器</param>
-        /// <returns>为Table添加列的语句生成树</returns>
-        public ICommandTree GetAlterTableAddColumnsTree(string schemaName, string tableName, IEnumerable<IColumnNode> columnNodes)
-        {
-            //创建为Table添加列的语句生成树
-            AlterTableAddColumnsTree alterTableAddColumnsTree = this.CreateAlterTableAddColumnsTree(schemaName, tableName);
-            //为命令生成树添加列节点
-            foreach (IColumnNode columnNode in columnNodes)
-                alterTableAddColumnsTree.Add(columnNode);
-            //返回为Table添加列的语句生成树
-            return alterTableAddColumnsTree;
-        }
-        /// <summary>
-        /// 获取Insert命令生成树
-        /// </summary>
-        /// <param name="schemaName">数据库架构名</param>
-        /// <param name="tableName">完整表名</param>
-        /// <param name="insertNodes">Insert命令生成树子节点</param>
-        /// <returns>Insert命令生成树</returns>
-        public ICommandTree GetInsertTree(string schemaName, string tableName, IEnumerable<KeyValuePair<string, string>> insertNodes)
-        {
-            //创建Insert命令生成树
-            InsertTree insertTree = this.CreateInsertTree(schemaName, tableName);
-            //为Insert命令生成树添加节点
-            foreach (KeyValuePair<string, string> insertNodePair in insertNodes)
-                insertTree.Append(insertNodePair.Key, insertNodePair.Value);
-            //返回Insert命令生成树
-            return insertTree;
-        }
-        /// <summary>
-        /// 获取Delete命令生成树
-        /// </summary>
-        /// <param name="schemaName">数据库架构名</param>
-        /// <param name="tableName">表名</param>
-        /// <param name="tableAlias">临时表名</param>
-        /// <param name="whereChildBuilders">Where语句段子节点集合</param>
-        /// <returns>Delete命令生成树</returns>
-        public ICommandTree GetDeleteTree(string schemaName, string tableName, string tableAlias, IEnumerable<ISqlBuilder> whereChildBuilders)
-        {
-            //创建Delete命令生成树
-            DeleteTree deleteTree = this.CreateDeleteTree(schemaName, tableName, tableAlias);
-            //为Delete命令生成树的Where节点添加子节点
-            foreach (ISqlBuilder sqlBuilder in whereChildBuilders)
-                deleteTree.Where.Append(sqlBuilder);
-            //返回Delete命令生成树
-            return deleteTree;
-        }
-        /// <summary>
-        /// 获取Update命令生成树
-        /// </summary>
-        /// <param name="schemaName">数据库架构名</param>
-        /// <param name="tableName">表名</param>
-        /// <param name="tableAlias">临时表名</param>
-        /// <param name="updateChildBuilders">Update命令生成树的子节点集合</param>
-        /// <returns>Update命令生成树</returns>
-        public ICommandTree GetUpdateTree(string schemaName, string tableName, string tableAlias, IEnumerable<INodeBuilder> updateChildBuilders)
-        {
-            //创建Update命令生成树
-            UpdateTree updateTree = this.CreateUpdateTree(schemaName, tableName, tableAlias);
-            //为Update命令生成树添加子节点
-            foreach (INodeBuilder nodeBuilder in updateChildBuilders)
-            {
-                switch (nodeBuilder.ParentNodeType)
-                {
-                    //为UpdateTree的Set节点添加子节点
-                    case SqlType.UpdateSet:
-                        updateTree.Set.Append(nodeBuilder);
-                        break;
-                    //为UpdateTree的Where节点添加子节点
-                    case SqlType.Where:
-                        updateTree.Where.Append(nodeBuilder);
-                        break;
-                }
-            }
-            //返回Update命令生成树
-            return updateTree;
-        }
-        /// <summary>
         /// 获取查询命令生成树
         /// Create sql query tree.
         /// </summary>
@@ -493,6 +404,88 @@ namespace CloudEntity.CommandTrees.Commom
             this.AppendTable(commandText, tableName);
             // 获取最终的SQL
             return commandText.ToString();
+        }
+        /// <summary>
+        /// 获取为Table添加列的SQL
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnNodes">列节点迭代器</param>
+        /// <returns>为Table添加列的SQL</returns>
+        public string GetAlterTableAddColumnsCommandText(string schemaName, string tableName, IEnumerable<IColumnNode> columnNodes)
+        {
+            //创建为Table添加列的语句生成树
+            AlterTableAddColumnsTree alterTableAddColumnsTree = this.CreateAlterTableAddColumnsTree(schemaName, tableName);
+            //为命令生成树添加列节点
+            foreach (IColumnNode columnNode in columnNodes)
+                alterTableAddColumnsTree.Add(columnNode);
+            // 获取最终的为Table添加列的SQL
+            return alterTableAddColumnsTree.Compile();
+        }
+        /// <summary>
+        /// 获取INSERT SQL
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">完整表名</param>
+        /// <param name="insertNodes">Insert命令生成树子节点</param>
+        /// <returns>INSERT SQL</returns>
+        public string GetInsertCommandText(string schemaName, string tableName, IEnumerable<KeyValuePair<string, string>> insertNodes)
+        {
+            // 创建Insert命令生成树
+            InsertTree insertTree = this.CreateInsertTree(schemaName, tableName);
+            // 为Insert命令生成树添加节点
+            foreach (KeyValuePair<string, string> insertNodePair in insertNodes)
+                insertTree.Append(insertNodePair.Key, insertNodePair.Value);
+            // 获取最终INSERT SQL语句
+            return insertTree.Compile();
+        }
+        /// <summary>
+        /// 获取DELETE SQL
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="tableAlias">临时表名</param>
+        /// <param name="whereChildBuilders">Where语句段子节点集合</param>
+        /// <returns>DELETE SQL</returns>
+        public string GetDeleteCommandText(string schemaName, string tableName, string tableAlias, IEnumerable<ISqlBuilder> whereChildBuilders)
+        {
+            // 创建Delete命令生成树
+            DeleteTree deleteTree = this.CreateDeleteTree(schemaName, tableName, tableAlias);
+            // 为Delete命令生成树的Where节点添加子节点
+            foreach (ISqlBuilder sqlBuilder in whereChildBuilders)
+                deleteTree.Where.Append(sqlBuilder);
+            // 获取最终DELETE SQL语句
+            return deleteTree.Compile();
+        }
+        /// <summary>
+        /// 获取Update命令生成树
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="tableAlias">临时表名</param>
+        /// <param name="updateChildBuilders">Update命令生成树的子节点集合</param>
+        /// <returns>Update命令生成树</returns>
+        public string GetUpdateCommandText(string schemaName, string tableName, string tableAlias, IEnumerable<INodeBuilder> updateChildBuilders)
+        {
+            // 创建Update命令生成树
+            UpdateTree updateTree = this.CreateUpdateTree(schemaName, tableName, tableAlias);
+            // 为Update命令生成树添加子节点
+            foreach (INodeBuilder nodeBuilder in updateChildBuilders)
+            {
+                switch (nodeBuilder.ParentNodeType)
+                {
+                    //为UpdateTree的Set节点添加子节点
+                    case SqlType.UpdateSet:
+                        updateTree.Set.Append(nodeBuilder);
+                        break;
+                    //为UpdateTree的Where节点添加子节点
+                    case SqlType.Where:
+                        updateTree.Where.Append(nodeBuilder);
+                        break;
+                }
+            }
+            // 获取最终UPDATE SQL语句
+            return updateTree.Compile();
         }
         #endregion
     }

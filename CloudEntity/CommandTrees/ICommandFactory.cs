@@ -86,40 +86,6 @@ namespace CloudEntity.CommandTrees
         #endregion
         #region 获取sql命令生成树
         /// <summary>
-        /// 获取为Table添加列的语句生成树
-        /// </summary>
-        /// <param name="schemaName">数据库架构名</param>
-        /// <param name="tableName">表名</param>
-        /// <param name="columnNodes">列节点迭代器</param>
-        /// <returns>为Table添加列的语句生成树</returns>
-        ICommandTree GetAlterTableAddColumnsTree(string schemaName, string tableName, IEnumerable<IColumnNode> columnNodes);
-        /// <summary>
-        /// 获取Insert命令生成树
-        /// </summary>
-        /// <param name="schemaName">数据库架构名</param>
-        /// <param name="tableName">表名</param>
-        /// <param name="insertNodes">Insert命令生成树子节点</param>
-        /// <returns>Insert命令生成树</returns>
-        ICommandTree GetInsertTree(string schemaName, string tableName, IEnumerable<KeyValuePair<string, string>> insertNodes);
-        /// <summary>
-        /// 获取Delete命令生成树
-        /// </summary>
-        /// <param name="schemaName">数据库架构名</param>
-        /// <param name="tableName">表名</param>
-        /// <param name="tableAlias">临时表名</param>
-        /// <param name="whereChildBuilders">Where语句段子节点集合</param>
-        /// <returns>Delete命令生成树</returns>
-        ICommandTree GetDeleteTree(string schemaName, string tableName, string tableAlias, IEnumerable<ISqlBuilder> whereChildBuilders);
-        /// <summary>
-        /// 获取Update命令生成树
-        /// </summary>
-        /// <param name="schemaName">数据库架构名</param>
-        /// <param name="tableName">表名</param>
-        /// <param name="tableAlias">临时表名</param>
-        /// <param name="updateChildBuilders">Update命令生成树的子节点集合</param>
-        /// <returns>Update命令生成树</returns>
-        ICommandTree GetUpdateTree(string schemaName, string tableName, string tableAlias, IEnumerable<INodeBuilder> updateChildBuilders);
-        /// <summary>
         /// 获取查询sql生成器
         /// </summary>
         /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
@@ -177,6 +143,40 @@ namespace CloudEntity.CommandTrees
         /// <param name="oldTableName">原来的Table名</param>
         /// <returns>重命名Table的SQL命令</returns>
         string GetRenameTableCommandText(string schemaName, string tableName, string oldTableName);
+        /// <summary>
+        /// 获取为Table添加列的SQL
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="columnNodes">列节点迭代器</param>
+        /// <returns>为Table添加列的SQL</returns>
+        string GetAlterTableAddColumnsCommandText(string schemaName, string tableName, IEnumerable<IColumnNode> columnNodes);
+        /// <summary>
+        /// 获取INSERT SQL
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">完整表名</param>
+        /// <param name="insertNodes">Insert命令生成树子节点</param>
+        /// <returns>INSERT SQL</returns>
+        string GetInsertCommandText(string schemaName, string tableName, IEnumerable<KeyValuePair<string, string>> insertNodes);
+        /// <summary>
+        /// 获取DELETE SQL
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="tableAlias">临时表名</param>
+        /// <param name="whereChildBuilders">Where语句段子节点集合</param>
+        /// <returns>DELETE SQL</returns>
+        string GetDeleteCommandText(string schemaName, string tableName, string tableAlias, IEnumerable<ISqlBuilder> whereChildBuilders);
+        /// <summary>
+        /// 获取Update命令生成树
+        /// </summary>
+        /// <param name="schemaName">数据库架构名</param>
+        /// <param name="tableName">表名</param>
+        /// <param name="tableAlias">临时表名</param>
+        /// <param name="updateChildBuilders">Update命令生成树的子节点集合</param>
+        /// <returns>Update命令生成树</returns>
+        string GetUpdateCommandText(string schemaName, string tableName, string tableAlias, IEnumerable<INodeBuilder> updateChildBuilders);
         #endregion
     }
 }

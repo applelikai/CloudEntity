@@ -206,9 +206,9 @@ namespace CloudEntity.Internal.Data.Entity
             foreach (TEntity entity in entities)
             {
                 //获取sql参数数组
-                IDbDataParameter[] parameters = this.GetParameters(base.InsertSql, entity).ToArray();
+                IDbDataParameter[] parameters = this.GetParameters(base.InsertCommandText, entity).ToArray();
                 //执行Insert
-                result += base.DbHelper.ExecuteUpdate(base.InsertSql, parameters: parameters);
+                result += base.DbHelper.ExecuteUpdate(base.InsertCommandText, parameters: parameters);
             }
             //返回DB受影响函数
             return result;
@@ -228,9 +228,9 @@ namespace CloudEntity.Internal.Data.Entity
             foreach (TEntity entity in entities)
             {
                 //获取sql参数数组
-                IDbDataParameter[] parameters = this.GetParameters(base.UpdateSql, entity).ToArray();
+                IDbDataParameter[] parameters = this.GetParameters(base.UpdateCommandText, entity).ToArray();
                 //执行并返回DB受影响行数
-                result += base.DbHelper.ExecuteUpdate(base.UpdateSql, parameters: parameters);
+                result += base.DbHelper.ExecuteUpdate(base.UpdateCommandText, parameters: parameters);
             }
             //返回DB受影响函数
             return result;

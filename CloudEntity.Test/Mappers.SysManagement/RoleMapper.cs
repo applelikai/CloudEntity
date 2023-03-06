@@ -27,5 +27,6 @@ public class RoleMapper : TableMapper<Role>
         setter.Map(r => r.RoleName, allowNull: false).Length(25);
         setter.Map(r => r.Remark).Length(100);
         setter.Map(r => r.CreatedTime, ColumnAction.Default);
+        setter.Map(r => r.LastUpdateDate, ColumnAction.EditAndDefault);
     }
 }

@@ -8,6 +8,7 @@ namespace CloudEntity.Core.Data.Entity
 {
     /// <summary>
     /// 列元数据初始化器
+    /// [Apple_Li 李凯 15150598493]
     /// </summary>
     public abstract class ColumnInitializer
     {
@@ -56,10 +57,10 @@ namespace CloudEntity.Core.Data.Entity
             string schemaName = tableMapper.Header.SchemaName ?? this.DbHelper.DefaultSchemaName;
             //获取表名
             string tableName = tableMapper.Header.TableName;
-            //创建Alter Table Columns语句生成树
-            ICommandTree alterTableAddColumnsTree = this.CommandFactory.GetAlterTableAddColumnsTree(schemaName, tableName, columnNodes);
+            //创建Alter Table ColumnsSQL
+            string commandText = this.CommandFactory.GetAlterTableAddColumnsCommandText(schemaName, tableName, columnNodes);
             //生成并执行Alter Table Columns语句，为当前实体Mapping的Table添加为注册的列
-            this.DbHelper.ExecuteUpdate(alterTableAddColumnsTree.Compile());
+            this.DbHelper.ExecuteUpdate(commandText);
         }
     }
 }

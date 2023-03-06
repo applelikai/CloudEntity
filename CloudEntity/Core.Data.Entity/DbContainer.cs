@@ -5,6 +5,7 @@ using CloudEntity.Data.Entity;
 using CloudEntity.Internal.CommandTrees;
 using CloudEntity.Internal.Data.Entity;
 using CloudEntity.Mapping;
+using CloudEntity.Mapping.Common;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -88,55 +89,26 @@ namespace CloudEntity.Core.Data.Entity
             cloned.AddPropertyLinkers(source.PropertyLinkers);
         }
         /// <summary>
-        /// 过滤获取统计查询Sql表达式节点集合
+        /// 复制来源数据源信息到新的实体查询数据源
         /// </summary>
-        /// <param name="nodeBuilders">源Sql表达式节点集合</param>
-        /// <param name="functionName">执行统计的函数名</param>
-        /// <returns>统计查询Sql表达式节点集合</returns>
-        private IEnumerable<INodeBuilder> GetFunctionNodeBuilders(IEnumerable<INodeBuilder> nodeBuilders, string functionName)
+        /// <param name="source">来源数据源</param>
+        /// <param name="cloned">新的实体查询数据源</param>
+        private void Clone(IDbBase source, DbScalar cloned)
         {
-            //获取Sql函数表达式节点
-            yield return new NodeBuilder(SqlType.Select, "{0}(*)", functionName);
-            //获取其他的sql表达式节点
-            foreach (INodeBuilder nodeBuilder in nodeBuilders)
+            // 遍历sql表达式节点列表
+            foreach (INodeBuilder nodeBuilder in source.NodeBuilders)
             {
                 switch (nodeBuilder.ParentNodeType)
                 {
+                    // 只复制FORM节点和WHERE节点下的子节点
                     case SqlType.From:
                     case SqlType.Where:
-                        yield return nodeBuilder;
+                        cloned.AddNodeBuilder(nodeBuilder);
                         break;
                 }
             }
-        }
-        /// <summary>
-        /// 过滤获取统计查询Sql表达式节点集合
-        /// </summary>
-        /// <param name="nodeBuilders">源Sql表达式节点集合</param>
-        /// <param name="functionName">执行统计的函数名</param>
-        /// <param name="lambdaExpression">指定对象某属性的表达式</param>
-        /// <returns>统计查询Sql表达式节点集合</returns>
-        private IEnumerable<INodeBuilder> GetFunctionNodeBuilders(IEnumerable<INodeBuilder> nodeBuilders, string functionName, LambdaExpression lambdaExpression)
-        {
-            //获取成员表达式
-            MemberExpression memberExpression = lambdaExpression.Body.GetMemberExpression();
-            //获取当前实体类型的Table元数据解析器
-            ITableMapper tableMapper = _mapperContainer.GetTableMapper(memberExpression.Expression.Type);
-            //获取columnMapper
-            IColumnMapper columnMapper = tableMapper.GetColumnMapper(memberExpression.Member.Name);
-            //获取Sql函数表达式节点
-            yield return _commandFactory.GetFunctionNodeBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, functionName);
-            //获取其他的sql表达式节点
-            foreach (INodeBuilder nodeBuilder in nodeBuilders)
-            {
-                switch (nodeBuilder.ParentNodeType)
-                {
-                    case SqlType.From:
-                    case SqlType.Where:
-                        yield return nodeBuilder;
-                        break;
-                }
-            }
+            // 复制sql参数列表
+            cloned.AddSqlParameters(source.Parameters);
         }
 
         /// <summary>
@@ -218,7 +190,7 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         /// <param name="connectionString">连接字符串</param>
         /// <param name="initializer">初始化器</param>
-        internal DbContainer(string connectionString, DbInitializer initializer)
+        private DbContainer(string connectionString, DbInitializer initializer)
         {
             //非空检查
             Check.ArgumentNull(connectionString, nameof(connectionString));
@@ -242,20 +214,23 @@ namespace CloudEntity.Core.Data.Entity
         /// <param name="entityType">某实体类的类型</param>
         public void InitTable(Type entityType)
         {
-            //检查Table初始化器是否为空,直接退出
+            // 检查Table初始化器是否为空,直接退出
             if (_tableInitializer == null)
                 return;
-            //获取TableMapper
+            // 获取TableMapper
             ITableMapper tableMapper = _mapperContainer.GetTableMapper(entityType);
-            //若Table不存在,则创建Table
+            // 若为视图映射，则直接退出
+            if (tableMapper is ViewMapper)
+                return;
+            // 若Table不存在,则创建Table
             if (!_tableInitializer.IsExist(tableMapper.Header))
                 _tableInitializer.CreateTable(tableMapper);
-            //若Table存在，则检查并添加EntityMapper中某些属性未注册到目标Table的列
+            // 若Table存在，则检查并添加EntityMapper中某些属性未注册到目标Table的列
             else
             {
-                //若列初始化器不为空
+                // 若列初始化器不为空
                 if (_columnInitializer != null)
-                    //检查并添加EntityMapper中某些属性未注册到目标Table的列
+                    // 检查并添加EntityMapper中某些属性未注册到目标Table的列
                     _columnInitializer.AlterTableAddColumns(tableMapper);
             }
         }
@@ -332,16 +307,14 @@ namespace CloudEntity.Core.Data.Entity
         /// <returns>统计查询数据源</returns>
         public IDbScalar CreateScalar(IDbBase dbBase, string functionName)
         {
-            // 创建DbScaler对象
-            DbScalar dbScalar = new DbScalar(_commandFactory, this.DbHelper);
-            // 加载sql表达式节点列表
-            foreach (INodeBuilder nodeBuilder in this.GetFunctionNodeBuilders(dbBase.NodeBuilders, functionName))
-                dbScalar.AddNodeBuilder(nodeBuilder);
-            // 加载sql参数列表
-            foreach (IDbDataParameter sqlParameter in dbBase.Parameters)
-                dbScalar.AddSqlParameter(sqlParameter);
-            // 获取DbScaler对象
-            return dbScalar;
+            // 创建统计查询数据源对象
+            DbScalar cloned = new DbScalar(_commandFactory, this.DbHelper);
+            // 复制来源数据源信息到新的统计查询数据源数据源
+            this.Clone(dbBase, cloned);
+            // 添加Sql函数表达式节点
+            cloned.AddNodeBuilder(new NodeBuilder(SqlType.Select, "{0}(*)", functionName));
+            // 获取复制的统计查询数据源
+            return cloned;
         }
         /// <summary>
         /// 创建统计查询数据源
@@ -352,16 +325,23 @@ namespace CloudEntity.Core.Data.Entity
         /// <returns>统计查询数据源</returns>
         public IDbScalar CreateScalar(IDbBase dbBase, string functionName, LambdaExpression lambdaExpression)
         {
-            // 创建DbScaler对象
-            DbScalar dbScalar = new DbScalar(_commandFactory, this.DbHelper);
-            // 加载sql表达式节点列表
-            foreach (INodeBuilder nodeBuilder in this.GetFunctionNodeBuilders(dbBase.NodeBuilders, functionName, lambdaExpression))
-                dbScalar.AddNodeBuilder(nodeBuilder);
-            // 加载sql参数列表
-            foreach (IDbDataParameter sqlParameter in dbBase.Parameters)
-                dbScalar.AddSqlParameter(sqlParameter);
-            // 获取DbScaler对象
-            return dbScalar;
+            // 获取成员表达式
+            MemberExpression memberExpression = lambdaExpression.Body.GetMemberExpression();
+            // 获取当前实体类型的Table元数据解析器
+            ITableMapper tableMapper = _mapperContainer.GetTableMapper(memberExpression.Expression.Type);
+            // 获取columnMapper
+            IColumnMapper columnMapper = tableMapper.GetColumnMapper(memberExpression.Member.Name);
+            // 获取统计表达式
+            INodeBuilder selectBuilder = _commandFactory.GetFunctionNodeBuilder(tableMapper.Header.TableAlias, columnMapper.ColumnName, functionName);
+
+            // 创建统计查询数据源对象
+            DbScalar cloned = new DbScalar(_commandFactory, this.DbHelper);
+            // 添加统计表达式
+            cloned.AddNodeBuilder(selectBuilder);
+            // 复制来源数据源信息到新的统计查询数据源数据源
+            this.Clone(dbBase, cloned);
+            // 获取复制的统计查询数据源
+            return cloned;
         }
         #endregion
         #region 创建查询数据源

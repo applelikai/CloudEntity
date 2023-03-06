@@ -15,15 +15,15 @@ namespace CloudEntity.Data.Entity
         /// <summary>
         /// 插入元素的Sql命令
         /// </summary>
-        string InsertSql { get; }
+        string InsertCommandText { get; }
         /// <summary>
         /// 更新元素的Sql命令
         /// </summary>
-        string UpdateSql { get; }
+        string UpdateCommandText { get; }
         /// <summary>
         /// 删除元素的Sql命令
         /// </summary>
-        string DeleteSql { get; }
+        string DeleteCommandText { get; }
         /// <summary>
         /// 创建查询数据源的工厂
         /// </summary>

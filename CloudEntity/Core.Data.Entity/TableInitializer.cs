@@ -8,6 +8,7 @@ namespace CloudEntity.Core.Data.Entity
 {
     /// <summary>
     /// Table初始化器
+    /// [Apple_Li 李凯 15150598493]
     /// </summary>
     public abstract class TableInitializer
     {

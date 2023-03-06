@@ -85,19 +85,21 @@ public class Program
     /// </summary>
     private static void InitData()
     {
+        // 获取数据容器
+        IDbContainer container = DbContainer.Get(_connectionString);
         // 创建角色id
         string roleId = GuidHelper.NewOrdered().ToString();
         // 添加角色
-        _container.List<Role>().Add(new Role(roleId, "管理员"));
+        container.List<Role>().Add(new Role(roleId, "管理员"));
         // 添加用户
-        _container.List<User>().Add(new User(GuidHelper.NewOrdered().ToString())
+        container.List<User>().Add(new User(GuidHelper.NewOrdered().ToString())
         {
             UserName = "admin",
             Password = "000000",
             RoleId = roleId
         });
         // 添加用户
-        _container.List<User>().Add(new User(GuidHelper.NewOrdered().ToString())
+        container.List<User>().Add(new User(GuidHelper.NewOrdered().ToString())
         {
             UserName = "apple",
             Password = "000000",
@@ -267,6 +269,17 @@ public class Program
             .ThenBy(u => u.UserName);
         // 打印用户列表
         Program.PrintUsers(wechatUsers);
+    }
+    /// <summary>
+    /// 统计测试
+    /// </summary>
+    private static void TestCount()
+    {
+        // 获取数据容器
+        IDbContainer container = DbContainer.Get(_connectionString);
+        // 打印统计信息
+        Console.WriteLine(container.List<Role>().Count());
+        Console.WriteLine(container.List<User>().Max(u => u.CreatedTime));
     }
     /// <summary>
     /// 测试事务执行

@@ -5,12 +5,11 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Authors>李凯</Authors>
     <Company />
-    <Description>基于.net core的类似于Entity Framework的实体框架，只要是支持ado.net访问的数据库，都可以通过自定义配置使用当前实体框架
-CloudEntity集成了基本的linq查询，实现了带有条件的修改(一条update批量修改) 和 带有条件的删除(一条delete批量删除)</Description>
+    <Description>基于netstandard2.0的类似于Entity Framework的实体框架，目前支持SQL Server,MySQL,MariaDB,Oracle和Postgresql，CloudEntity使用了类似于Linq但又不是Linq的全新的查询方式，这会让很多熟悉Linq的开发人员打开一个新世界的大门。</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Version>1.2.8.4</Version>
-    <AssemblyVersion>1.2.8.4</AssemblyVersion>
-    <FileVersion>1.2.8.4</FileVersion>
+    <Version>1.2.9</Version>
+    <AssemblyVersion>1.2.9</AssemblyVersion>
+    <FileVersion>1.2.9</FileVersion>
     <RepositoryUrl>https://github.com/applelikai/CloudEntity</RepositoryUrl>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/applelikai/CloudEntity</PackageProjectUrl>
@@ -18,9 +17,6 @@ CloudEntity集成了基本的linq查询，实现了带有条件的修改(一条u
     <RepositoryType>git</RepositoryType>
     <NeutralLanguage />
   </PropertyGroup>
-  <ItemGroup>
-    <None Remove="Internal.Data.Entity\DbSortedQuery.cs~RFfcd9db.TMP" />
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Data.Common" Version="4.3.0" />
   </ItemGroup>

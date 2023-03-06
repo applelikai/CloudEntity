@@ -72,6 +72,8 @@ namespace CloudEntity.Internal.Mapping
                     return DataType.Float;
                 case "String":
                     return DataType.Varchar;
+                case "DateOnly":
+                    return DataType.Date;
                 default:
                     //尝试获取相同类型名称的数据类型，获取失败则获取默认数据类型
                     DataType dataType;

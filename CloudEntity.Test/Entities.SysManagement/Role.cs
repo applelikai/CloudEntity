@@ -23,6 +23,10 @@ public class Role
     /// 录入时间
     /// </summary>
     public DateTime? CreatedTime { get; set; }
+    /// <summary>
+    /// 最后更新日期
+    /// </summary>
+    public DateOnly? LastUpdateDate { get; set; }
 
     /// <summary>
     /// 初始化
