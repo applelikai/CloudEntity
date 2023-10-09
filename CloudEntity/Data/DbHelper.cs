@@ -13,11 +13,11 @@ namespace CloudEntity.Data
         /// <summary>
         /// 连接字符串
         /// </summary>
-        private string _connectionString;
+        private readonly string _connectionString;
         /// <summary>
         /// 数据库默认架构名（或用户名 或模式 总之就是表名前缀）
         /// </summary>
-        private string _defaultSchemaName;
+        private readonly string _defaultSchemaName;
 
         /// <summary>
         /// 数据库默认架构名（或用户名 或模式 总之就是表名前缀）

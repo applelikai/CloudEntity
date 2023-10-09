@@ -13,11 +13,26 @@ namespace CloudEntity.CommandTrees.Commom
         /// 所有的查询的列名
         /// </summary>
         private readonly IList<string> _selectNames;
+        /// <summary>
+        /// Select子节点集合
+        /// </summary>
+        private IBuilderCollection _selectBuilders;
 
         /// <summary>
         /// Select节点
         /// </summary>
-        protected IBuilderCollection Select { get; private set; }
+        protected IBuilderCollection Select
+        {
+            get
+            {
+                // 若Select子节点集合为空
+                if (_selectBuilders == null)
+                    // 则创建Select子节点集合
+                    _selectBuilders = this.CreateSelectBuilder();
+                // 最后获取Select子节点集合
+                return _selectBuilders;
+            }
+        }
         /// <summary>
         /// From节点
         /// </summary>
@@ -68,7 +83,6 @@ namespace CloudEntity.CommandTrees.Commom
             // 初始化查询列名
             _selectNames = new List<string>();
             // 初始化各个子节点
-            this.Select = this.CreateSelectBuilder();
             this.From = new BuilderCollection("\n      FROM ", string.Empty, "\n", string.Empty);
             this.Where = new BuilderCollection("\n     WHERE ", "       AND ", "\n", string.Empty);
             this.GroupBy = new BuilderCollection("\n  GROUP BY", "           ", ",\n", string.Empty);

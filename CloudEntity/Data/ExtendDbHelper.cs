@@ -39,7 +39,7 @@ namespace CloudEntity.Data
         /// <param name="dbHelper">操作数据库的DbHelper</param>
         /// <param name="parameterModel">参数模型对象</param>
         /// <returns>sql参数流</returns>
-        private static IEnumerable<IDbDataParameter> GetParameters(this DbHelper dbHelper, object parameterModel)
+        private static IEnumerable<IDbDataParameter> GetParameters(this IDbHelper dbHelper, object parameterModel)
         {
             //遍历所有的属性并创建返回sql参数
             foreach (PropertyInfo property in parameterModel.GetType().GetRuntimeProperties())
@@ -55,7 +55,7 @@ namespace CloudEntity.Data
         /// <param name="commandText">sql命令</param>
         /// <param name="marker">sql参数标识符号</param>
         /// <returns>sql参数流</returns>
-        private static IEnumerable<IDbDataParameter> GetParameters(this DbHelper dbHelper, object parameterModel, string commandText, char marker)
+        private static IEnumerable<IDbDataParameter> GetParameters(this IDbHelper dbHelper, object parameterModel, string commandText, char marker)
         {
             //遍历所有的属性并创建返回sql参数
             foreach (PropertyInfo property in parameterModel.GetType().GetRuntimeProperties())
@@ -74,7 +74,7 @@ namespace CloudEntity.Data
         /// <param name="commandText">sql命令</param>
         /// <param name="model">对象</param>
         /// <returns>受影响行数</returns>
-        public static int Modify<TModel>(this DbHelper dbHelper, string commandText, TModel model)
+        public static int Modify<TModel>(this IDbHelper dbHelper, string commandText, TModel model)
             where TModel : class, new()
         {
             //执行修改并获取受影响的行数
@@ -89,7 +89,7 @@ namespace CloudEntity.Data
         /// <param name="model">对象</param>
         /// <param name="marker">sql参数标识符</param>
         /// <returns>受影响行数</returns>
-        public static int Modify<TModel>(this DbHelper dbHelper, string commandText, TModel model, char marker)
+        public static int Modify<TModel>(this IDbHelper dbHelper, string commandText, TModel model, char marker)
             where TModel : class, new()
         {
             //获取sql参数数组
@@ -105,7 +105,7 @@ namespace CloudEntity.Data
         /// <param name="commandText">sql命令</param>
         /// <param name="parameters">sql参数数组</param>
         /// <returns>对象流</returns>
-        public static IEnumerable<TModel> GetModels<TModel>(this DbHelper dbHelper, string commandText, params IDbDataParameter[] parameters)
+        public static IEnumerable<TModel> GetModels<TModel>(this IDbHelper dbHelper, string commandText, params IDbDataParameter[] parameters)
             where TModel : class, new()
         {
             //获取TModel类型的对象存取器
@@ -121,7 +121,7 @@ namespace CloudEntity.Data
         /// <param name="commandText">sql命令</param>
         /// <param name="parameterModel">参数对象</param>
         /// <returns>对象流</returns>
-        public static IEnumerable<TModel> GetModels<TModel>(this DbHelper dbHelper, string commandText, object parameterModel)
+        public static IEnumerable<TModel> GetModels<TModel>(this IDbHelper dbHelper, string commandText, object parameterModel)
             where TModel : class, new()
         {
             //获取sql参数数组

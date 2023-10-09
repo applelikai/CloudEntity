@@ -55,7 +55,7 @@ namespace CloudEntity.Internal.Data.Entity
             where TModel : class, new()
         {
             // 获取SELECT命令生成树
-            ISelectCommandTree selectCommandTree = base.CommandFactory.GetQueryTree(base.NodeBuilders);
+            ISelectCommandTree selectCommandTree = base.CommandFactory.GetTopQueryTree(base.NodeBuilders, this.TopCount);
             // 获取sql命令
             string commandText = selectCommandTree.Compile();
             // 构建读取DataReader，创建填充获取TModel对象的匿名函数
@@ -70,7 +70,7 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TEntity> GetEnumerator()
         {
             // 获取SELECT命令生成树
-            ISelectCommandTree selectCommandTree = base.CommandFactory.GetQueryTree(base.NodeBuilders);
+            ISelectCommandTree selectCommandTree = base.CommandFactory.GetTopQueryTree(base.NodeBuilders, this.TopCount);
             // 获取sql命令
             string commandText = selectCommandTree.Compile();
             // 构建读取DataReader，创建填充获取实体对象的匿名函数
