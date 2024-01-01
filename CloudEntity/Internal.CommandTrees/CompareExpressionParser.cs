@@ -109,9 +109,14 @@ namespace CloudEntity.Internal.CommandTrees
                 NodeType = binaryExpression.NodeType,
                 RightBuilder = base.GetSqlBuilder(parameterExpression, binaryExpression.Right, ref parameterName, ref parameterValue)
             };
-            // 确定sql参数节点前，先确定正式的sql参数名称，并设置参数
-            parameterName = parameterSetter.GetParameterName(parameterName);
-            parameterSetter.AddSqlParameter(parameterName, parameterValue);
+            // 当sql参数值不为空时，才能确定sql参数节点存在，可以添加sql参数
+            if (parameterValue != null)
+            {
+                // 确定正式的sql参数名称，
+                parameterName = parameterSetter.GetParameterName(parameterName);
+                // 并添加sql参数
+                parameterSetter.AddSqlParameter(parameterName, parameterValue);
+            }
             // 确定二叉树sql表达式节点的sql参数节点
             if (binaryBuilder.LeftBuilder == null)
                 binaryBuilder.LeftBuilder = base.GetParameterBuilder(parameterName);

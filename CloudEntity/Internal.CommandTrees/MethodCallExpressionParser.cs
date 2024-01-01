@@ -86,18 +86,22 @@ namespace CloudEntity.Internal.CommandTrees
                 RightBuilder = base.GetSqlBuilder(parameterExpression, methodCallExpression.Arguments[0], ref parameterName, ref parameterValue)
             };
             binaryBuilder.SqlOperator = this.GetSqlOperator(methodCallExpression.Method.Name, ref parameterValue);
-            // 确定sql参数节点前，先确定正式的sql参数名称
-            parameterName = parameterSetter.GetParameterName(parameterName);
+            // 检查解析表达式是否正确
+            if (string.IsNullOrEmpty(binaryBuilder.SqlOperator))
+                throw new Exception(string.Format("Unknow Expression: {0}", methodCallExpression.ToString()));
+            // 当sql参数值不为空时，才能确定sql参数节点存在，可以添加sql参数
+            if (parameterValue != null)
+            {
+                // 确定正式的sql参数名称，
+                parameterName = parameterSetter.GetParameterName(parameterName);
+                // 并添加sql参数
+                parameterSetter.AddSqlParameter(parameterName, parameterValue);
+            }
             // 确定二叉树sql表达式节点的sql参数节点
             if (binaryBuilder.LeftBuilder == null)
                 binaryBuilder.LeftBuilder = base.GetParameterBuilder(parameterName);
             if (binaryBuilder.RightBuilder == null)
                 binaryBuilder.RightBuilder = base.GetParameterBuilder(parameterName);
-            // 检查解析表达式是否正确
-            if (string.IsNullOrEmpty(binaryBuilder.SqlOperator))
-                throw new Exception(string.Format("Unknow Expression: {0}", methodCallExpression.ToString()));
-            // 添加sql参数
-            parameterSetter.AddSqlParameter(parameterName, parameterValue);
             // 获取sql表达式节点及其附属参数
             return binaryBuilder;
         }
