@@ -22,15 +22,15 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// 操作数据库某Table的线程锁(避免同时刻执行增删改)
         /// </summary>
-        private object _modifyLocker;
+        private readonly object _modifyLocker;
         /// <summary>
         /// sql表达式节点集合
         /// </summary>
-        private IList<INodeBuilder> _nodebuilders;
+        private readonly IList<INodeBuilder> _nodebuilders;
         /// <summary>
         /// sql参数集合
         /// </summary>
-        private IList<IDbDataParameter> _sqlParameters;
+        private readonly IList<IDbDataParameter> _sqlParameters;
 
         /// <summary>
         /// 获取当前实体对象
@@ -41,14 +41,20 @@ namespace CloudEntity.Internal.Data.Entity
         {
             get
             {
-                //非空检查
+                // 非空检查
                 Check.ArgumentNull(id, nameof(id));
-                //获取查询命令生成树
+
+                // 获取查询列名数组
+                string[] columnNames = this.GetSelectNames().ToArray();
+                // 获取从DataReader到实体的转换器
+                ReaderEntityConverter converter = new ReaderEntityConverter(columnNames, typeof(TEntity), base.TableMapper);
+
+                // 获取查询命令生成树
                 ICommandTree queryTree = base.CommandFactory.GetQueryTree(this.GetQueryByIdChildBuilders());
-                //获取Sql参数数组
+                // 获取Sql参数数组
                 IDbDataParameter[] parameters = { base.DbHelper.CreateParameter(base.TableMapper.KeyMapper.Property.Name, id) };
-                //执行查询
-                return base.DbHelper.GetResults(this.CreateEntity, queryTree.Compile(), parameters: parameters).SingleOrDefault();
+                // 执行查询
+                return base.DbHelper.GetResults(converter.Convert, queryTree.Compile(), parameters: parameters).SingleOrDefault() as TEntity;
             }
         }
         /// <summary>
@@ -120,31 +126,6 @@ namespace CloudEntity.Internal.Data.Entity
             //获取Where节点的子节点集合
             IColumnMapper keyColumnMapper = base.TableMapper.KeyMapper;
             yield return base.CommandFactory.GetEqualsBuilder(tableAlias, keyColumnMapper.ColumnName, keyColumnMapper.Property.Name);
-        }
-        /// <summary>
-        /// 创建实体对象并读取DataReader数据填充对象属性
-        /// </summary>
-        /// <param name="reader">数据流</param>
-        /// <returns>实体对象</returns>
-        private TEntity CreateEntity(IDataReader reader)
-        {
-            // 创建实体对象
-            object entity = base.EntityAccessor.CreateInstance();
-            // 遍历ColumnMapper列表
-            foreach (IColumnMapper columnMapper in base.TableMapper.GetColumnMappers())
-            {
-                // 获取查询列的列名
-                string selectColumnName = columnMapper.ColumnAlias ?? columnMapper.ColumnName;
-                //获取值
-                object value = reader[selectColumnName];
-                //若当前列值为空,则跳过,不赋值
-                if (value is DBNull)
-                    continue;
-                //为entity当前属性赋值
-                base.EntityAccessor.SetValue(columnMapper.Property.Name, entity, value);
-            }
-            // 获取实体对象
-            return entity as TEntity;
         }
 
         /// <summary>
@@ -252,10 +233,15 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>TEntity类型的枚举器</returns>
         public IEnumerator<TEntity> GetEnumerator()
         {
+            // 获取查询列名数组
+            string[] columnNames = this.GetSelectNames().ToArray();
+            // 获取从DataReader到实体的转换器
+            ReaderEntityConverter converter = new ReaderEntityConverter(columnNames, typeof(TEntity), base.TableMapper);
+
             // 获取查询sql命令
             string commandText = this.ToSqlString();
             // 执行查询获取结果
-            foreach (TEntity entity in base.DbHelper.GetResults(this.CreateEntity, commandText))
+            foreach (TEntity entity in base.DbHelper.GetResults(converter.Convert, commandText))
                 yield return entity;
         }
         /// <summary>

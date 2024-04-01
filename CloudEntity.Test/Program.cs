@@ -1,4 +1,5 @@
-﻿using CloudEntity.Core.Data.Entity;
+﻿using CloudEntity;
+using CloudEntity.Core.Data.Entity;
 using CloudEntity.Data.Entity;
 using CloudEntity.Test.Entities.SysManagement;
 using CloudEntity.Test.Models;
@@ -9,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 
 public class Program
 {
@@ -90,7 +92,7 @@ public class Program
         // 创建角色id
         string roleId = GuidHelper.NewOrdered().ToString();
         // 添加角色
-        container.List<Role>().Add(new Role(roleId, "管理员"));
+        container.List<Role>().AddModel(new RoleItem(roleId, "管理员"));
         // 添加用户
         container.List<User>().Add(new User(GuidHelper.NewOrdered().ToString())
         {
@@ -115,7 +117,7 @@ public class Program
         // 遍历用户并打印
         foreach (User user in users)
         {
-            Console.WriteLine("{0} {1} {2:yyyy/MM/dd HH:mm:ss}", user.Role?.RoleName, user.UserName, user.CreatedTime);
+            Console.WriteLine("{0} {1} {2} {3:yyyy/MM/dd HH:mm:ss}", user.UserId, user.Role?.RoleName, user.UserName, user.CreatedTime);
         }
     }
     /// <summary>
@@ -140,7 +142,7 @@ public class Program
             .SetIncludeBy(r => r.RoleName);
         // 获取用户数据源
         IDbQuery<User> users = _container.CreateQuery<User>()
-            .SetIncludeBy(u => new { u.UserName, u.CreatedTime})
+            .SetIncludeBy(u => new { u.UserId, u.UserName, u.CreatedTime})
             .SetJoin(roles, u => u.Role, (u, r) => u.RoleId == r.RoleId)
             .SetSort(u => u.Role.RoleName);
         // 第一次打印用户列表
@@ -152,7 +154,7 @@ public class Program
         // 第三次打印用户列表
         Program.PrintUsers(pagedUsers);
         // 第四次映射为微信用户列表并打印
-        // Program.PrintUsers(pagedUsers.Cast<WechatUser>());
+        Program.PrintUsers(pagedUsers.Cast<WechatUser>());
     }
     /// <summary>
     /// TOP查询测试

@@ -2,10 +2,8 @@ using CloudEntity.CommandTrees;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
 using CloudEntity.Mapping;
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 
 namespace CloudEntity.Internal.Data.Entity
@@ -54,14 +52,40 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerable<TModel> Cast<TModel>()
             where TModel : class, new()
         {
-            // 获取SELECT命令生成树
-            ISelectCommandTree selectCommandTree = base.CommandFactory.GetTopQueryTree(base.NodeBuilders, this.TopCount);
+            // 获取查询列名数组
+            string[] columnNames = this.GetSelectNames().ToArray();
+            // 获取从DataReader到映射类型的转换器
+            ReaderModelConverter<TModel> converter = new ReaderModelConverter<TModel>(columnNames, typeof(TEntity), base.MapperContainer, base.PropertyLinkers);
+
+            // 获取查询命令生成树
+            ICommandTree commandTree = base.CommandFactory.GetTopQueryTree(base.NodeBuilders, this.TopCount);
             // 获取sql命令
-            string commandText = selectCommandTree.Compile();
-            // 构建读取DataReader，创建填充获取TModel对象的匿名函数
-            Func<IDataReader, TModel> getModel = this.BuildGetModelFunc<TModel>(selectCommandTree.SelectNames.ToArray());
+            string commandText = commandTree.Compile();
+
             // 执行查询获取映射对象迭代器
-            return base.DbHelper.GetResults(getModel, commandText, parameters: base.Parameters.ToArray());
+            return base.DbHelper.GetResults(converter.Convert, commandText, parameters: base.Parameters.ToArray());
+        }
+        /// <summary>
+        /// 将此数据源的查询结果映射为TModel对象数据源
+        /// </summary>
+        /// <param name="entityModelMaps">实体类型与映射类型部分属性映射字典</param>
+        /// <typeparam name="TModel">TModel对象（只要是有无参构造函数的类就可以）</typeparam>
+        /// <returns>TModel对象数据源</returns>
+        public IEnumerable<TModel> Cast<TModel>(IDictionary<string, string> entityModelMaps)
+            where TModel : class, new()
+        {
+            // 获取查询列名数组
+            string[] columnNames = this.GetSelectNames().ToArray();
+            // 获取从DataReader到映射类型的转换器
+            ReaderModelConverter<TModel> converter = new ReaderModelConverter<TModel>(columnNames, typeof(TEntity), base.MapperContainer, base.PropertyLinkers, entityModelMaps);
+
+            // 获取查询命令生成树
+            ICommandTree commandTree = base.CommandFactory.GetTopQueryTree(base.NodeBuilders, this.TopCount);
+            // 获取sql命令
+            string commandText = commandTree.Compile();
+
+            // 执行查询获取映射对象迭代器
+            return base.DbHelper.GetResults(converter.Convert, commandText, parameters: base.Parameters.ToArray());
         }
         /// <summary>
         /// 获取枚举器
@@ -69,14 +93,18 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>枚举器</returns>
         public IEnumerator<TEntity> GetEnumerator()
         {
+            // 获取查询列名数组
+            string[] columnNames = this.GetSelectNames().ToArray();
+            // 获取从DataReader到实体的转换器
+            ReaderEntityConverter converter = new ReaderEntityConverter(columnNames, typeof(TEntity), base.MapperContainer, base.PropertyLinkers);
+
             // 获取SELECT命令生成树
-            ISelectCommandTree selectCommandTree = base.CommandFactory.GetTopQueryTree(base.NodeBuilders, this.TopCount);
+            ICommandTree commandTree = base.CommandFactory.GetTopQueryTree(base.NodeBuilders, this.TopCount);
             // 获取sql命令
-            string commandText = selectCommandTree.Compile();
-            // 构建读取DataReader，创建填充获取实体对象的匿名函数
-            Func<IDataReader, TEntity> getEntity = base.BuildGetEntityFunc(selectCommandTree.SelectNames.ToArray());
+            string commandText = commandTree.Compile();
+
             // 执行查询获取实体对象列表并遍历
-            foreach (TEntity entity in base.DbHelper.GetResults(getEntity, commandText, parameters: base.Parameters.ToArray()))
+            foreach (TEntity entity in base.DbHelper.GetResults(converter.Convert, commandText, parameters: base.Parameters.ToArray()))
             {
                 // 依次获取实体对象
                 yield return entity;

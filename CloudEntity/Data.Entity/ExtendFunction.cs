@@ -104,7 +104,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">数据源</param>
         /// <param name="predicate">条件表达式</param>
         /// <returns>数据源中所有元素是否都满足条件</returns>
-        private static bool All<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, bool>> predicate)
+        public static bool All<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
         {
             return source.Count() == source.Count(predicate);
@@ -116,7 +116,7 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">数据源</param>
         /// <param name="predicate">条件表达式</param>
         /// <returns>数据源中是否任何一个元素都满足条件</returns>
-        private static bool Any<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, bool>> predicate)
+        public static bool Any<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
         {
             return source.Count(predicate) > 0;

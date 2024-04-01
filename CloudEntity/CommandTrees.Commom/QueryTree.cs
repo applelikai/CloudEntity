@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 
 namespace CloudEntity.CommandTrees.Commom
 {
@@ -7,12 +6,8 @@ namespace CloudEntity.CommandTrees.Commom
     /// 查询命令生成树
     /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
-	public class QueryTree : CommandTree, ISelectCommandTree
+	public class QueryTree : CommandTree
     {
-        /// <summary>
-        /// 所有的查询的列名
-        /// </summary>
-        private readonly IList<string> _selectNames;
         /// <summary>
         /// Select子节点集合
         /// </summary>
@@ -51,14 +46,6 @@ namespace CloudEntity.CommandTrees.Commom
         protected IBuilderCollection OrderBy { get; private set; }
 
         /// <summary>
-        /// 查询列名列表
-        /// </summary>
-        public IEnumerable<string> SelectNames
-        {
-            get { return _selectNames; }
-        }
-
-        /// <summary>
         /// 创建Select节点
         /// </summary>
         /// <returns>Select节点</returns>
@@ -80,8 +67,6 @@ namespace CloudEntity.CommandTrees.Commom
         public QueryTree(char parameterMarker)
             : base(parameterMarker) 
         {
-            // 初始化查询列名
-            _selectNames = new List<string>();
             // 初始化各个子节点
             this.From = new BuilderCollection("\n      FROM ", string.Empty, "\n", string.Empty);
             this.Where = new BuilderCollection("\n     WHERE ", "       AND ", "\n", string.Empty);
@@ -89,23 +74,6 @@ namespace CloudEntity.CommandTrees.Commom
             this.OrderBy = new BuilderCollection("\n  ORDER BY ", "           ", ",\n", string.Empty);
         }
 
-        /// <summary>
-        /// 添加SELECT子节点
-        /// </summary>
-        /// <param name="sqlBuilder">sql子节点</param>
-        public void AppendSelect(INodeBuilder sqlBuilder)
-        {
-            // 若当前节点为Column节点
-            if (sqlBuilder.BuilderType == BuilderType.Column)
-            {
-                // 获取列节点
-                ColumnBuilder columnBuilder = sqlBuilder as ColumnBuilder;
-                // 添加列名
-                _selectNames.Add(columnBuilder.ColumnName);
-            }
-            // 为SELECT节点添加子节点
-            this.Select.Append(sqlBuilder);
-        }
         /// <summary>
         /// 添加SELECT子节点
         /// </summary>

@@ -5,7 +5,7 @@ namespace CloudEntity
 {
     /// <summary>
     /// 用于扩展object
-    /// 李凯 2015/10/08
+    /// 李凯 2024/03/25
     /// </summary>
     public static class TypeHelper
     {
@@ -30,18 +30,35 @@ namespace CloudEntity
             return (TValue)result;
         }
         /// <summary>
+        /// 获取当前类型的目标类型
+        /// </summary>
+        /// <param name="type">当前类型</param>
+        /// <returns>当前类型的目标类型</returns>
+        public static Type SourceType(this Type type)
+        {
+            // 若当前类型不是可空类型,直接返回当前类型
+            if (type.Name != "Nullable`1")
+                return type;
+            // 从Nullable类型名称中获取最终的类型名称
+            int start = "System.Nullable`1[[".Length;
+            int length = type.FullName.IndexOf(',') - start;
+            string typeFullName = type.FullName.Substring(start, length);
+            // 获取最终目标类型
+            return Type.GetType(typeFullName);
+        }
+        /// <summary>
         /// 获取当前类型的目标类型名称
         /// </summary>
         /// <param name="type">当前类型</param>
         /// <returns>当前类型的目标类型名称</returns>
         public static string SourceTypeName(this Type type)
         {
-            //若当前类型不是基本类型，扔出异常
+            // 若当前类型不是基本类型，扔出异常
             Check.IsBaseType(type);
-            //若当前类型不是可空类型,直接返回当前类型
+            // 若当前类型不是可空类型,直接返回当前类型
             if (type.Name != "Nullable`1")
                 return type.Name;
-            //从Nullable类型名称中获取最终的类型名称
+            // 从Nullable类型名称中获取最终的类型名称
             int start = "System.Nullable`1[[System.".Length;
             int length = type.FullName.IndexOf(',') - start;
             return type.FullName.Substring(start, length);

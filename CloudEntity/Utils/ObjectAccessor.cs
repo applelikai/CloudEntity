@@ -8,34 +8,34 @@ namespace CloudEntity
     /// <summary>
     /// 用于创建对象，并给对象属性赋值的实体访问类
     /// 李凯 Apple_Li 15150598493
-    /// 最后修改时间：2023/02/06
+    /// 最后修改时间：2024/03/24
     /// </summary>
     public sealed class ObjectAccessor
     {
         /// <summary>
         /// 创建对象的委托
         /// </summary>
-        private Delegate _creator;
+        private readonly Delegate _creator;
         /// <summary>
         /// creators线程锁
         /// </summary>
-        private object _creatorLocker;
+        private readonly object _creatorLocker;
         /// <summary>
         /// 创建对象的匿名函数字典
         /// </summary>
-        private IDictionary<ConstructorInfo, Delegate> _creators;
+        private readonly IDictionary<ConstructorInfo, Delegate> _creators;
         /// <summary>
         /// 属性访问器字典
         /// </summary>
-        private IDictionary<string, PropertyAccessor> _propertyAccessors;
+        private readonly IDictionary<string, PropertyAccessor> _propertyAccessors;
         /// <summary>
         /// 访问器字典线程锁
         /// </summary>
-        private static object accessorsLocker;
+        private readonly static object _accessorsLocker;
         /// <summary>
         /// 对象访问器字典
         /// </summary>
-        private static IDictionary<string, ObjectAccessor> accessors;
+        private readonly static IDictionary<string, ObjectAccessor> _accessors;
 
         /// <summary>
         /// Object's type
@@ -48,8 +48,8 @@ namespace CloudEntity
         /// </summary>
         static ObjectAccessor()
         {
-            ObjectAccessor.accessorsLocker = new object();
-            ObjectAccessor.accessors = new Dictionary<string, ObjectAccessor>();
+            _accessorsLocker = new object();
+            _accessors = new Dictionary<string, ObjectAccessor>();
         }
         /// <summary>
         /// 创建对象访问器
@@ -93,12 +93,12 @@ namespace CloudEntity
         /// <returns>属性访问器字典</returns>
         private IDictionary<string, PropertyAccessor> GetPropertyAccessors()
         {
-            //创建属性访问器字典
+            // 创建属性访问器字典
             IDictionary<string, PropertyAccessor> propertyAccessors = new Dictionary<string, PropertyAccessor>();
-            //遍历属性,创建并注册属性访问器
+            // 遍历属性,创建并注册属性访问器
             foreach (PropertyInfo property in this.GetProperties())
                 propertyAccessors.Add(property.Name, new PropertyAccessor(property));
-            //返回属性访问器字典
+            // 返回属性访问器字典
             return propertyAccessors;
         }
         /// <summary>
@@ -142,8 +142,19 @@ namespace CloudEntity
         /// <param name="value">值</param>
         public void SetValue(string propertyName, object instance, object value)
         {
-            //为entity当前属性赋值
+            // 为对象当前属性赋值
             _propertyAccessors[propertyName].SetValue(instance, value);
+        }
+        /// <summary>
+        /// 给对象某属性赋转换值(值类型不一致则先转换)
+        /// </summary>
+        /// <param name="propertyName">对象某属性的名称</param>
+        /// <param name="instance">对象</param>
+        /// <param name="value">值</param>
+        public void SetConvertValue(string propertyName, object instance, object value)
+        {
+            // 为对象当前属性赋值(若值类型与属性类型不一致，则转换值类型再赋给当前对象属性)
+            _propertyAccessors[propertyName].SetConvertValue(instance, value);
         }
         /// <summary>
         /// 给对象某属性赋值
@@ -170,7 +181,7 @@ namespace CloudEntity
         /// <returns>对象某属性的值</returns>
         public object GetValue(string propertyName, object instance)
         {
-            //获取对象实例当前属性值
+            // 获取对象实例当前属性值
             return _propertyAccessors[propertyName].GetValue(instance);
         }
         /// <summary>
@@ -181,13 +192,13 @@ namespace CloudEntity
         /// <returns>对象某属性的值</returns>
         public object TryGetValue(string propertyName, object instance)
         {
-            //若不包含当前属性，返回null
+            // 若不包含当前属性，返回null
             if (!_propertyAccessors.ContainsKey(propertyName))
                 return null;
-            //若对象实例为空,返回null
+            // 若对象实例为空,返回null
             if (instance == null)
                 return null;
-            //获取对象实例当前属性值
+            // 获取对象实例当前属性值
             return _propertyAccessors[propertyName].GetValue(instance);
         }
         /// <summary>
@@ -205,18 +216,18 @@ namespace CloudEntity
         /// <returns>实体对象</returns>
         public object CreateInstance(object[] arguments)
         {
-            //获取类型数组
+            // 获取类型数组
             Type[] argumentTypes = new Type[arguments.Length];
             for (int i = 0; i < argumentTypes.Length; i++)
             {
                 Check.ArgumentNull(arguments[i], "arguments", string.Format("arguments[{0}] is null", i));
                 argumentTypes[i] = arguments[i].GetType();
             }
-            //获取构造函数
+            // 获取构造函数
             ConstructorInfo constructor = this.ObjectType.GetConstructor(argumentTypes);
             if (constructor == null)
                 return null;
-            //创建对象
+            // 创建对象
             return this.GetCreator(constructor).DynamicInvoke(arguments);
         }
         /// <summary>
@@ -234,19 +245,19 @@ namespace CloudEntity
         /// <returns>对象访问器</returns>
         public static ObjectAccessor GetAccessor(Type objectType)
         {
-            //检查
+            // 非空检查
             Check.ArgumentNull(objectType, nameof(objectType));
-            //若字典中存在当前类型访问器,直接返回
+            // 若字典中存在当前类型访问器,直接返回
             Start:
-            if (ObjectAccessor.accessors.ContainsKey(objectType.FullName))
-                return ObjectAccessor.accessors[objectType.FullName];
-            //进入线程安全模式
-            lock (ObjectAccessor.accessorsLocker)
+            if (ObjectAccessor._accessors.ContainsKey(objectType.FullName))
+                return ObjectAccessor._accessors[objectType.FullName];
+            // 进入线程安全模式
+            lock (ObjectAccessor._accessorsLocker)
             {
-                //若字典中不存在当前类型访问器,创建并添加到字典中
-                if (!ObjectAccessor.accessors.ContainsKey(objectType.FullName))
-                    ObjectAccessor.accessors.Add(objectType.FullName, new ObjectAccessor(objectType));
-                //回到Start,重新再字典中获取当前类型的访问器
+                // 若字典中不存在当前类型访问器,创建并添加到字典中
+                if (!ObjectAccessor._accessors.ContainsKey(objectType.FullName))
+                    ObjectAccessor._accessors.Add(objectType.FullName, new ObjectAccessor(objectType));
+                // 回到Start,重新再字典中获取当前类型的访问器
                 goto Start;
             }
         }

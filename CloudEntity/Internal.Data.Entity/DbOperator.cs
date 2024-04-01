@@ -20,11 +20,11 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// insert所有非自增列的sql
         /// </summary>
-        private string _insertAllCommandText;
+        private readonly string _insertAllCommandText;
         /// <summary>
         /// update所有非主键列的sql
         /// </summary>
-        private string _updateAllCommandText;
+        private readonly string _updateAllCommandText;
 
         /// <summary>
         /// 操作数据库的Helper
@@ -35,13 +35,13 @@ namespace CloudEntity.Internal.Data.Entity
         /// </summary>
         protected ICommandFactory CommandFactory { get; private set; }
         /// <summary>
-        /// 实体访问器
-        /// </summary>
-        protected ObjectAccessor EntityAccessor { get; private set; }
-        /// <summary>
         /// Table元数据解析器
         /// </summary>
         protected ITableMapper TableMapper { get; private set; }
+        /// <summary>
+        /// 实体访问器
+        /// </summary>
+        protected ObjectAccessor EntityAccessor { get; private set; }
 
         /// <summary>
         /// 插入元素的Sql命令
@@ -277,19 +277,41 @@ namespace CloudEntity.Internal.Data.Entity
         /// 获取sql参数集合
         /// </summary>
         /// <param name="commandText">sql命令</param>
-        /// <param name="entity">实体</param>
+        /// <param name="model">映射对象</param>
         /// <returns>sql参数集合</returns>
-        protected IEnumerable<IDbDataParameter> GetParameters(string commandText, object entity)
+        protected IEnumerable<IDbDataParameter> GetParameters(string commandText, object model)
         {
-            //遍历ColumnMapper，依次返回sql参数
+            // 获取实体对象(或映射对象)的访问器
+            ObjectAccessor objectAccessor = ObjectAccessor.GetAccessor(model.GetType());
+            // 遍历ColumnMapper，依次返回sql参数
             foreach (IColumnMapper columnMapper in this.TableMapper.GetColumnMappers())
             {
                 if (commandText.Contains(string.Concat(this.CommandFactory.ParameterMarker, columnMapper.Property.Name)))
                 {
-                    //获取参数值
+                    // 获取参数值
+                    object value = objectAccessor.TryGetValue(columnMapper.Property.Name, model);
+                    // 依次获取参数
+                    yield return this.DbHelper.CreateParameter(columnMapper.Property.Name, value ?? DBNull.Value);
+                }
+            }
+        }
+        /// <summary>
+        /// 获取sql参数集合
+        /// </summary>
+        /// <param name="commandText">sql命令</param>
+        /// <param name="entity">实体对象</param>
+        /// <returns>sql参数集合</returns>
+        protected IEnumerable<IDbDataParameter> GetParameters(string commandText, TEntity entity)
+        {
+            // 遍历ColumnMapper，依次返回sql参数
+            foreach (IColumnMapper columnMapper in this.TableMapper.GetColumnMappers())
+            {
+                if (commandText.Contains(string.Concat(this.CommandFactory.ParameterMarker, columnMapper.Property.Name)))
+                {
+                    // 获取参数值
                     object value = this.EntityAccessor.GetValue(columnMapper.Property.Name, entity);
-                    //依次获取参数
-                    yield return this.DbHelper.CreateParameter(columnMapper.Property.Name, value);
+                    // 依次获取参数
+                    yield return this.DbHelper.CreateParameter(columnMapper.Property.Name, value ?? DBNull.Value);
                 }
             }
         }
@@ -329,25 +351,26 @@ namespace CloudEntity.Internal.Data.Entity
             _insertAllCommandText = this.GetInsertAllCommandText();
             _updateAllCommandText = this.GetUpdateAllCommandText();
         }
+        #region 添加实体对象
         /// <summary>
         /// 向数据库插入实体对象指定插入的列的值
         /// </summary>
         /// <param name="entity">待添加的实体对象</param>
-        /// <returns>添加的实体对象的数量</returns>
+        /// <returns>INSERT的行数</returns>
         public int Add(TEntity entity)
         {
-            //非空检查
+            // 非空检查
             Check.ArgumentNull(entity, nameof(entity));
-            //获取sql参数数组
+            // 获取sql参数数组
             IDbDataParameter[] parameters = this.GetParameters(this.InsertCommandText, entity).ToArray();
-            //执行insert
+            // 执行insert
             return this.ExecuteUpdate(this.InsertCommandText, parameters);
         }
         /// <summary>
         /// (异步)向数据库插入实体对象指定插入的列的值
         /// </summary>
         /// <param name="entity">待添加的实体对象</param>
-        /// <returns>添加的实体对象的数量</returns>
+        /// <returns>INSERT的行数</returns>
         public Task<int> AddAsync(TEntity entity)
         {
             return Task.Factory.StartNew(() => this.Add(entity));
@@ -356,25 +379,83 @@ namespace CloudEntity.Internal.Data.Entity
         /// 向数据库插入实体对象所有非自增标识的列的值
         /// </summary>
         /// <param name="entity">待添加的实体对象</param>
-        /// <returns>添加的实体对象的数量</returns>
+        /// <returns>INSERT的行数</returns>
         public int Insert(TEntity entity)
         {
-            //非空检查
+            // 非空检查
             Check.ArgumentNull(entity, nameof(entity));
-            //获取sql参数数组
+            // 获取sql参数数组
             IDbDataParameter[] parameters = this.GetParameters(_insertAllCommandText, entity).ToArray();
-            //执行insert
+            // 执行insert
             return this.ExecuteUpdate(_insertAllCommandText, parameters);
         }
         /// <summary>
         /// (异步)向数据库插入实体对象所有非自增标识的列的值
         /// </summary>
         /// <param name="entity">待添加的实体对象</param>
-        /// <returns>添加的实体对象的数量</returns>
+        /// <returns>INSERT的行数</returns>
         public Task<int> InsertAsync(TEntity entity)
         {
             return Task.Factory.StartNew(() => this.Insert(entity));
         }
+        #endregion
+        #region 添加映射对象
+        /// <summary>
+        /// 向数据库插入映射对象指定插入的列的值
+        /// </summary>
+        /// <typeparam name="TModel">映射类型（映射类型的属性名必须与实体类型的属性名一致）</typeparam>
+        /// <param name="model">映射对象</param>
+        /// <returns>INSERT的行数</returns>
+        public int AddModel<TModel>(TModel model)
+            where TModel : class
+        {
+            // 非空检查
+            Check.ArgumentNull(model, nameof(model));
+            // 获取sql参数数组
+            IDbDataParameter[] parameters = this.GetParameters(this.InsertCommandText, model).ToArray();
+            // 执行insert
+            return this.ExecuteUpdate(this.InsertCommandText, parameters);
+        }
+        /// <summary>
+        /// 异步向数据库插入映射对象指定插入的列的值
+        /// </summary>
+        /// <typeparam name="TModel">映射类型（映射类型的属性名必须与实体类型的属性名一致）</typeparam>
+        /// <param name="model">映射对象</param>
+        /// <returns>INSERT的行数</returns>
+        public Task<int> AddModelAsync<TModel>(TModel model)
+            where TModel : class
+        {
+            return Task.Factory.StartNew(() => this.AddModel(model));
+        }
+        /// <summary>
+        /// 向数据库插入映射对象所有非自增标识的列的值
+        /// </summary>
+        /// <typeparam name="TModel">映射类型（映射类型的属性名必须与实体类型的属性名一致）</typeparam>
+        /// <param name="model">映射对象</param>
+        /// <returns>INSERT的行数</returns>
+        public int InsertModel<TModel>(TModel model)
+            where TModel : class
+        {
+            // 非空检查
+            Check.ArgumentNull(model, nameof(model));
+            // 获取sql参数数组
+            IDbDataParameter[] parameters = this.GetParameters(_insertAllCommandText, model).ToArray();
+            // 执行insert
+            return this.ExecuteUpdate(_insertAllCommandText, parameters);
+        }
+        /// <summary>
+        /// 异步向数据库插入映射对象所有非自增标识的列的值
+        /// </summary>
+        /// <typeparam name="TModel">映射类型（映射类型的属性名必须与实体类型的属性名一致）</typeparam>
+        /// <param name="model">映射对象</param>
+        /// <returns>INSERT的行数</returns>
+        public Task<int> InsertModelAsync<TModel>(TModel model)
+            where TModel : class
+        {
+            return Task.Factory.StartNew(() => this.InsertModel(model));
+        }
+        #endregion
+        #region 删除
         /// <summary>
         /// 删除数据库中的某个实体对象
         /// </summary>
@@ -382,11 +463,11 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>删除的实体对象的数量</returns>
         public int Remove(TEntity entity)
         {
-            //非空检查
+            // 非空检查
             Check.ArgumentNull(entity, nameof(entity));
-            //获取sql参数数组
+            // 获取sql参数数组
             IDbDataParameter[] parameters = this.GetParameters(this.DeleteCommandText, entity).ToArray();
-            //执行并返回DB受影响行数
+            // 执行并返回DB受影响行数
             return this.ExecuteUpdate(this.DeleteCommandText, parameters);
         }
         /// <summary>
@@ -420,58 +501,117 @@ namespace CloudEntity.Internal.Data.Entity
             // 执行并返回DB受影响行数
             return this.ExecuteUpdate(commandText, entities.Parameters.ToArray());
         }
+        #endregion
+        #region 保存修改实体对象
         /// <summary>
-        /// 将实体对象的所有的属性的值更新至数据库
+        /// 向数据库UPDATE实体对象的所有的非标识属性的值
         /// </summary>
         /// <param name="entity">实体对象</param>
-        /// <returns>修改的实体对象的数量</returns>
+        /// <returns>UPDATE的行数</returns>
         public int Modify(TEntity entity)
         {
-            //非空检查
+            // 非空检查
             Check.ArgumentNull(entity, nameof(entity));
-            //初始化sql参数集合
+            // 初始化sql参数集合
             IDbDataParameter[] parameters = this.GetParameters(_updateAllCommandText, entity).ToArray();
-            //执行并返回DB受影响行数
+            // 执行并返回DB受影响行数
             return this.ExecuteUpdate(_updateAllCommandText, parameters);
         }
         /// <summary>
-        /// (异步)将实体对象的所有的属性的值更新至数据库
+        /// (异步)向数据库UPDATE实体对象的所有的非标识属性的值
         /// </summary>
         /// <param name="entity">实体对象</param>
-        /// <returns>修改的实体对象的数量</returns>
+        /// <returns>UPDATE的行数</returns>
         public Task<int> ModifyAsync(TEntity entity)
         {
             return Task.Factory.StartNew(() => this.Modify(entity));
         }
         /// <summary>
-        /// 保存实体对象中所有指定修改的属性的值至数据库
+        /// 向数据库UPDATE实体对象中所有指定修改的属性的值
         /// </summary>
         /// <param name="entity">实体对象</param>
-        /// <returns>修改的实体对象的数量</returns>
+        /// <returns>UPDATE的行数</returns>
         public int Save(TEntity entity)
         {
-            //非空检查
+            // 非空检查
             Check.ArgumentNull(entity, nameof(entity));
-            //获取sql参数数组
+            // 获取sql参数数组
             IDbDataParameter[] parameters = this.GetParameters(this.UpdateCommandText, entity).ToArray();
-            //执行并返回DB受影响行数
+            // 执行并返回DB受影响行数
             return this.ExecuteUpdate(this.UpdateCommandText, parameters);
         }
         /// <summary>
-        /// (异步)保存实体对象中所有指定修改的属性的值至数据库
+        /// (异步)向数据库UPDATE实体对象中所有指定修改的属性的值
         /// </summary>
         /// <param name="entity">实体对象</param>
-        /// <returns>修改的实体对象的数量</returns>
+        /// <returns>UPDATE的行数</returns>
         public Task<int> SaveAsync(TEntity entity)
         {
             return Task.Factory.StartNew(() => this.Save(entity));
         }
+        #endregion
+        #region 保存修改映射对象
+        /// <summary>
+        /// 向数据库UPDATE映射对象的所有的非标识属性的值
+        /// </summary>
+        /// <typeparam name="TModel">映射类型（映射类型的属性名必须与实体类型的属性名一致）</typeparam>
+        /// <param name="model">映射对象</param>
+        /// <returns>UPDATE的行数</returns>
+        public int ModifyModel<TModel>(TModel model)
+            where TModel : class
+        {
+            // 非空检查
+            Check.ArgumentNull(model, nameof(model));
+            // 初始化sql参数集合
+            IDbDataParameter[] parameters = this.GetParameters(_updateAllCommandText, model).ToArray();
+            // 执行并返回DB受影响行数
+            return this.ExecuteUpdate(_updateAllCommandText, parameters);
+        }
+        /// <summary>
+        /// 异步向数据库UPDATE映射对象的所有的非标识属性的值
+        /// </summary>
+        /// <typeparam name="TModel">映射类型（映射类型的属性名必须与实体类型的属性名一致）</typeparam>
+        /// <param name="model">映射对象</param>
+        /// <returns>UPDATE的行数</returns>
+        public Task<int> ModifyModelAsync<TModel>(TModel model)
+            where TModel : class
+        {
+            return Task.Factory.StartNew(() => this.ModifyModel(model));
+        }
+        /// <summary>
+        /// 向数据库UPDATE映射对象中所有指定修改的属性的值
+        /// </summary>
+        /// <typeparam name="TModel">映射类型（映射类型的属性名必须与实体类型的属性名一致）</typeparam>
+        /// <param name="model">映射对象</param>
+        /// <returns>UPDATE的行数</returns>
+        public int SaveModel<TModel>(TModel model)
+            where TModel : class
+        {
+            // 非空检查
+            Check.ArgumentNull(model, nameof(model));
+            // 获取sql参数数组
+            IDbDataParameter[] parameters = this.GetParameters(this.UpdateCommandText, model).ToArray();
+            // 执行并返回DB受影响行数
+            return this.ExecuteUpdate(this.UpdateCommandText, parameters);
+        }
+        /// <summary>
+        /// 异步向数据库UPDATE映射对象中所有指定修改的属性的值
+        /// </summary>
+        /// <typeparam name="TModel">映射类型（映射类型的属性名必须与实体类型的属性名一致）</typeparam>
+        /// <param name="model">映射对象</param>
+        /// <returns>UPDATE的行数</returns>
+        public Task<int> SaveModelAsync<TModel>(TModel model)
+            where TModel : class
+        {
+            return Task.Factory.StartNew(() => this.SaveModel(model));
+        }
+        #endregion
         /// <summary>
         /// 批量修改符合条件的实体的信息
         /// </summary>
         /// <param name="setParameters">属性名及属性值字典</param>
         /// <param name="entities">待修改的实体的数据源</param>
-        /// <returns>修改的实体对象的数量</returns>
+        /// <returns>UPDATE的行数</returns>
         public int SaveAll(IDictionary<string, object> setParameters, IDbQuery<TEntity> entities)
         {
             // 非空检查

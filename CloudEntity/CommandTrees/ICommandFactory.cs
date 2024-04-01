@@ -90,26 +90,26 @@ namespace CloudEntity.CommandTrees
         /// </summary>
         /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
         /// <returns>sql查询命令生成树</returns>
-        ISelectCommandTree GetQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
+        ICommandTree GetQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
         /// <summary>
         /// 获取TOP查询sql的生成树
         /// </summary>
         /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
         /// <param name="topCount">查询的前几条的元素数量</param>
         /// <returns>TOP查询sql的生成树</returns>
-        ISelectCommandTree GetTopQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, int topCount);
+        ICommandTree GetTopQueryTree(IEnumerable<INodeBuilder> queryChildBuilders, int topCount);
         /// <summary>
         /// 获取生成Distinct查询sql的生成树
         /// </summary>
         /// <param name="queryChildBuilders">查询命令生成树的子节点集合</param>
         /// <returns>Distinct查询sql的生成树</returns>
-        ISelectCommandTree GetDistinctQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
+        ICommandTree GetDistinctQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
         /// <summary>
         /// 获取分页查询命令生成树
         /// </summary>
         /// <param name="queryChildBuilders">分页查询命令生成树的子节点集</param>
         /// <returns>分页查询命令生成树</returns>
-        ISelectCommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
+        ICommandTree GetPagingQueryTree(IEnumerable<INodeBuilder> queryChildBuilders);
         /// <summary>
         /// 获取With As 查询命令生成树
         /// </summary>

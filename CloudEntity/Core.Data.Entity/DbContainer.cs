@@ -22,47 +22,47 @@ namespace CloudEntity.Core.Data.Entity
         /// <summary>
         /// 访问DbList字典的线程锁
         /// </summary>
-        private object _dbListsLocker;
+        private readonly object _dbListsLocker;
         /// <summary>
         /// 操作数据库的DbHelper
         /// </summary>
-        private IDbHelper _dbHelper;
+        private readonly IDbHelper _dbHelper;
         /// <summary>
         /// Table初始化器
         /// </summary>
-        private TableInitializer _tableInitializer;
+        private readonly TableInitializer _tableInitializer;
         /// <summary>
         /// 列初始化器
         /// </summary>
-        private ColumnInitializer _columnInitializer;
+        private readonly ColumnInitializer _columnInitializer;
         /// <summary>
         /// Sql命令工厂
         /// </summary>
-        private ICommandFactory _commandFactory;
+        private readonly ICommandFactory _commandFactory;
         /// <summary>
         /// Mapper容器
         /// </summary>
-        private IMapperContainer _mapperContainer;
+        private readonly IMapperContainer _mapperContainer;
         /// <summary>
         /// 创建表达式解析器的工厂
         /// </summary>
-        private IPredicateParserFactory _predicateParserFactory;
+        private readonly IPredicateParserFactory _predicateParserFactory;
         /// <summary>
         /// 创建查询条件解析器的工厂
         /// </summary>
-        private IPredicateParserFactory _mapperPredicateParserFactory;
+        private readonly IPredicateParserFactory _mapperPredicateParserFactory;
         /// <summary>
         /// 数据列表字典
         /// </summary>
-        private IDictionary<Type, object> _dbLists;
+        private readonly IDictionary<Type, object> _dbLists;
         /// <summary>
         /// 控制字典缓存的线程锁
         /// </summary>
-        private static object _containersLocker;
+        private readonly static object _containersLocker;
         /// <summary>
         /// 数据容器字典
         /// </summary>
-        private static IDictionary<string, IDbContainer> _containers;
+        private readonly static IDictionary<string, IDbContainer> _containers;
 
         /// <summary>
         /// 操作数据库的DbHelper

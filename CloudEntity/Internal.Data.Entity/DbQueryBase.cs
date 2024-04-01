@@ -1,4 +1,5 @@
 ﻿using CloudEntity.CommandTrees;
+using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
 using System;
@@ -17,11 +18,11 @@ namespace CloudEntity.Internal.Data.Entity
         /// <summary>
         /// sql表达式节点集合
         /// </summary>
-        private IList<INodeBuilder> _nodebuilders;
+        private readonly IList<INodeBuilder> _nodebuilders;
         /// <summary>
         /// sql参数集合
         /// </summary>
-        private IList<IDbDataParameter> _sqlParameters;
+        private readonly IList<IDbDataParameter> _sqlParameters;
 
         /// <summary>
         /// SQL命令工厂

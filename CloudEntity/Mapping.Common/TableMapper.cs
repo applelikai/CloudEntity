@@ -8,25 +8,22 @@ namespace CloudEntity.Mapping.Common
 {
     /// <summary>
     /// 实体和表的映射基类
+    /// [作者：Apple_Li 李凯 15150598493]
     /// </summary>
     public abstract class TableMapper : ITableMapper
     {
         /// <summary>
-        /// 线程锁
-        /// </summary>
-        private object locker;
-        /// <summary>
         /// 表的基本信息
         /// </summary>
-        private ITableHeader tableHeader;
+        private readonly ITableHeader _tableHeader;
         /// <summary>
         /// 主键列与属性的映射对象
         /// </summary>
-        private IColumnMapper keyMapper;
+        private readonly IColumnMapper _keyMapper;
         /// <summary>
         /// 列与属性的映射对象字典(Key:属性名, Value:ColumnMapper)
         /// </summary>
-        private IDictionary<string, IColumnMapper> _columnMappers;
+        private readonly IDictionary<string, IColumnMapper> _columnMappers;
 
         /// <summary>
         /// 实体类型
@@ -37,44 +34,14 @@ namespace CloudEntity.Mapping.Common
         /// </summary>
         public ITableHeader Header
         {
-            get
-            {
-                Start:
-                //若tableInfo不为空直接返回
-                if (this.tableHeader != null)
-                    return this.tableHeader;
-                //进入临界区(只能一个线程进入)
-                lock (this.locker)
-                {
-                    //若tableInfo为空则创建
-                    if (this.tableHeader == null)
-                        this.tableHeader = this.GetHeader();
-                    //回到开始
-                    goto Start;
-                }
-            }
+            get { return _tableHeader; }
         }
         /// <summary>
         /// 主键列与属性的映射对象
         /// </summary>
         public IColumnMapper KeyMapper
         {
-            get
-            {
-                Start:
-                //若keyMapper不为空，直接返回
-                if (this.keyMapper != null)
-                    return this.keyMapper;
-                //进入临界区
-                lock (this.locker)
-                {
-                    //若keyMapper为空，则查询获取
-                    if (this.keyMapper == null)
-                        this.keyMapper = _columnMappers.Values.Single(c => c.ColumnAction.ToString().StartsWith("Primary"));
-                    //回到Start
-                    goto Start;
-                }
-            }
+            get { return _keyMapper; }
         }
 
         /// <summary>
@@ -112,13 +79,18 @@ namespace CloudEntity.Mapping.Common
         {
             // 非空检查
             Check.ArgumentNull(entityType, nameof(entityType));
-            // 赋值
+            // 初始化对象类型
             this.EntityType = entityType;
-            this.locker = new object();
+
+            // 初始化头信息
+            _tableHeader = this.GetHeader();
+
             // 初始化列与属性的映射对象字典
             _columnMappers = new Dictionary<string, IColumnMapper>();
             // 加载列与属性的映射对象字典
             this.LoadColumnMappers(_columnMappers);
+            // 主键列与属性的映射对象
+            _keyMapper = _columnMappers.Values.FirstOrDefault(c => c.ColumnAction.ToString().StartsWith("Primary"));
         }
         /// <summary>
         /// 获取当前属性对应的ColumnMapper

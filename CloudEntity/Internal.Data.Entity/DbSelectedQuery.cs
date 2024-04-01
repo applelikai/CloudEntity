@@ -59,17 +59,7 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>查询列名列表</returns>
         public IEnumerable<string> GetSelectNames()
         {
-            // 遍历所有的sql表达式节点
-            foreach (INodeBuilder nodeBuilder in base.NodeBuilders)
-            {
-                // 若不是Column节点则跳过
-                if (nodeBuilder.BuilderType != BuilderType.Column)
-                    continue;
-                // 获取Column节点
-                ColumnBuilder columnBuilder = nodeBuilder as ColumnBuilder;
-                // 获取查询列名
-                yield return columnBuilder.ColumnName;
-            }
+            return (this as IDbBase).GetSelectNames();
         }
         /// <summary>
         /// 获取枚举器
@@ -77,12 +67,15 @@ namespace CloudEntity.Internal.Data.Entity
         /// <returns>枚举器</returns>
         public IEnumerator<TElement> GetEnumerator()
         {
+            // 获取查询列名数组
+            string[] columnNames = this.GetSelectNames().ToArray();
+            // 获取从DataReader到实体的转换器
+            ReaderEntityConverter converter = new ReaderEntityConverter(columnNames, typeof(TEntity), base.MapperContainer, base.PropertyLinkers);
+
             // 获取sql命令
             string commandText = this.CreateQueryTree().Compile();
-            // 构建读取DataReader，创建填充获取实体对象的匿名函数
-            Func<IDataReader, TEntity> getEntity = base.BuildGetEntityFunc(this.GetSelectNames().ToArray());
             //执行查询获取TElement类型的枚举器
-            foreach (TEntity entity in base.DbHelper.GetResults(getEntity, commandText, parameters: base.Parameters.ToArray()))
+            foreach (TEntity entity in base.DbHelper.GetResults(converter.Convert, commandText, parameters: base.Parameters.ToArray()))
                 yield return this.Convert(entity);
         }
         /// <summary>

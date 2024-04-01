@@ -1,4 +1,7 @@
-﻿using System;
+﻿using CloudEntity.CommandTrees.Commom;
+using CloudEntity.CommandTrees;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -12,6 +15,28 @@ namespace CloudEntity.Data.Entity
     /// </summary>
     public static class ExtendQuery
     {
+        /// <summary>
+        /// 获取的查询列名列表
+        /// </summary>
+        /// <param name="source">数据操作基对象</param>
+        /// <returns>查询列名列表</returns>
+        internal static IEnumerable<string> GetSelectNames(this IDbBase source)
+        {
+            // 非空验证
+            Check.ArgumentNull(source, nameof(source));
+            // 遍历所有的sql表达式节点
+            foreach (INodeBuilder nodeBuilder in source.NodeBuilders)
+            {
+                // 若不是Column节点则跳过
+                if (nodeBuilder.BuilderType != BuilderType.Column)
+                    continue;
+                // 获取Column节点
+                ColumnBuilder columnBuilder = nodeBuilder as ColumnBuilder;
+                // 获取查询列名
+                yield return columnBuilder.ColumnName;
+            }
+        }
+
         /// <summary>
         /// Extendable method: 为数据源添加 数据对象某属性值包含（或不包含）对象属性值数组中 的检索条件
         /// </summary>
