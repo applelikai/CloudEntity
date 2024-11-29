@@ -179,6 +179,56 @@ namespace CloudEntity.Data.Entity
         /// <param name="source">数据源</param>
         /// <param name="selector">指定实体某属性表达式</param>
         /// <returns>实体数据源中所有实体某属性的平均值</returns>
+        public static long Avg<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, long>> selector)
+            where TEntity : class
+        {
+            return source.Function("Avg", selector);
+        }
+        /// <summary>
+        /// Extendable method: 获取实体数据源中所有实体某属性的平均值
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定实体某属性表达式</param>
+        /// <returns>实体数据源中所有实体某属性的平均值</returns>
+        public static long Avg<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, long?>> selector)
+            where TEntity : class
+        {
+            return source.Function("Avg", selector);
+        }
+        /// <summary>
+        /// Extendable method: 获取实体数据源中符合条件的实体某属性的平均值
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定实体某属性表达式</param>
+        /// <param name="predicate">筛选条件表达式</param>
+        /// <returns>实体数据源中符合条件的实体某属性的平均值</returns>
+        public static long Avg<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, long>> selector, Expression<Func<TEntity, bool>> predicate)
+            where TEntity : class
+        {
+            return source.Function("Avg", selector, predicate);
+        }
+        /// <summary>
+        /// Extendable method: 获取实体数据源中符合条件的实体某属性的平均值
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定实体某属性表达式</param>
+        /// <param name="predicate">筛选条件表达式</param>
+        /// <returns>实体数据源中符合条件的实体某属性的平均值</returns>
+        public static long Avg<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, long?>> selector, Expression<Func<TEntity, bool>> predicate)
+            where TEntity : class
+        {
+            return source.Function("Avg", selector, predicate);
+        }
+        /// <summary>
+        /// Extendable method: 获取实体数据源中所有实体某属性的平均值
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定实体某属性表达式</param>
+        /// <returns>实体数据源中所有实体某属性的平均值</returns>
         public static double Avg<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, double>> selector)
             where TEntity : class
         {
@@ -319,6 +369,56 @@ namespace CloudEntity.Data.Entity
         /// <param name="predicate">筛选条件表达式</param>
         /// <returns>实体数据源中符合条件的元素某属性的和</returns>
         public static int Sum<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, int?>> selector, Expression<Func<TEntity, bool>> predicate)
+            where TEntity : class
+        {
+            return source.Function("Sum", selector, predicate);
+        }
+        /// <summary>
+        /// Extendable method: 统计实体数据源中所有元素属性的和
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定实体某属性表达式</param>
+        /// <returns>实体数据源中所有元素某属性的和</returns>
+        public static long Sum<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, long>> selector)
+            where TEntity : class
+        {
+            return source.Function("Sum", selector);
+        }
+        /// <summary>
+        /// Extendable method: 统计实体数据源中所有元素属性的和
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定实体某属性表达式</param>
+        /// <returns>实体数据源中所有元素某属性的和</returns>
+        public static long Sum<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, long?>> selector)
+            where TEntity : class
+        {
+            return source.Function("Sum", selector);
+        }
+        /// <summary>
+        /// Extendable method: 统计实体数据源中符合条件的元素属性的和
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定实体某属性表达式</param>
+        /// <param name="predicate">筛选条件表达式</param>
+        /// <returns>实体数据源中符合条件的元素某属性的和</returns>
+        public static long Sum<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, long>> selector, Expression<Func<TEntity, bool>> predicate)
+            where TEntity : class
+        {
+            return source.Function("Sum", selector, predicate);
+        }
+        /// <summary>
+        /// Extendable method: 统计实体数据源中符合条件的元素属性的和
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <param name="source">数据源</param>
+        /// <param name="selector">指定实体某属性表达式</param>
+        /// <param name="predicate">筛选条件表达式</param>
+        /// <returns>实体数据源中符合条件的元素某属性的和</returns>
+        public static long Sum<TEntity>(this IDbSource<TEntity> source, Expression<Func<TEntity, long?>> selector, Expression<Func<TEntity, bool>> predicate)
             where TEntity : class
         {
             return source.Function("Sum", selector, predicate);

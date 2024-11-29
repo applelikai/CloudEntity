@@ -1,8 +1,6 @@
 ﻿using CloudEntity.CommandTrees;
-using CloudEntity.CommandTrees.Commom;
 using CloudEntity.Data;
 using CloudEntity.Data.Entity;
-using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -125,6 +123,9 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="value">参数值</param>
         public void AddSqlParameter(string name, object value)
         {
+            // 若包含同名参数，退出
+            if (_sqlParameters.Any(p => p.ParameterName.Equals(name)))
+                return;
             // 创建sql参数
             IDbDataParameter sqlParameter = this.DbHelper.CreateParameter(name, value);
             // 添加sql参数
@@ -136,6 +137,10 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="sqlParameter">sql参数</param>
         public void AddSqlParameter(IDbDataParameter sqlParameter)
         {
+            // 若包含同名参数，退出
+            if (_sqlParameters.Any(p => p.ParameterName.Equals(sqlParameter.ParameterName)))
+                return;
+            // 添加sql参数
             _sqlParameters.Add(sqlParameter);
         }
         /// <summary>
@@ -144,8 +149,15 @@ namespace CloudEntity.Internal.Data.Entity
         /// <param name="sqlParameters">sql参数列表</param>
         public void AddSqlParameters(IEnumerable<IDbDataParameter> sqlParameters)
         {
+            // 遍历sql参数
             foreach (IDbDataParameter sqlParameter in sqlParameters)
+            {
+                // 若包含同名参数，跳过
+                if (_sqlParameters.Any(p => p.ParameterName.Equals(sqlParameter.ParameterName)))
+                    continue;
+                // 添加sql参数
                 _sqlParameters.Add(sqlParameter);
+            }
         }
     }
 }
