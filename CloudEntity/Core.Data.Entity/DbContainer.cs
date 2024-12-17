@@ -93,7 +93,7 @@ namespace CloudEntity.Core.Data.Entity
         /// </summary>
         /// <param name="source">来源数据源</param>
         /// <param name="cloned">新的实体查询数据源</param>
-        private void Clone(IDbBase source, DbScalar cloned)
+        private void Clone(IDbBase source, DbQueryBase cloned)
         {
             // 遍历sql表达式节点列表
             foreach (INodeBuilder nodeBuilder in source.NodeBuilders)
@@ -319,11 +319,13 @@ namespace CloudEntity.Core.Data.Entity
         /// <summary>
         /// 创建统计查询数据源
         /// </summary>
-        /// <param name="dbBase">操作数据库的基础对象</param>
+        /// <typeparam name="TEntity">实体对象类型</typeparam>
+        /// <param name="source">实体对象数据源</param>
         /// <param name="functionName">统计函数名</param>
         /// <param name="lambdaExpression">指定对象某属性的表达式</param>
         /// <returns>统计查询数据源</returns>
-        public IDbScalar CreateScalar(IDbBase dbBase, string functionName, LambdaExpression lambdaExpression)
+        public IDbScalar CreateScalar<TEntity>(IDbSource<TEntity> source, string functionName, LambdaExpression lambdaExpression)
+            where TEntity : class
         {
             // 获取成员表达式
             MemberExpression memberExpression = lambdaExpression.Body.GetMemberExpression();
@@ -339,7 +341,32 @@ namespace CloudEntity.Core.Data.Entity
             // 添加统计表达式
             cloned.AddNodeBuilder(selectBuilder);
             // 复制来源数据源信息到新的统计查询数据源数据源
-            this.Clone(dbBase, cloned);
+            this.Clone(source, cloned);
+            // 获取复制的统计查询数据源
+            return cloned;
+        }
+        /// <summary>
+        /// 创建统计查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="functionName">统计函数名</param>
+        /// <param name="lambdaExpression">指定对象某属性的表达式</param>
+        /// <returns>统计查询数据源</returns>
+        public IDbScalar CreateScalar<TModel>(IDbAsView<TModel> source, string functionName, LambdaExpression lambdaExpression)
+            where TModel : class, new()
+        {
+            // 获取成员表达式
+            MemberExpression memberExpression = lambdaExpression.Body.GetMemberExpression();
+            // 获取统计表达式
+            INodeBuilder selectBuilder = _commandFactory.GetFunctionNodeBuilder(source.TableAlias, memberExpression.Member.Name, functionName);
+
+            // 创建统计查询数据源对象
+            DbAsScalar cloned = new DbAsScalar(_commandFactory, this.DbHelper, source.InnerQuerySql, source.TableAlias);
+            // 添加统计表达式
+            cloned.AddNodeBuilder(selectBuilder);
+            // 复制来源数据源信息到新的统计查询数据源数据源
+            this.Clone(source, cloned);
             // 获取复制的统计查询数据源
             return cloned;
         }
@@ -550,7 +577,7 @@ namespace CloudEntity.Core.Data.Entity
         /// <summary>
         /// 创建视图查询数据源
         /// </summary>
-        /// <typeparam name="TModel">视图对象</typeparam>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
         /// <param name="source">视图查询数据源</param>
         /// <returns>新的视图查询数据源</returns>
         public IDbAsView<TModel> CreateView<TModel>(IDbAsView<TModel> source)

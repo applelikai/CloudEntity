@@ -159,9 +159,15 @@ namespace CloudEntity.CommandTrees.Commom
             {
                 switch (nodeBuilder.ParentNodeType)
                 {
+                    // 添加SELECT子节点
+                    case SqlType.Select:
+                        queryTree.Select.Append(nodeBuilder);
+                        break;
+                    // 添加WHERE子节点
                     case SqlType.Where:
                         queryTree.Where.Append(nodeBuilder);
                         break;
+                    // 添加ORDER BY子节点
                     case SqlType.OrderBy:
                         queryTree.OrderBy.Append(nodeBuilder);
                         break;

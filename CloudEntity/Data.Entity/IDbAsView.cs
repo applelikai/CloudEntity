@@ -14,13 +14,17 @@ namespace CloudEntity.Data.Entity
         where TModel : class, new()
     {
         /// <summary>
-        /// 查询数据源创建工厂
+        /// 视图查询时使用的临时表名
         /// </summary>
-        IDbFactory Factory { get; }
+        string TableAlias { get; }
         /// <summary>
         /// 查询sql
         /// </summary>
         string InnerQuerySql { get; }
+        /// <summary>
+        /// 查询数据源创建工厂
+        /// </summary>
+        IDbFactory Factory { get; }
 
         /// <summary>
         /// 设置数据源数据检索条件

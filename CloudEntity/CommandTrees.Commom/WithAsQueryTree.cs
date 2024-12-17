@@ -18,6 +18,10 @@ namespace CloudEntity.CommandTrees.Commom
         protected string TableAlias { get; private set; }
 
         /// <summary>
+        /// Select节点
+        /// </summary>
+        public IBuilderCollection Select { get; private set; }
+        /// <summary>
         /// Where节点
         /// </summary>
         public IBuilderCollection Where { get; private set; }
@@ -42,7 +46,7 @@ namespace CloudEntity.CommandTrees.Commom
         /// <param name="tableAlias">临时表名</param>
         protected virtual void AppendFrom(StringBuilder commandText, string tableAlias)
         {
-            commandText.AppendFormat("    FROM {0}", tableAlias);
+            commandText.AppendFormat("\n    FROM {0}", tableAlias);
         }
 
         /// <summary>
@@ -56,6 +60,7 @@ namespace CloudEntity.CommandTrees.Commom
         {
             this.InnerQuerySql = innerQuerySql;
             this.TableAlias = tableAlias;
+            this.Select = new BuilderCollection("  SELECT ", "         ", ",\n", string.Empty);
             this.Where = new BuilderCollection("\n   WHERE ", "     AND ", "\n", string.Empty);
             this.OrderBy = new BuilderCollection("\nORDER BY ", "         ", ",\n", string.Empty);
         }
@@ -65,13 +70,21 @@ namespace CloudEntity.CommandTrees.Commom
         /// <param name="commandText">待构建的sql</param>
         public override void Build(StringBuilder commandText)
         {
+            // 拼接视图sql
             this.AppendWithAs(commandText, this.TableAlias);
             commandText.AppendLine("\n(");
             commandText.AppendLine(this.InnerQuerySql);
             commandText.AppendLine(")");
-            commandText.AppendLine("  SELECT *");
+            // 拼接Select
+            if (this.Select.Count > 0)
+                this.Select.Build(commandText);
+            else
+                commandText.Append("  SELECT *");
+            // 拼接Form
             this.AppendFrom(commandText, this.TableAlias);
+            // 拼接Where
             this.Where.Build(commandText);
+            // 拼接OrderBy
             this.OrderBy.Build(commandText);
         }
     }

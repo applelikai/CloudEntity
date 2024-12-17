@@ -20,11 +20,23 @@ namespace CloudEntity.Data.Entity
         /// <summary>
         /// 创建统计查询对象
         /// </summary>
-        /// <param name="dbBase">操作数据库的基础对象</param>
+        /// <typeparam name="TEntity">实体对象类型</typeparam>
+        /// <param name="source">实体对象数据源</param>
         /// <param name="functionName">统计函数名</param>
         /// <param name="lambdaExpression">指定对象某属性的表达式</param>
         /// <returns>统计查询对象</returns>
-        IDbScalar CreateScalar(IDbBase dbBase, string functionName, LambdaExpression lambdaExpression);
+        IDbScalar CreateScalar<TEntity>(IDbSource<TEntity> source, string functionName, LambdaExpression lambdaExpression)
+            where TEntity : class;
+        /// <summary>
+        /// 创建统计查询数据源
+        /// </summary>
+        /// <typeparam name="TModel">视图对象类型</typeparam>
+        /// <param name="source">视图查询数据源</param>
+        /// <param name="functionName">统计函数名</param>
+        /// <param name="lambdaExpression">指定对象某属性的表达式</param>
+        /// <returns>统计查询数据源</returns>
+        IDbScalar CreateScalar<TModel>(IDbAsView<TModel> source, string functionName, LambdaExpression lambdaExpression)
+            where TModel : class, new ();
         #endregion
         #region 创建查询数据源
         /// <summary>

@@ -20,10 +20,6 @@ namespace CloudEntity.Internal.Data.Entity
         where TModel : class, new()
     {
         /// <summary>
-        /// 视图查询时使用的临时表名
-        /// </summary>
-        private string _tableAlias;
-        /// <summary>
         /// 对象访问器
         /// </summary>
         private ObjectAccessor _modelAccessor;
@@ -36,6 +32,10 @@ namespace CloudEntity.Internal.Data.Entity
         /// 查询数据源创建工厂
         /// </summary>
         public IDbFactory Factory { get; private set; }
+        /// <summary>
+        /// 视图查询时使用的临时表名
+        /// </summary>
+        public string TableAlias { get; private set; }
         /// <summary>
         /// 查询sql
         /// </summary>
@@ -76,7 +76,7 @@ namespace CloudEntity.Internal.Data.Entity
             //获取列名
             string columnName = memberExpression.Member.Name;
             //获取不使用别名的OrderBy节点的子表达式(排序时，禁止使用别名)
-            return base.CommandFactory.GetOrderByChildBuilder(_tableAlias, columnName, isDesc);
+            return base.CommandFactory.GetOrderByChildBuilder(TableAlias, columnName, isDesc);
         }
 
         /// <summary>
@@ -93,11 +93,12 @@ namespace CloudEntity.Internal.Data.Entity
             //非空检查
             Check.ArgumentNull(dbFactory, nameof(dbFactory));
             Check.ArgumentNull(innerQuerySql, nameof(innerQuerySql));
+
             // 初始化
             _modelAccessor = ObjectAccessor.GetAccessor(typeof(TModel));
-            _tableAlias = typeof(TModel).Name.ToLower();
-            //赋值
             _predicateParserFactory = predicateParserFactory;
+
+            this.TableAlias = typeof(TModel).Name.ToLower();
             this.Factory = dbFactory;
             this.InnerQuerySql = innerQuerySql;
         }
@@ -241,7 +242,7 @@ namespace CloudEntity.Internal.Data.Entity
         public IEnumerator<TModel> GetEnumerator()
         {
             // 创建CommandTree
-            ICommandTree queryTree = base.CommandFactory.GetWithAsQueryTree(this.InnerQuerySql, _tableAlias, this.NodeBuilders);
+            ICommandTree queryTree = base.CommandFactory.GetWithAsQueryTree(this.InnerQuerySql, this.TableAlias, this.NodeBuilders);
             // 执行查询
             foreach (TModel model in base.DbHelper.GetResults(this.CreateModel, queryTree.Compile(), parameters: this.Parameters.ToArray()))
                 yield return model;

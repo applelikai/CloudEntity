@@ -24,7 +24,7 @@ namespace CloudEntity.CommandTrees.Commom.PostgreSqlClient
         /// <param name="tableAlias">临时表名</param>
         protected override void AppendFrom(StringBuilder commandText, string tableAlias)
         {
-            commandText.AppendFormat("    FROM \"{0}\"", tableAlias);
+            commandText.AppendFormat("\n    FROM \"{0}\"", tableAlias);
         }
 
         /// <summary>
